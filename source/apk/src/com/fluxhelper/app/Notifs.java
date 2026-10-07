@@ -107,10 +107,21 @@ public final class Notifs {
                     i2.putExtra("min", min);
                     PendingIntent pe2 = PendingIntent.getBroadcast(c, REQ, i2,
                             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+                    // setAlarmClock — найнадійніший канал будильника Android:
+                    // спрацьовує навіть у doze на Xiaomi/Huawei і не потребує
+                    // дозволу SCHEDULE_EXACT_ALARM. Fallback — exact/inexact.
                     try {
-                        am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pe2);
-                    } catch (SecurityException ex) {
-                        am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pe2);
+                        Intent openApp = new Intent(c, MainActivity.class);
+                        openApp.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                        PendingIntent piOpen = PendingIntent.getActivity(c, 7, openApp,
+                                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+                        am.setAlarmClock(new AlarmManager.AlarmClockInfo(at, piOpen), pe2);
+                    } catch (Exception ex) {
+                        try {
+                            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pe2);
+                        } catch (SecurityException ex2) {
+                            am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pe2);
+                        }
                     }
                     return;
                 }
@@ -118,25 +129,59 @@ public final class Notifs {
         } catch (Exception ignored) { }
     }
 
-    /** показує сповіщення "скоро почнеться урок" */
+    /** показує сповіщення "скоро почнеться урок".
+     *  ХВИЛИНИ РАХУЄМО В МОМЕНТ ПОКАЗУ (а не при плануванні!):
+     *  якщо будильник спрацював пізніше/раніше — у тексті справжні хвилини. */
     public static void show(Context c, String name, String time, int min) {
         NotificationManager nm = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
         if (nm == null) return;
         if (Build.VERSION.SDK_INT >= 24 && !nm.areNotificationsEnabled()) return;
+        int delta = min;
+        try {
+            String[] tm = time.split(":");
+            int hm = Integer.parseInt(tm[0].trim()) * 60 + Integer.parseInt(tm[1].trim());
+            Calendar now = Calendar.getInstance();
+            delta = hm - (now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE));
+        } catch (Exception ignored) { }
+        if (delta < 0) delta = 0;
+        String when = (delta == 0) ? "починається зараз" : ("через " + delta + " хв");
         Notification.Builder b = (Build.VERSION.SDK_INT >= 26)
                 ? new Notification.Builder(c, CH)
                 : new Notification.Builder(c);
         b.setSmallIcon(R.drawable.ic_notif)
          .setContentTitle("🔔 Скоро почнеться урок")
-         .setContentText(name + " о " + time + " — через " + min + " хв")
+         .setContentText(name + " о " + time + " — " + when)
          .setStyle(new Notification.BigTextStyle().bigText(
-                 name + " починається о " + time + "\nдо початку " + min + " хв ⏰"))
+                 name + " починається о " + time + "\n" + when + " ⏰"))
          .setAutoCancel(true);
         Intent i = new Intent(c, MainActivity.class);
         i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         b.setContentIntent(PendingIntent.getActivity(c, 7, i,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
         try { nm.notify(NID, b.build()); } catch (Exception ignored) { }
+        logNotif(c, name, time);   // журнал: інтерфейс покаже «прийшло о HH:MM»
+    }
+
+    // ================================================= журнал сповіщень
+    /** додає запис у журнал (SharedPreferences, останні 30) — JS читає через
+     *  AndroidHost.getNotifLog() і показує у застосунку з часом отримання. */
+    private static void logNotif(Context c, String name, String time) {
+        try {
+            org.json.JSONArray arr = new org.json.JSONArray(p(c).getString("notiflog", "[]"));
+            org.json.JSONObject o = new org.json.JSONObject();
+            o.put("ts", System.currentTimeMillis());
+            o.put("n", name == null || name.length() == 0 ? "Урок" : name);
+            o.put("s", time == null ? "" : time);
+            org.json.JSONArray out = new org.json.JSONArray();
+            out.put(o);
+            for (int i = 0; i < arr.length() && i < 29; i++) out.put(arr.get(i));
+            p(c).edit().putString("notiflog", out.toString()).apply();
+        } catch (Exception ignored) { }
+    }
+
+    /** увесь журнал для JS */
+    public static String getLog(Context c) {
+        return p(c).getString("notiflog", "[]");
     }
 
     /**

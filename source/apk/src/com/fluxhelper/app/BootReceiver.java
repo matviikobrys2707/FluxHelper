@@ -10,7 +10,13 @@ public class BootReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         if (intent == null) return;
         String a = intent.getAction();
-        if (a != null && a.equals(Intent.ACTION_BOOT_COMPLETED)) {
+        // перезавантаження, зміна часу/таймзони, оновлення застосунку —
+        // в усіх цих випадках плануємо наступний будильник заново
+        boolean hit = Intent.ACTION_BOOT_COMPLETED.equals(a)
+                || "android.intent.action.TIME_SET".equals(a)
+                || "android.intent.action.TIMEZONE_CHANGED".equals(a)
+                || "android.intent.action.MY_PACKAGE_REPLACED".equals(a);
+        if (hit) {
             Notifs.ensureChannel(context);
             Notifs.reschedule(context);
         }

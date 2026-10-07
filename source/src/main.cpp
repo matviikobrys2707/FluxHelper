@@ -342,6 +342,20 @@ static void ShowBalloon(const std::wstring& title, const std::wstring& text) {
     Shell_NotifyIconW(NIM_MODIFY, &nid);
 }
 
+// копія сповіщення в інтерфейс (журнал з часом отримання) — виклик з головного потоку
+static void UiScript(const std::wstring& js);   // визначено нижче (поряд з оновленням)
+static void PushNotifToUi(const std::string& nameUtf8, int startMin, int delta) {
+    std::string n = nameUtf8;
+    for (auto& c : n) if (c == '"' || c == '\\') c = ' ';
+    wchar_t js[420];
+    swprintf(js, 420,
+             L"window.__fh&&window.__fh.notifFired&&window.__fh.notifFired(\"%s\",\"%02d:%02d\",%d)",
+             Utf8ToWide(n).c_str(), startMin / 60, startMin % 60, delta);
+    UiScript(js);
+}
+
+// ФІКС «пише через 3 хв, коли до уроку 0 хв»: хвилини у ТЕКСТІ сповіщення
+// завжди реальні (настоящі) — рахуємо скільки ХВИЛИН лишилось САМЕ ПІД ЧАС показу.
 static void CheckNotifs() {
     if (!g_cfg.notif || g_sched.empty() || !g_hwnd) return;
     SYSTEMTIME st;
@@ -359,9 +373,14 @@ static void CheckNotifs() {
             g_notifKey = key;
             std::wstring nm = Utf8ToWide(it.name);
             wchar_t msg[300];
-            swprintf(msg, 300, L"🔔 %s\nпочаток о %02d:%02d — через %d хв",
-                     nm.c_str(), it.startMin / 60, it.startMin % 60, g_cfg.notifmin);
+            if (delta <= 0)
+                swprintf(msg, 300, L"🔔 %s\nпочаток о %02d:%02d — починається зараз!",
+                         nm.c_str(), it.startMin / 60, it.startMin % 60);
+            else
+                swprintf(msg, 300, L"🔔 %s\nпочаток о %02d:%02d — через %d хв",
+                         nm.c_str(), it.startMin / 60, it.startMin % 60, delta);
             ShowBalloon(L"Скоро почнеться урок", msg);
+            PushNotifToUi(it.name, it.startMin, delta);
             return;
         }
     }
@@ -626,17 +645,30 @@ static int HttpDownloadTo(const std::wstring& url, const std::wstring& dst) {
 struct UpdParams { std::wstring ver, repo; };
 
 static void UpdateThreadMain(UpdParams p) {
-    const std::wstring base = L"https://raw.githubusercontent.com/" + p.repo
-                            + L"/main/versions/" + p.ver + L"/";
+    // ДЖЕРЕЛА ЗАВАНТАЖЕННЯ (по черзі):
+    //  1) GitHub Release — immutable-файли, без CDN-кешу (завжди свіжі)
+    //  2) raw.githubusercontent versions/<v>/ з cache-buster (?cb=час) —
+    //     Fastly кешує raw на 5 хв; запит з новим ?cb= обходить кеш і віддає
+    //     нову версію ОДРАЗУ після публікації (без «оновлення недоступне»)
+    const wchar_t* names[3] = { L"FluxHelper.exe", L"FluxControl.exe", L"Blazix.exe" };
+    const std::wstring relBase = L"https://github.com/" + p.repo + L"/releases/download/v" + p.ver + L"/";
+    const std::wstring rawBase = L"https://raw.githubusercontent.com/" + p.repo + L"/main/versions/" + p.ver + L"/";
+    wchar_t cb[32];
+    swprintf(cb, 32, L"?cb=%llu", (unsigned long long)GetTickCount64());
     // качаємо в папку запущеного exe (стіл тощо) — після оновлення файл лишається на місці
     const std::wstring dst = ExeDirUpd() + L"\\FluxHelper.new.exe";
 
-    // 1.7.1+: канонічне ім'я — FluxHelper.exe; далі старі назви для давніх версій
-    int st = HttpDownloadTo(base + L"FluxHelper.exe", dst);
-    if (st == 404) st = HttpDownloadTo(base + L"FluxControl.exe", dst);   // 1.5.3..1.7.0
-    if (st == 404) st = HttpDownloadTo(base + L"Blazix.exe", dst);        // ім'я 1.5.4
+    int st = -1;
+    bool got404 = false;
+    for (int i = 0; i < 3 && st != 0; ++i) {
+        st = HttpDownloadTo(relBase + names[i], dst);
+        if (st == 404) {
+            got404 = true;
+            st = HttpDownloadTo(rawBase + names[i] + cb, dst);
+        }
+    }
     if (st != 0) {
-        if (st == 404)     UpdPostErr(L"версію не знайдено на GitHub (404)");
+        if (st == 404 || got404) UpdPostErr(L"версію не знайдено на GitHub (404)");
         else if (st == -2) UpdPostErr(L"не вдалося зберегти файл поруч із програмою (папка без прав запису?)");
         else               UpdPostErr(L"немає з'єднання з GitHub — перевір інтернет");
         return;
@@ -683,6 +715,60 @@ static void UpdateThreadMain(UpdParams p) {
 // виклик JS з головного потоку (для прогресу завантаження)
 static void UiScript(const std::wstring& js) {
     if (g_web) g_web->ExecuteScript(js.c_str(), nullptr);
+}
+
+// ------------------------------------------------- запуск Zoom
+// Налаштування «як відкривати Zoom» (лише ПК):
+//   • додаток  -> протокол zoommtg:// (сам Zoom, БЕЗ браузера);
+//     якщо Zoom не встановлено — автоматично через браузер
+//   • браузер  -> звичайне https-посилання (веб-версія Zoom)
+// Наявність Zoom перевіряємо за реєстрацією протокола zoommtg у HKCR.
+static bool ZoomProtoOk() {
+    HKEY k = nullptr;
+    // пошук і в HKCU (користувацькі асоціації), і в HKLM (системні)
+    if (RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\Classes\\zoommtg", 0, KEY_READ, &k) == ERROR_SUCCESS) {
+        RegCloseKey(k); return true;
+    }
+    if (RegOpenKeyExW(HKEY_CLASSES_ROOT, L"zoommtg", 0, KEY_READ, &k) == ERROR_SUCCESS) {
+        RegCloseKey(k); return true;
+    }
+    return false;
+}
+
+// https://us05web.zoom.us/j/123456789?pwd=xyz -> zoommtg://zoom.us/join?action=join&confno=123456789&pwd=xyz
+static bool BuildZoomAppUrl(const std::wstring& httpsUrl, std::wstring& out) {
+    size_t j = httpsUrl.find(L"/j/");
+    if (j == std::wstring::npos) return false;
+    size_t idStart = j + 3;
+    size_t idEnd = idStart;
+    while (idEnd < httpsUrl.size() && httpsUrl[idEnd] != L'?' && httpsUrl[idEnd] != L'/' && httpsUrl[idEnd] != L'&') ++idEnd;
+    std::wstring id = httpsUrl.substr(idStart, idEnd - idStart);
+    if (id.empty()) return false;
+    for (wchar_t c : id) if (!(c >= L'0' && c <= L'9')) return false;   // confno — тільки цифри
+    out = L"zoommtg://zoom.us/join?action=join&confno=" + id;
+    size_t pwd = httpsUrl.find(L"pwd=");
+    if (pwd != std::wstring::npos) {
+        std::wstring pv;
+        for (size_t i = pwd + 4; i < httpsUrl.size(); ++i) {
+            wchar_t c = httpsUrl[i];
+            if (c == L'&') break;
+            pv += c;
+        }
+        if (!pv.empty()) out += L"&pwd=" + pv;
+    }
+    return true;
+}
+
+static void OpenJoinLink(const std::wstring& mode, const std::wstring& url) {
+    if (mode == L"app") {
+        std::wstring z;
+        if (ZoomProtoOk() && BuildZoomAppUrl(url, z)) {
+            // Zoom встановлено -> запускаємо ДОДАТОК напряму, минаючи браузер
+            if ((intptr_t)ShellExecuteW(g_hwnd, L"open", z.c_str(), nullptr, nullptr, SW_SHOWNORMAL) > 32) return;
+        }
+        // Zoom немає (або посилання не розпізнано) -> автоматично через браузер
+    }
+    ShellExecuteW(g_hwnd, L"open", url.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 }
 
 // ------------------------------------------------- COM-база для обробників
@@ -743,6 +829,14 @@ struct MsgHandler : ComImpl<ICoreWebView2WebMessageReceivedEventHandler, IID_ICo
             // перетягування за власну титульну панель
             ReleaseCapture();
             SendMessageW(g_hwnd, WM_NCLBUTTONDOWN, HTCAPTION, 0);
+        }
+        else if (m.rfind(L"fh:join2|", 0) == 0) {
+            // fh:join2|<mode>|<url>  mode: app = Zoom-додаток (zoommtg://), web = браузер
+            std::wstring rest(m.c_str() + 9);
+            size_t bar = rest.find(L'|');
+            std::wstring mode = (bar == std::wstring::npos) ? L"app" : rest.substr(0, bar);
+            std::wstring url = (bar == std::wstring::npos) ? rest : rest.substr(bar + 1);
+            if (url.rfind(L"http", 0) == 0) OpenJoinLink(mode, url);
         }
         else if (m.rfind(L"fh:join|", 0) == 0)
             ShellExecuteW(g_hwnd, L"open", m.c_str() + 8, nullptr, nullptr, SW_SHOWNORMAL);

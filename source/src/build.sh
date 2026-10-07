@@ -14,7 +14,7 @@ SDKINC="$ROOT/tools/webview2/include"
 mkdir -p src/build
 
 # 1) DLL лоадера поруч (вбудовується в ресурси)
-cp -f tools/WebView2Loader.dll src/WebView2Loader.dll
+cp -f tools/webview2/WebView2Loader.dll src/WebView2Loader.dll
 
 # 2) ресурси (іконка + DLL + VERSIONINFO) — FileDescription тепер ASCII (FH_DESC),
 #    тому жодних патчів після windres не потрібно

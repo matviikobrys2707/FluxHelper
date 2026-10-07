@@ -9,8 +9,8 @@
 #define FH_VERSION_H
 
 #define FH_VER_MAJ 1
-#define FH_VER_MIN 7
-#define FH_VER_PAT 2
+#define FH_VER_MIN 8
+#define FH_VER_PAT 0
 
 #define FH_STRINGIFY_(x) #x
 #define FH_STRINGIFY(x)  FH_STRINGIFY_(x)

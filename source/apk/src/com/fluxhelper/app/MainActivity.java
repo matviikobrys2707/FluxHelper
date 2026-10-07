@@ -126,21 +126,33 @@ public class MainActivity extends Activity {
             jsErr("некоректні дані оновлення");
             return;
         }
-        final String url = "https://raw.githubusercontent.com/" + repo
-                + "/main/versions/" + ver + "/FluxHelper.apk";
+        // спершу Release-asset (immutable, без CDN-кешу), потім raw з cache-buster
+        // (Fastly кешує raw на 5 хв — ?cb= обходить кеш, оновлення доступне одразу)
+        final String[] urls = {
+                "https://github.com/" + repo + "/releases/download/v" + ver + "/FluxHelper.apk",
+                "https://raw.githubusercontent.com/" + repo + "/main/versions/" + ver
+                        + "/FluxHelper.apk?cb=" + System.currentTimeMillis()
+        };
         jsCall("window.__fh&&window.__fh.dlProg(0)");
         new Thread(new Runnable() {
             @Override public void run() {
                 try {
                     File base = getExternalFilesDir(null);
                     if (base == null) { jsErr("пам'ять телефону недоступна"); return; }
-                    HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
-                    con.setConnectTimeout(15000);
-                    con.setReadTimeout(30000);
-                    con.setInstanceFollowRedirects(true);
-                    con.connect();
-                    int code = con.getResponseCode();
-                    if (code != 200) { jsErr("GitHub відповів " + code); return; }
+                    HttpURLConnection con = null;
+                    int code = 404;
+                    for (String u : urls) {
+                        con = (HttpURLConnection) new URL(u).openConnection();
+                        con.setConnectTimeout(15000);
+                        con.setReadTimeout(30000);
+                        con.setInstanceFollowRedirects(true);
+                        con.connect();
+                        code = con.getResponseCode();
+                        if (code == 200) break;
+                        con.disconnect();
+                        con = null;
+                    }
+                    if (con == null || code != 200) { jsErr("GitHub відповів " + code); return; }
                     long total = con.getContentLength();
                     File dir = new File(base, "update");
                     dir.mkdirs();
@@ -300,6 +312,12 @@ public class MainActivity extends Activity {
         public void testNotif(String title, String text) {
             Notifs.ensureChannel(MainActivity.this);
             Notifs.showNow(MainActivity.this, title, text);
+        }
+
+        /** Журнал отриманих сповіщень (з часом) — інтерфейс показує «прийшло о HH:MM». */
+        @JavascriptInterface
+        public String getNotifLog() {
+            return Notifs.getLog(MainActivity.this);
         }
     }
 }

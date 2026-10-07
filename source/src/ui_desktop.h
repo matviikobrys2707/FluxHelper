@@ -61,10 +61,21 @@ button{font-family:inherit}
 /* на ПК титульна панель — ЗАВЖДИ найвища: згорнути/закрити/лого/назва видно
    навіть поверх екранів оновлення і «немає з'єднання» (модалка нижче панелі) */
 body.upd-lock #tbar,body.net-lock #tbar{z-index:130;background:rgba(10,10,18,.88)}
-body.upd-lock #bCfg{display:none!important}
+body.upd-lock .tb-seg{visibility:hidden}
 body.upd-lock .tb-ver,body.net-lock .tb-ver{visibility:hidden}
 body.upd-lock #upd{top:48px}
 body.net-lock #neterr{top:48px}
+
+/* перемикач вкладок у ЦЕНТРІ титульної панелі: Розклад | Налаштування.
+   Окрема кнопка «Налаштування» біля «Згорнути» більше не потрібна */
+.tb-seg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;gap:3px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:3px;
+  app-region:no-drag;-webkit-app-region:no-drag}
+.tb-seg button{border:0;background:transparent;color:#9aa0b4;font-family:inherit;font-size:11.5px;font-weight:800;
+  padding:5px 18px;border-radius:8px;cursor:pointer;transition:all .15s ease;letter-spacing:.2px;white-space:nowrap}
+.tb-seg button:hover{color:#e0e2f0;background:rgba(255,255,255,.06)}
+.tb-seg button.on{background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff;box-shadow:0 4px 14px rgba(99,102,241,.4)}
+.tb-seg button:active{transform:scale(.96)}
 
 /* ---------- головний екран ---------- */
 .view{flex:1;min-height:0;display:flex;flex-direction:column;padding:16px 20px 14px;position:relative;z-index:1}
@@ -95,6 +106,18 @@ main::-webkit-scrollbar{width:8px}
 main::-webkit-scrollbar-thumb{background:rgba(124,58,237,.35);border-radius:8px}
 main::-webkit-scrollbar-thumb:hover{background:rgba(124,58,237,.55)}
 main::-webkit-scrollbar-track{background:transparent}
+
+/* журнал отриманих сповіщень на головному екрані (коли і що прийшло) */
+#nfeed{margin:0 0 10px;display:flex;flex-direction:column;gap:6px}
+.nf-item{display:flex;align-items:center;gap:10px;padding:9px 13px;border-radius:14px;
+  background:linear-gradient(135deg,rgba(52,211,153,.10),rgba(16,185,129,.05));border:1px solid rgba(52,211,153,.32);
+  animation:pop .3s ease both}
+.nf-ic{width:30px;height:30px;border-radius:10px;background:rgba(52,211,153,.14);display:grid;place-items:center;color:#34d399;flex:none}
+.nf-t{flex:1;min-width:0}
+.nf-t b{display:block;font-size:12.5px;color:#d1fae5;font-weight:700}
+.nf-t span{display:block;font-size:10.5px;color:#8b8fa3;margin-top:1px}
+.nf-time{font-size:10px;font-weight:800;color:#34d399;background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);
+  padding:3px 9px;border-radius:999px;flex:none;letter-spacing:.4px}
 .empty{display:flex;flex-direction:column;align-items:center;gap:10px;padding:60px 0;color:#8b8fa3;font-size:13px}
 .empty svg{opacity:.5}
 
@@ -161,7 +184,6 @@ main.still .card{animation:none!important}
 .sw-verpill{font-size:10px;font-weight:800;letter-spacing:.8px;color:#c4b5fd;background:rgba(139,92,246,.14);
   border:1px solid rgba(139,92,246,.35);border-radius:999px;padding:3px 10px;text-transform:uppercase}
 .sw-sub{display:block;font-size:12px;color:#8b8fa3;margin-top:3px}
-.sw-head .su-back{margin-top:4px}
 .sw-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
 .sw-card{position:relative;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.085);
   border-radius:18px;padding:15px 17px 14px;overflow:hidden;animation:secIn .4s ease both;
@@ -285,18 +307,24 @@ input[type=range]#nMin::-moz-range-thumb{width:16px;height:16px;border-radius:50
 .b-save:hover:not(:disabled){filter:brightness(1.14);transform:translateY(-1px)}
 .b-save:active:not(:disabled){transform:scale(.98)}
 .b-save:disabled{opacity:.35;cursor:not-allowed;box-shadow:none}
-/* блок «Про програму» — тут ховається пасхалка режиму розробника (5 тапів по версії) */
-.sw-about{display:flex;align-items:center;gap:12px;margin-top:16px;padding:13px 15px;border-radius:18px;
-  background:rgba(255,255,255,.025);border:1px dashed rgba(255,255,255,.1)}
-.sw-about .lmark img{display:block;border-radius:9px}
-.sw-about .ab-t{flex:1;min-width:0}
-.sw-about .ab-t b{display:block;font-size:13.5px;color:#fff;letter-spacing:.3px}
-.sw-about .ab-t span{display:block;font-size:10.5px;color:#8b8fa3;margin-top:2px}
-.sw-ver{border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#c7cbe0;font-family:inherit;
-  font-size:11px;font-weight:800;padding:7px 13px;border-radius:999px;cursor:pointer;transition:all .15s ease;flex:none;
-  user-select:none;-webkit-user-select:none}
-.sw-ver:hover{border-color:rgba(139,92,246,.45);color:#fff}
-.sw-ver:active{transform:scale(.94)}
+/* блок «Про програму» — ГАРНА ГРАДІЄНТНА РАМОЧКА (як на телефоні).
+   Внизу налаштувань; 5 натискань по ній -> режим розробника */
+.sw-about{display:flex;align-items:center;gap:13px;margin-top:16px;padding:15px 16px;border-radius:20px;cursor:pointer;
+  position:relative;overflow:hidden;user-select:none;-webkit-user-select:none;
+  background:linear-gradient(135deg,rgba(139,92,246,.17),rgba(99,102,241,.08));
+  border:1px solid rgba(139,92,246,.42);box-shadow:0 10px 30px rgba(99,102,241,.13);
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.sw-about::after{content:'';position:absolute;top:-64px;right:-44px;width:170px;height:170px;border-radius:50%;
+  background:radial-gradient(circle,rgba(139,92,246,.28),transparent 70%);pointer-events:none}
+.sw-about:hover{transform:translateY(-2px);border-color:rgba(139,92,246,.66);box-shadow:0 14px 38px rgba(99,102,241,.22)}
+.sw-about:active{transform:scale(.985)}
+.sw-about .lmark img{display:block;border-radius:12px;box-shadow:0 8px 22px rgba(0,0,0,.4);position:relative}
+.sw-about .ab-t{flex:1;min-width:0;position:relative}
+.sw-about .ab-t b{display:block;font-size:15.5px;color:#fff;letter-spacing:.3px}
+.sw-about .ab-t span{display:block;font-size:11px;color:rgba(233,236,255,.82);margin-top:3px}
+.sw-ver{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#e0e2f0;font-family:inherit;
+  font-size:11px;font-weight:800;padding:7px 13px;border-radius:999px;flex:none;position:relative;letter-spacing:.3px;
+  user-select:none;-webkit-user-select:none;white-space:nowrap}
 /* секція режиму розробника */
 .sw-card.dev{border-color:rgba(251,191,36,.35);background:linear-gradient(180deg,rgba(251,191,36,.06),rgba(255,255,255,.02))}
 .sw-card.dev::before{background:linear-gradient(90deg,transparent,rgba(251,191,36,.6),rgba(245,158,11,.5),transparent)}
@@ -382,6 +410,11 @@ input[type=range]#nMin::-moz-range-thumb{width:16px;height:16px;border-radius:50
 #boot{position:fixed;inset:0;z-index:100;background:#050508;display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:15px;transition:opacity .5s ease}
 #boot.off{opacity:0;pointer-events:none}
+/* ФІКС «лого з'являється із затримкою»: поки PNG не декодовано — увесь вміст
+   сплеша приховано (видно лише фон, під ним — такий самий GDI-сплеш з іконкою).
+   Щойно іконка готова — іконка/назва/смуга з'являються ОДНОЧАСНО */
+#boot.pre .bt-mark,#boot.pre .bt-name,#boot.pre .bt-bar,#boot.pre .bt-pct{opacity:0}
+#boot .bt-mark,#boot .bt-name,#boot .bt-bar,#boot .bt-pct{transition:opacity .15s ease}
 /* іконка на сплеші: статичний <img> з data-URI прямо в HTML (не через JS) —
    декодується синхронно і малюється РАЗОМ з першим кадром екрана завантаження */
 .bt-mark img{display:block;filter:drop-shadow(0 12px 36px rgba(99,102,241,.5))}
@@ -451,12 +484,12 @@ body.ready #app{animation:apin .55s cubic-bezier(.16,1,.3,1) both}
   <div class="tb-l">
     <span class="lmark" id="logo" aria-hidden="true"><img src="data:image/png;base64,__LOGO_B64__" width="27" height="27" alt="" decoding="sync" style="display:block;border-radius:8px"></span>
     <span class="tb-name">FluxHelper</span>
-    <span class="tb-ver" id="tbSec">розклад</span>
+  </div>
+  <div class="tb-seg" role="tablist">
+    <button id="segSched" title="Розклад">Розклад</button>
+    <button id="segSetup" title="Налаштування">Налаштування</button>
   </div>
   <div class="tb-r">
-    <button class="tb-btn" id="bCfg" title="Налаштування">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-    </button>
     <button class="tb-btn win-only" id="bMin" title="Згорнути">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
     </button>
@@ -482,6 +515,7 @@ body.ready #app{animation:apin .55s cubic-bezier(.16,1,.3,1) both}
     <div class="chip" id="chip"></div>
   </header>
   <nav id="tabs"></nav>
+  <div id="nfeed" class="hidden"></div>
   <main id="list"></main>
 </div>
 
@@ -493,12 +527,8 @@ body.ready #app{animation:apin .55s cubic-bezier(.16,1,.3,1) both}
           <h2>Налаштування</h2>
           <span class="sw-verpill">FluxHelper для Windows</span>
         </div>
-        <span class="sw-sub">групи перемикаються на місці · сповіщення · оновлення</span>
+        <span class="sw-sub">групи · сповіщення · запуск Zoom</span>
       </div>
-      <button class="su-back" id="bBack" title="Назад до розкладу">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-        <span>Розклад</span>
-      </button>
     </div>
 
     <div class="sw-grid">
@@ -507,14 +537,13 @@ body.ready #app{animation:apin .55s cubic-bezier(.16,1,.3,1) both}
           <span class="sw-c-ic grad"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
           <div class="sw-c-tt">
             <b>Мої групи</b>
-            <span>натисни 1 або 2 — вчитель і посилання підставляться скрізь одразу</span>
+            <span>твій вчитель і посилання підставляться скрізь одразу</span>
           </div>
-          <span class="s-prog" id="sSum">—</span>
         </div>
         <div id="sumRows"></div>
         <button class="b-groups" id="bGroups">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          Деталі та вчителі обох груп…
+          Оберіть групи
         </button>
       </section>
 
@@ -543,18 +572,20 @@ body.ready #app{animation:apin .55s cubic-bezier(.16,1,.3,1) both}
 
       <section class="sw-card">
         <div class="sw-c-head">
-          <span class="sw-c-ic plain"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
-          <div class="sw-c-tt"><b>Оновлення</b><span>FluxHelper оновлюється сам</span></div>
+          <span class="sw-c-ic grad"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></span>
+          <div class="sw-c-tt"><b>Запуск Zoom</b><span>як відкривати уроки на цьому комп'ютері</span></div>
         </div>
-        <div class="sw-tog-row">
-          <div class="su-ic2">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M12 12l8-4.5"/><path d="M12 12v9"/><path d="M12 12L4 7.5"/></svg>
-          </div>
-          <div class="su-body">
-            <b>Версія <span id="upCur"></span></b>
-            <span id="upStat">перевіряємо…</span>
-          </div>
-          <button class="b-mini" id="bUpd">Перевірити</button>
+        <div class="su-opts">
+          <button class="su-opt" id="zApp" type="button">
+            <b>Через додаток</b>
+            <span>сам Zoom, без браузера. Якщо Zoom не встановлено — автоматично через браузер</span>
+            <span class="ck"></span>
+          </button>
+          <button class="su-opt" id="zWeb" type="button">
+            <b>Через браузер</b>
+            <span>веб-версія Zoom відкриється у браузері</span>
+            <span class="ck"></span>
+          </button>
         </div>
       </section>
 
@@ -571,20 +602,24 @@ body.ready #app{animation:apin .55s cubic-bezier(.16,1,.3,1) both}
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
           <span>Надіслати тестове сповіщення<span class="dsub" id="devTestSub">приклад: «Урок почнеться через 5 хв»</span></span>
         </button>
+        <button class="dev-btn ghost" id="bUpd">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Перевірити оновлення зараз<span class="dsub" id="devUpdStat">оновлення приходять автоматично</span></span>
+        </button>
         <button class="dev-btn ghost" id="bDevOff">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
-          <span>Вимкнути режим розробника<span class="dsub">або натисни на версію внизу ще 5 разів</span></span>
+          <span>Вимкнути режим розробника<span class="dsub">або натисни на рамку внизу ще 5 разів</span></span>
         </button>
       </section>
     </div>
 
-    <div class="sw-about">
-      <span class="lmark"><img src="data:image/png;base64,__LOGO_B64__" width="40" height="40" alt="" decoding="sync"></span>
+    <div class="sw-about" id="aboutBox" role="button" title="FluxHelper">
+      <span class="lmark"><img src="data:image/png;base64,__LOGO_B64__" width="44" height="44" alt="" decoding="sync"></span>
       <div class="ab-t">
         <b>FluxHelper</b>
         <span>розклад 8-Б класу · автор Blazix</span>
       </div>
-      <button class="sw-ver" id="verTap" title="FluxHelper">версія __APP_VER__</button>
+      <span class="sw-ver">версія __APP_VER__</span>
     </div>
   </div>
 </div>
@@ -613,7 +648,6 @@ body.ready #app{animation:apin .55s cubic-bezier(.16,1,.3,1) both}
     </div>
     <div class="g-rows" id="gRows"></div>
     <div class="g-foot">
-      <span class="s-prog" id="gProg">0/5</span>
       <button class="b-mini" id="gCancel">Скасувати</button>
       <button class="b-save" id="gSave" disabled>Зберегти</button>
     </div>
@@ -638,7 +672,7 @@ body.ready #app{animation:apin .55s cubic-bezier(.16,1,.3,1) both}
   </div>
 </div>
 
-<div id="boot">
+<div id="boot" class="pre">
   <div class="bt-mark" id="btMark"><img src="data:image/png;base64,__LOGO_B64__" width="92" height="92" alt="" decoding="sync" fetchpriority="high" style="display:block;border-radius:20px"></div>
   <div class="bt-name">FluxHelper</div>
   <div class="bt-bar"><i id="btFill"></i></div>
@@ -903,10 +937,25 @@ function host(m) {
   }
   return false;
 }
+// режим запуску Zoom (тільки ПК): 'app' = додаток (zoommtg://, без браузера;
+// якщо Zoom не встановлено — хост сам відкриє браузер), 'web' = браузер
+let ZOOM = { mode: 'app' };
+try {
+  const z = JSON.parse(localStorage.getItem('fh_zoom') || 'null');
+  if (z && (z.mode === 'app' || z.mode === 'web')) ZOOM.mode = z.mode;
+} catch (e) {}
+function saveZoom() { try { localStorage.setItem('fh_zoom', JSON.stringify(ZOOM)); } catch (e) {} }
+function refreshZoomUI() {
+  const a = byId('zApp'), w = byId('zWeb');
+  if (a) a.classList.toggle('on', ZOOM.mode === 'app');
+  if (w) w.classList.toggle('on', ZOOM.mode === 'web');
+}
 function openL(u) {
   if (!u) return;
   if (ANDROID) { try { AndroidHost.open(u); return; } catch (e) {} }
-  if (!host('fh:join|' + u)) window.open(u, '_blank');
+  if (host('fh:join2|' + ZOOM.mode + '|' + u)) return;   // хост: додаток або браузер
+  if (host('fh:join|' + u)) return;
+  window.open(u, '_blank');
 }
 
 // ---------------- тост + буфер обміну ----------------
@@ -1179,6 +1228,12 @@ function setChip() {
 function todayIdx() { const d = todayDow(); return (d >= 1 && d <= 5) ? d - 1 : 0; }
 
 function setTbSec(t) { const e = byId('tbSec'); if (e) e.textContent = t; }
+// сегмент-перемикач у титульній панелі: Розклад | Налаштування
+function setSeg(view) {
+  const a = byId('segSched'), b = byId('segSetup');
+  if (a) a.classList.toggle('on', view !== 'setup');
+  if (b) b.classList.toggle('on', view === 'setup');
+}
 function showMain() {
   if (FIRST) { showSetup(); openGroups(); return; }   // перший запуск — спершу групи
   setupOpen = false;
@@ -1186,7 +1241,10 @@ function showMain() {
   byId('vMain').classList.remove('hidden');
   setChip();
   markNav('sched');
+  setSeg('sched');
   setTbSec('розклад');
+  renderFeed();
+  pollNotifLog();
   checkNban();
 }
 function showSetup() {
@@ -1194,12 +1252,12 @@ function showSetup() {
   closeDrawer();
   byId('vMain').classList.add('hidden');
   byId('vSetup').classList.remove('hidden');
-  const bb = byId('bBack');
-  if (bb) bb.style.display = FIRST ? 'none' : '';     // у майстрі першого запуску немає «назад»
   buildSummary();
   refreshNotifUI();
+  refreshZoomUI();
   refreshDev();
   markNav('setup');
+  setSeg('setup');
   setTbSec('налаштування');
 }
 
@@ -1248,8 +1306,6 @@ function buildSummary() {
   rows.innerHTML = '';
   const keys = splitKeys();
   const done = keys.filter(function (k) { return S && (S[k] === 1 || S[k] === 2); }).length;
-  const sp = byId('sSum');
-  if (sp) sp.textContent = done + '/' + keys.length;
   if (!done) {
     rows.appendChild(el('div', 'sum-hint',
       'Групи ще не обрано. Натисни 1 або 2 біля предмета — і застосунок скрізь підставить саме твоїх вчителів і посилання.'));
@@ -1397,10 +1453,18 @@ function sendTestNotif() {
   const title = '🔔 Скоро почнеться урок';
   const text = nm + ' почнеться через ' + NOTIF.min + ' хв (тест)';
   if (ANDROID) {
-    try { AndroidHost.testNotif(title, text); toast('Тестове сповіщення надіслано ✓'); return; } catch (e) {}
+    try {
+      AndroidHost.testNotif(title, text);
+      pushNFeed(nm, '');
+      toast('Тестове сповіщення надіслано ✓');
+      return;
+    } catch (e) {}
   }
   if (host('fh:notif-test|' + JSON.stringify({ title: title, text: text }))) {
-    toast('Тестове сповіщення надіслано ✓'); return;
+    // балун покаже хост -> він же штовхне notifFired у журнал
+    setTimeout(function () { try { pollNotifLog(); } catch (e) {} }, 400);
+    toast('Тестове сповіщення надіслано ✓');
+    return;
   }
   toast('Сповіщення недоступні на цьому пристрої');
 }
@@ -1647,26 +1711,37 @@ function updFromDb(u) {
   if (UPD.avail) return;
   updCheck(latest);
 }
-// --- миттєве відстеження версії: застосунок САМ дивиться на Firebase —
-// щойно в базі зміниться update.latest (і зросте) — одразу перевіряємо GitHub
-// і показуємо вікно оновлення. Без кнопки «Перевірити» і без перезапуску.
+// --- миттєве відстеження версії ---
+// Джерело №1: GitHub versions/latest.json з cache-buster (?cb=час) — raw-CDN
+// кешує на 5 хв, але кожен новий ?cb= обходить кеш, тож нова версія з'являється
+// ОДРАЗУ після деплою (деплой заливає Firebase останнім, після перевірки GitHub).
+// Джерело №2 (запасне): Firebase /update.json.
 let updWatchBusy = false;
+function fetchLatest(cb) {
+  fetch('https://raw.githubusercontent.com/' + UPDATE_REPO + '/main/versions/latest.json?cb=' + Date.now(), { cache: 'no-store' })
+    .then(function (r) { return r.ok ? r.json() : Promise.reject(0); })
+    .then(function (j) { cb(j); })
+    .catch(function () {
+      fetch(DB_URL + '/update.json', { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) { cb(j); })
+        .catch(function () { cb(null); });
+    });
+}
+function handleLatest(u) {
+  updWatchBusy = false;
+  if (!u || typeof u !== 'object') return;
+  const latest = (typeof u.latest === 'string') ? u.latest : '';
+  if (latest && Array.isArray(u.notes) && u.notes.length) {
+    UPD.dbNotes = u.notes.map(String).slice(0, 24);
+    UPD.dbVer = latest;
+  }
+  if (/^\d+\.\d+\.\d+$/.test(latest) && verCmp(latest, APP_VER) > 0) updCheck(latest);
+}
 function watchUpdate() {
   if (updOpen() || updWatchBusy || document.hidden) return;
   updWatchBusy = true;
-  fetch(DB_URL + '/update.json', { cache: 'no-store' })
-    .then(function (r) { return r.ok ? r.json() : null; })
-    .then(function (u) {
-      updWatchBusy = false;
-      if (!u || typeof u !== 'object') return;
-      const latest = (typeof u.latest === 'string') ? u.latest : '';
-      if (latest && Array.isArray(u.notes) && u.notes.length) {
-        UPD.dbNotes = u.notes.map(String).slice(0, 24);
-        UPD.dbVer = latest;
-      }
-      if (/^\d+\.\d+\.\d+$/.test(latest) && verCmp(latest, APP_VER) > 0) updCheck(latest);
-    })
-    .catch(function () { updWatchBusy = false; });
+  fetchLatest(handleLatest);
 }
 // --- завантаження + встановлення ---
 function setUpdBtn(en) { const b = byId('updGo'); if (b) b.disabled = !en; }
@@ -1793,6 +1868,62 @@ function netProbe(retry) {
     });
 }
 
+// ---------------- журнал отриманих сповіщень (час отримання) ----------------
+// ПК: хост штовхає notifFired(name, "HH:MM", delta) щоразу, коли показує балун.
+// Android: читаємо лог із Java (AndroidHost.getNotifLog) — працює і коли
+// сповіщення прийшло, поки застосунок був закритий.
+let NFEED = [];
+try { const _nf = JSON.parse(localStorage.getItem('fh_nfeed') || '[]'); if (Array.isArray(_nf)) NFEED = _nf; } catch (e) {}
+function saveNFeed() { try { localStorage.setItem('fh_nfeed', JSON.stringify(NFEED.slice(-12))); } catch (e) {} }
+function fmtClock(ts) { const d = new Date(ts); const m = d.getMinutes(); return d.getHours() + ':' + (m < 10 ? '0' + m : '' + m); }
+function pushNFeed(name, time, at, key) {
+  NFEED.push({ n: String(name || 'Урок'), s: String(time || ''), at: at || Date.now(), k: key || '' });
+  NFEED = NFEED.slice(-12);
+  saveNFeed();
+  renderFeed();
+}
+function renderFeed() {
+  const box = byId('nfeed');
+  if (!box) return;
+  box.innerHTML = '';
+  const t0 = new Date(); t0.setHours(0, 0, 0, 0);
+  const items = NFEED.filter(function (x) { return (x.at || 0) >= t0.getTime(); }).slice(-3);
+  if (!items.length) { box.classList.add('hidden'); return; }
+  box.classList.remove('hidden');
+  items.forEach(function (x) {
+    const it = el('div', 'nf-item');
+    const ic = el('span', 'nf-ic'); ic.innerHTML = icon('clock', 14);
+    const t = el('span', 'nf-t');
+    const b = el('b'); b.textContent = x.n;
+    const sp = el('span'); sp.textContent = x.s ? ('початок о ' + x.s) : 'тестове сповіщення';
+    t.append(b, sp);
+    const tm = el('span', 'nf-time'); tm.textContent = 'прийшло о ' + fmtClock(x.at);
+    it.append(ic, t, tm);
+    box.appendChild(it);
+  });
+}
+function notifFired(name, time, delta) {
+  pushNFeed(name, time);
+  try { toast('🔔 ' + name + ' — ' + (delta > 0 ? ('через ' + delta + ' хв') : 'починається зараз')); } catch (e) {}
+}
+function pollNotifLog() {
+  if (!ANDROID) return;
+  try {
+    if (!window.AndroidHost || !AndroidHost.getNotifLog) return;
+    const arr = JSON.parse(AndroidHost.getNotifLog() || '[]');
+    if (!Array.isArray(arr) || !arr.length) return;
+    let added = false;
+    arr.forEach(function (x) {
+      if (!x) return;
+      const key = 'a' + (x.ts || 0) + '|' + (x.n || '');
+      for (const y of NFEED) if (y.k === key) return;
+      NFEED.push({ n: x.n || 'Урок', s: x.s || '', at: x.ts || Date.now(), k: key });
+      added = true;
+    });
+    if (added) { NFEED = NFEED.slice(-12); saveNFeed(); renderFeed(); }
+  } catch (e) {}
+}
+
 // ---------------- банер сповіщень (телефон) ----------------
 let nbanPoll = 0;
 function notifPermOk() {
@@ -1875,8 +2006,6 @@ function init() {
   // лого в титульній панелі ТЕПЕР СТАТИЧНИЙ <img> у HTML — малюється разом
   // із першим кадром (раніше його вставляв JS -> «іконки вгорі немає»)
   const dwl = byId('dwLogo'); if (dwl) dwl.innerHTML = logoMark(36);
-  byId('upCur').textContent = APP_VER;
-  const st = byId('upStat'); if (st) st.textContent = 'встановлена версія ' + APP_VER;  // рядок у налаштуваннях
   byId('neLogo').innerHTML = logoMark(74);
   byId('upLogo').innerHTML = logoMark(74);
   byId('neRetry').onclick = function () { netProbe(true); };
@@ -1884,8 +2013,13 @@ function init() {
 
   byId('bMin').onclick = function () { host('fh:min'); };
   byId('bClose').onclick = function () { host('fh:close'); };
-  byId('bCfg').onclick = function () { showSetup(); };
-  byId('bBack').onclick = function () { showMain(); };
+  // вкладки в центрі титульної панелі
+  const sg1 = byId('segSched'); if (sg1) sg1.onclick = function () { showMain(); };
+  const sg2 = byId('segSetup'); if (sg2) sg2.onclick = function () { showSetup(); };
+  // режим запуску Zoom (тільки ПК)
+  const zA = byId('zApp'); if (zA) zA.onclick = function () { ZOOM.mode = 'app'; saveZoom(); refreshZoomUI(); toast('Zoom відкриватиметься через додаток'); };
+  const zW = byId('zWeb'); if (zW) zW.onclick = function () { ZOOM.mode = 'web'; saveZoom(); refreshZoomUI(); toast('Zoom відкриватиметься через браузер'); };
+  refreshZoomUI();
   byId('tbar').addEventListener('mousedown', function (e) {
     if (e.button === 0 && !(e.target && e.target.closest && e.target.closest('.tb-btn'))) host('fh:drag');
   });
@@ -1904,7 +2038,9 @@ function init() {
     nMinSl.onchange = function () { saveNotif(); pushNotifSched(); };
   }
   byId('bPerm').onclick = function () { if (ANDROID) { try { AndroidHost.requestNotifPerm(); pollNotifPerm(); } catch (e) {} } };
-  // --- режим розробника: 5 тапів на версію в блоці «Про програму» ---
+  // --- режим розробника: 5 тапів по РАМЦІ «Про програму» в самому низу ---
+  const ab = byId('aboutBox');
+  if (ab) ab.onclick = tapVersion;
   const vt = byId('verTap');
   if (vt) vt.onclick = tapVersion;
   const dc = byId('devCancel'); if (dc) dc.onclick = function () { byId('devwrap').classList.add('hidden'); };
@@ -1922,11 +2058,9 @@ function init() {
   };
   byId('bUpd').onclick = function () {
     if (updOpen()) return;
-    const st2 = byId('upStat');
+    const st2 = byId('devUpdStat');
     if (st2) st2.textContent = 'перевіряємо…';
-    fetch(DB_URL + '/update.json', { cache: 'no-store' })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (u) {
+    fetchLatest(function (u) {
         const latest = (u && typeof u.latest === 'string') ? u.latest : '';
         if (/^\d+\.\d+\.\d+$/.test(latest) && verCmp(latest, APP_VER) > 0) {
           UPD.dbNotes = (u && Array.isArray(u.notes)) ? u.notes.map(String).slice(0, 24) : null;
@@ -1934,8 +2068,7 @@ function init() {
           updCheck(latest);
           if (st2) st2.textContent = 'знайдено ' + latest + ' — відкриваю оновлення…';
         } else if (st2) st2.textContent = 'у тебе найновіша версія (' + APP_VER + ')';
-      })
-      .catch(function () { if (st2) st2.textContent = 'немає з\u2019єднання — спробуй пізніше'; });
+      });
   };
   window.addEventListener('keydown', function (e) {
     if (updOpen()) return;   // блокуюча модалка оновлення — керування вимкнено
@@ -1975,7 +2108,7 @@ function init() {
   // з'являється САМО, щойно версія на сервері зміниться
   setInterval(watchUpdate, 25000);
   document.addEventListener('visibilitychange', function () {
-    if (!document.hidden) { watchUpdate(); doFetch(false); }
+    if (!document.hidden) { watchUpdate(); doFetch(false); pollNotifLog(); }
   });
 
   // на телефоні одразу просимо дозвіл на сповіщення
@@ -1990,6 +2123,26 @@ function init() {
     const k = sel + '|' + FAKENOW + '|' + d.getHours() + ':' + d.getMinutes();
     if (k !== lastTick) { lastTick = k; if (!setupOpen) render(false); }
   }, 15000);
+  // журнал сповіщень Android — одразу після старту і далі раз на 30 с
+  pollNotifLog();
+  setInterval(pollNotifLog, 30000);
+
+  // ФІКС «лого із затримкою»: сплеш показуємо лише тоді, коли іконка вже
+  // декодована — іконка/назва/смуга з'являються ОДНОЧАСНО (під HTML-сплешем
+  // усе цей час малюється такий самий GDI-сплеш із іконкою)
+  (function bootRevealLogo() {
+    const b = byId('boot');
+    if (!b) return;
+    let done = false;
+    const go = function () { if (!done) { done = true; b.classList.remove('pre'); } };
+    const im = b.querySelector('.bt-mark img');
+    if (!im) { go(); return; }
+    if (im.complete && im.naturalWidth > 0) { go(); return; }
+    im.addEventListener('load', go);
+    im.addEventListener('error', go);
+    if (im.decode) { try { im.decode().then(go, go); } catch (e) { } }
+    setTimeout(go, 900);   // страховка — без лого не лишаємось ніколи
+  })();
 
   // плавне завершення екрана завантаження: netProbe вирішує — оновлення чи головний екран
   bootLoop();
@@ -2031,6 +2184,7 @@ window.__fh = {
   tapVersion: tapVersion, setDev: setDev, devOn: function () { return DEV; },
   sendTestNotif: sendTestNotif
 };
+window.__fh.notifFired = notifFired;   // хост штовхає сповіщення в журнал інтерфейсу
 
 try { init(); } catch (err) {
   bootReady = true;

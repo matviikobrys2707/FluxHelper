@@ -10,8 +10,9 @@
 #   [5/9] чистит файлы с незнакомыми именами в versions/ на GitHub
 #   [6/9] публикует versions/<версия>/FluxControl.exe | .apk | changelog.txt
 #         + копии Blazix.* / FluxHelper.* (чтобы могли обновиться старые сборки)
-#   [7/9] обновляет Firebase: update/latest + update/notes
-#   [8/9] создаёт GitHub Release - постоянную ссылку «всегда последняя версия»
+#   [7/9] создаёт GitHub Release + versions/latest.json (быстрая проверка версии)
+#   [8/9] проверяет, что файлы РЕАЛЬНО скачиваются (ретраи с cache-buster)
+#   [9/9] И ТОЛЬКО ПОТОМ обновляет Firebase: update/latest + update/notes
 #   [9/9] проверяет, что всё реально скачивается
 #
 #  Запуск:  powershell -ExecutionPolicy Bypass -File deploy.ps1
@@ -28,7 +29,7 @@ param(
 )
 
 # ---------------- НАСТРОЙКИ (обычно менять не нужно) -------------
-$Token       = ""   # <--- ВСТАВЬ СВІЙ GITHUB-ТОКЕН СЮДИ (github_pat_...)
+$Token       = "PASTE_YOUR_GITHUB_TOKEN_HERE"
 $Repo        = "matviikobrys2707/FluxHelper"
 $Branch      = "main"
 $AppName     = "FluxHelper"
@@ -569,6 +570,20 @@ if ($ApkPath) {
 }
 try { Upload-File $clTmp "versions/$ver/changelog.txt" $ver; Ok "changelog.txt загружен" }
 catch { Warn2 ("не удалось загрузить changelog: " + $_.Exception.Message) }
+# latest.json - джерело швидкої перевірки версії для застосунків (GitHub-first).
+# Програми читають його з cache-buster (?cb=...), тому нова версія з'являється
+# ОДРАЗУ після публікації - без 5-хвилинного кешу raw-CDN.
+try {
+    $ts = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+    $lj = '{"latest":"' + $ver + '","notes":[' + (($notesList | ForEach-Object { '"' + ($_ -replace '"','\"') + '"' }) -join ',') + '],"published_at":"' + $ts + '"}'
+    $ljTmp = [IO.Path]::GetTempFileName()
+    [IO.File]::WriteAllText($ljTmp, $lj, $utf8)
+    Upload-File $ljTmp "versions/latest.json" $null | Out-Null
+    Remove-Item $ljTmp -ErrorAction SilentlyContinue
+    Ok "versions/latest.json загружен (швидка перевірка версії без кешу)"
+} catch {
+    Warn2 ("не удалось загрузить latest.json: " + $_.Exception.Message)
+}
 # копии под старыми именами - чтобы могли обновиться сборки 1.5.3-1.7.0 (FluxControl) и 1.5.4 (Blazix)
 if ($ExePath) {
     foreach ($oldName in @("Blazix.exe", "FluxControl.exe")) {
@@ -583,24 +598,7 @@ if ($ApkPath) {
     }
 }
 
-# ---------- [7/9] Firebase ----------
-Step "Обновляю Firebase (update/latest + update/notes)"
-if ($FbUrl) {
-    try {
-        Update-Firebase $FbUrl $ver $notesList
-        $check = Get-FirebaseLatest $FbUrl
-        if ($check -eq $ver) { Ok "latest = $ver, notes записаны ($(@($notesList).Count) шт.)" }
-        else { Warn2 "записал, но при проверке latest = '$check' (ожидал $ver)" }
-    } catch {
-        Warn2 ("Firebase не обновился: " + $_.Exception.Message)
-        Warn2 "файлы на GitHub уже есть; проверь правила базы данных"
-    }
-} else {
-    Warn2 "Firebase URL не найден - пропускаю (приложения не увидят обновление!)"
-    Warn2 "впиши URL в `$FirebaseUrl в начале скрипта и запусти ещё раз"
-}
-
-# ---------- [8/9] GitHub Release ----------
+# ---------- [7/9] GitHub Release ----------
 Step "Создаю GitHub Release (постоянная ссылка на скачивание)"
 $relAssets = @{}
 if ($ExePath) { $relAssets["$AppName.exe"] = $ExePath }
@@ -616,27 +614,59 @@ if ($relAssets.Count -gt 0) {
     Warn2 "нечего приложить к релизу"
 }
 
-# ---------- [9/9] финальная проверка ----------
-Step "Проверяю, что всё реально скачивается"
-$allOk = $true
-foreach ($pair in @(@("EXE", $rawExe, $ExePath), @("APK", $rawApk, $ApkPath))) {
-    $kind = $pair[0]; $url = $pair[1]; $local = $pair[2]
-    if (-not $local) { continue }
+# ---------- [9/9] Firebase (ОСТАННИЙ крок) ----------
+# Пишемо ТІЛЬКИ після успішної публікації й перевірки на GitHub:
+# порядок завжди GitHub -> Firebase, тому «в базі вже є нова версія, а на
+# GitHub її ще нема» більше НЕМОЖЛИВО.
+Step "Обновляю Firebase (update/latest + update/notes) - все на GitHub проверено"
+if ($FbUrl) {
     try {
-        $r = Invoke-WebRequest -UseBasicParsing -Uri $url
-        $same = $true
-        try { if ($r.RawContentLength -ne ([IO.FileInfo]$local).Length) { $same = $false } } catch {}
-        if ($same) { Ok ("$kind скачивается, размер совпадает: " + [math]::Round($r.RawContentLength/1KB) + " КБ") }
-        else { Warn2 "$kind скачивается, но размер отличается от локального файла" }
+        Update-Firebase $FbUrl $ver $notesList
+        $check = Get-FirebaseLatest $FbUrl
+        if ($check -eq $ver) { Ok "latest = $ver, notes записаны ($(@($notesList).Count) шт.)" }
+        else { Warn2 "записал, но при проверке latest = '$check' (ожидал $ver)" }
     } catch {
-        $allOk = $false
-        Fail ("$kind НЕ скачивается (HTTP " + (HttpCode $_) + "): $url")
+        Warn2 ("Firebase не обновился: " + $_.Exception.Message)
+        Warn2 "файлы на GitHub уже есть; проверь правила базы данных"
     }
+} else {
+    Warn2 "Firebase URL не найден - пропускаю (приложения не увидят обновление!)"
+    Warn2 "впиши URL в `$FirebaseUrl в начале скрипта и запусти ещё раз"
 }
+
+# ---------- [8/9] ФИНАЛЬНАЯ ПРОВЕРКА (до Firebase!) ----------
+# Перевіряємо з cache-buster (?cb=...), поки CDN не віддасть свіжі файли.
+# Firebase оновлюємо ЛИШЕ коли все підтверджено - щоб не було ситуації
+# «в базі вже пише про оновлення, а скачати його неможливо».
+Step "Проверяю, что всё реально скачивается (до обновления Firebase)"
+$allOk = $true
+function Verify-Raw([string]$kind, [string]$url, [string]$local) {
+    if (-not $local) { return $true }
+    for ($i = 0; $i -lt 6; $i++) {
+        try {
+            $u = if ($i -eq 0) { $url } else { ($url + "?cb=" + [DateTimeOffset]::Now.ToUnixTimeMilliseconds()) }
+            $r = Invoke-WebRequest -UseBasicParsing -Uri $u
+            $same = $true
+            try { if ($r.RawContentLength -ne ([IO.FileInfo]$local).Length) { $same = $false } } catch {}
+            if ($same) { Ok ("$kind скачивается, размер совпадает: " + [math]::Round($r.RawContentLength/1KB) + " КБ"); return $true }
+            else { Warn2 "$kind скачивается, но размер отличается (попытка $($i+1))" }
+        } catch { Info ("$kind ещё не доступен (попытка $($i+1)/6, HTTP " + (HttpCode $_) + ")") }
+        Start-Sleep -Seconds 10
+    }
+    Fail ("$kind НЕ скачивается после попыток: $url")
+    return $false
+}
+$allOk = (Verify-Raw "EXE" $rawExe $ExePath) -and $allOk
+$allOk = (Verify-Raw "APK" $rawApk $ApkPath) -and $allOk
 try {
-    $r = Invoke-WebRequest -UseBasicParsing -Uri $rawCl
+    $r = Invoke-WebRequest -UseBasicParsing -Uri ($rawCl + "?cb=" + [DateTimeOffset]::Now.ToUnixTimeMilliseconds())
     Ok "changelog.txt скачивается"
 } catch { Warn2 "changelog.txt не скачивается (появится чуть позже - GitHub кэширует)" }
+if (-not $allOk) {
+    Fail "GitHub ещё не отдаёт файлы - Firebase НЕ обновляю (иначе приложения увидят обновление, которое нельзя скачать)"
+    Fail "запусти публикацию ещё раз через пару минут"
+    Wait-Exit 1
+}
 
 Write-Host ""
 Write-Host "  ==========================================================" -ForegroundColor DarkGray
