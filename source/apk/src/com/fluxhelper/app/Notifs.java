@@ -52,7 +52,7 @@ public final class Notifs {
             JSONObject o = new JSONObject(json == null ? "{}" : json);
             boolean on = o.optBoolean("on", false);
             int min = o.optInt("min", 5);
-            if (min != 5 && min != 10 && min != 15) min = 5;
+            if (min < 1 || min > 15) min = 5;   // слайдер у застосунку: 1..15 хв
             JSONArray items = o.optJSONArray("items");
             p(c).edit()
                 .putBoolean("on", on)
@@ -137,5 +137,28 @@ public final class Notifs {
         b.setContentIntent(PendingIntent.getActivity(c, 7, i,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
         try { nm.notify(NID, b.build()); } catch (Exception ignored) { }
+    }
+
+    /**
+     * Тестове сповіщення з режиму розробника: показуємо СРАЗУ довільний
+     * заголовок/текст — той самий канал, що й для звичайних сповіщень.
+     */
+    public static void showNow(Context c, String title, String text) {
+        NotificationManager nm = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm == null) return;
+        if (Build.VERSION.SDK_INT >= 24 && !nm.areNotificationsEnabled()) return;
+        Notification.Builder b = (Build.VERSION.SDK_INT >= 26)
+                ? new Notification.Builder(c, CH)
+                : new Notification.Builder(c);
+        b.setSmallIcon(R.drawable.ic_notif)
+         .setContentTitle(title == null || title.length() == 0 ? "FluxHelper" : title)
+         .setContentText(text == null ? "" : text)
+         .setStyle(new Notification.BigTextStyle().bigText(text == null ? "" : text))
+         .setAutoCancel(true);
+        Intent i = new Intent(c, MainActivity.class);
+        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        b.setContentIntent(PendingIntent.getActivity(c, 7, i,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
+        try { nm.notify(NID + 1, b.build()); } catch (Exception ignored) { }
     }
 }

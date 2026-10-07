@@ -143,6 +143,18 @@ static void InitSplashLogo() {
         g_logoBmp = Gdiplus::Bitmap::FromStream(stm);   // потік звільняється разом з Bitmap
     else
         GlobalFree(hg);
+    // ФІКС «лого з'являється із затримкою»: GDI+ декодує PNG ЛІНИВО при першому
+    // малюванні, тому перший кадр сплеша міг виходити без іконки. Примусово
+    // декодуємо ВСЕ зображення прямо тут (offscreen того самого розміру),
+    // щоб сплеш мав іконку вже на ПЕРШОМУ кадрі — разом із фоном і назвою.
+    if (g_logoBmp) {
+        const UINT lw = g_logoBmp->GetWidth(), lh = g_logoBmp->GetHeight();
+        if (lw > 0 && lh > 0) {
+            Gdiplus::Bitmap warm(lw, lh, PixelFormat32bppARGB);
+            Gdiplus::Graphics gw(&warm);
+            gw.DrawImage(g_logoBmp, 0, 0, (INT)lw, (INT)lh);   // малюнок 1-в-1 -> повне декодування зараз
+        }
+    }
 }
 
 // ------------------------------------------------- конвертації рядків
@@ -363,7 +375,7 @@ static void AddTray() {
     g_nid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
     g_nid.uCallbackMessage = WM_APP + 1;
     g_nid.hIcon = LoadIconW(GetModuleHandleW(nullptr), MAKEINTRESOURCEW(1));
-    wcsncpy(g_nid.szTip, L"Flux Helper", 63);
+    wcsncpy(g_nid.szTip, L"FluxHelper", 63);
     Shell_NotifyIconW(NIM_ADD, &g_nid);
 }
 
@@ -382,7 +394,12 @@ static void ReplaceAll(std::string& s, const std::string& from, const std::strin
 }
 static std::string BuildUiHtml() {
     std::string tpl = kUiHtmlDesktop;
-    ReplaceFirst(tpl, "__LOGO_B64__", kLogoB64);
+    // ГОЛОВНИЙ ФІКС «іконки немає вгорі»: плейсхолдер логотипа зустрічається у
+    // HTML КІЛЬКА разів (статичний <img> у титульній панелі + <img> сплеша +
+    // const LOGO у JS). Колишній ReplaceFirst підставляв base64 ЛИШЕ В ПЕРШЕ
+    // входження -> сплеш мав іконку, а решта (лого у шапці, вікна помилок)
+    // залишались з буквальним "__LOGO_B64__" = биті картинки. Замінюємо ВСЕ.
+    ReplaceAll(tpl, "__LOGO_B64__", kLogoB64);
     ReplaceAll(tpl, "__APP_VER__", FH_VER_STR);   // APP_VER в JS + футери = версія з version.h
     char buf[128];
     if (CfgValid(g_cfg))
@@ -750,6 +767,24 @@ struct MsgHandler : ComImpl<ICoreWebView2WebMessageReceivedEventHandler, IID_ICo
         }
         else if (m.rfind(L"fh:copy|", 0) == 0)
             CopyToClipboard(std::wstring(m.c_str() + 8));
+        else if (m.rfind(L"fh:notif-test|", 0) == 0) {
+            // РЕЖИМ РОЗРОБНИКА: тестове сповіщення з інтерфейсу.
+            // {"title":"...","text":"..."} -> балун Windows (як для звичайних сповіщень)
+            std::wstring j(m.c_str() + 14);
+            auto jv = [&](const wchar_t* key) -> std::wstring {
+                size_t p = j.find(key);
+                if (p == std::wstring::npos) return L"";
+                p = j.find(L'"', p);
+                if (p == std::wstring::npos) return L"";
+                size_t e = j.find(L'"', p + 1);
+                if (e == std::wstring::npos) return L"";
+                return j.substr(p + 1, e - p - 1);
+            };
+            std::wstring ti = jv(L"\"title\""), tx = jv(L"\"text\"");
+            if (ti.empty()) ti = L"Тестове сповіщення";
+            if (tx.empty()) tx = L"Урок почнеться через 5 хв";
+            ShowBalloon(ti, tx);
+        }
         else if (m.rfind(L"fh:update|", 0) == 0) {
             // {"v":"1.5.1","repo":"user/FluxHelper"} — завантажити та встановити
             std::wstring j(m.c_str() + 10);
@@ -824,7 +859,7 @@ struct CtrlHandler : ComImpl<ICoreWebView2CreateCoreWebView2ControllerCompletedH
             MessageBoxW(g_hwnd,
                 L"Не вдалося створити веб-переглядач (WebView2).\n"
                 L"Перевір, чи встановлений Microsoft Edge WebView2 Runtime.",
-                L"Flux Helper — помилка", MB_OK | MB_ICONERROR);
+                L"FluxHelper — помилка", MB_OK | MB_ICONERROR);
             return S_OK;
         }
         g_ctrl = ctrl;
@@ -898,7 +933,7 @@ STDMETHODIMP EnvHandler::Invoke(HRESULT err, ICoreWebView2Environment* env) {
             L"Не вдалося ініціалізувати WebView2.\n\n"
             L"Встанови Microsoft Edge WebView2 Runtime (безкоштовно):\n"
             L"https://go.microsoft.com/fwlink/p/?LinkId=2124703",
-            L"Flux Helper — помилка", MB_OK | MB_ICONERROR);
+            L"FluxHelper — помилка", MB_OK | MB_ICONERROR);
         return S_OK;
     }
     auto* h = new CtrlHandler();
@@ -1088,7 +1123,7 @@ static void DrawSplash(HDC dc, const RECT& rc) {
                            DEFAULT_PITCH, L"Segoe UI");
     HGDIOBJ of2 = SelectObject(mem, f2);
     RECT tr2 = { 0, y2, w, y2 + (int)(26 * k) };
-    DrawTextW(mem, L"Flux Helper", -1, &tr2, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+    DrawTextW(mem, L"FluxHelper", -1, &tr2, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
     SelectObject(mem, of2);
     DeleteObject(f2);
 
@@ -1299,7 +1334,7 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE, PWSTR, int nCmdShow) {
     int y = wa.top  + ((wa.bottom - wa.top) - H) / 2;
 
     // безрамкове вікно: стандартний заголовок вимкнено через WM_NCCALCSIZE
-    g_hwnd = CreateWindowExW(0, wc.lpszClassName, L"Flux Helper",
+    g_hwnd = CreateWindowExW(0, wc.lpszClassName, L"FluxHelper",
                              WS_POPUP | WS_THICKFRAME | WS_CAPTION | WS_SYSMENU |
                              WS_MINIMIZEBOX | WS_MAXIMIZEBOX,
                              x, y, W, H, nullptr, nullptr, hInst, nullptr);
@@ -1348,7 +1383,7 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE, PWSTR, int nCmdShow) {
         MessageBoxW(g_hwnd,
             L"Не вдалося підготувати WebView2Loader.dll.\n"
             L"Перевстанови програму або перевір, чи не блокує її антивірус.",
-            L"Flux Helper — помилка", MB_OK | MB_ICONERROR);
+            L"FluxHelper — помилка", MB_OK | MB_ICONERROR);
         return 1;
     }
 
@@ -1356,7 +1391,7 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE, PWSTR, int nCmdShow) {
         GetProcAddress(hLoader, "CreateCoreWebView2EnvironmentWithOptions");
     if (!createEnv) {
         MessageBoxW(g_hwnd, L"WebView2Loader.dll пошкоджений. Перевстанови програму.",
-                    L"Flux Helper — помилка", MB_OK | MB_ICONERROR);
+                    L"FluxHelper — помилка", MB_OK | MB_ICONERROR);
         return 1;
     }
 

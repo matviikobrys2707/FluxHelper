@@ -15,7 +15,7 @@ static const char kUiHtmlDesktop[] = R"HTML(<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Flux Helper</title>
+<title>FluxHelper</title>
 <style>
 
 *{margin:0;padding:0;box-sizing:border-box}
@@ -48,7 +48,7 @@ button{font-family:inherit}
 .tb-l{display:flex;align-items:center;gap:10px}
 .lmark{display:grid;place-items:center;pointer-events:none}
 .lmark svg{display:block}
-#tbar .lmark{box-shadow:0 4px 14px rgba(99,102,241,.45);border-radius:50%}
+#tbar .lmark{box-shadow:0 4px 14px rgba(99,102,241,.45);border-radius:9px}
 .tb-name{font-size:14.5px;font-weight:700;letter-spacing:.3px;color:#fff}
 .tb-ver{font-size:9.5px;font-weight:800;letter-spacing:1.2px;color:#a5b4fc;text-transform:uppercase;opacity:.85}
 .tb-r{display:flex;height:100%}
@@ -145,13 +145,58 @@ main.still .card{animation:none!important}
 .today-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#34d399;margin-left:4px;vertical-align:1px;
   box-shadow:0 0 8px rgba(52,211,153,.9);animation:pulse 1.4s infinite}
 
-/* ---------- екран налаштувань (окремий скрол) ---------- */
-#vSetup{display:block;overflow-y:auto;padding:16px 20px 22px}
+/* ---------- ЕКРАН НАЛАШТУВАНЬ (ПК) ----------
+   Окремий «десктопний» стиль: широкі картки у сітці, сегмент-кнопки
+   груп (перемикання на місці, без вікон), рядки як у Windows 11.
+   Це НЕ той самий дизайн, що на телефоні (там — великий список і
+   шторка знизу). */
+#vSetup{display:block;overflow-y:auto;padding:18px 24px 24px}
 #vSetup::-webkit-scrollbar{width:8px}
 #vSetup::-webkit-scrollbar-thumb{background:rgba(124,58,237,.35);border-radius:8px}
 #vSetup::-webkit-scrollbar-track{background:transparent}
-.setwrap{width:100%;max-width:620px;margin:0 auto}
-.set-foot{text-align:center;font-size:10.5px;color:#8b8fa3;padding:8px 0 2px}
+.sw-wrap{width:100%;max-width:780px;margin:0 auto}
+.sw-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:16px}
+.sw-title-row{display:flex;align-items:center;gap:10px}
+.sw-title-row h2{font-size:24px}
+.sw-verpill{font-size:10px;font-weight:800;letter-spacing:.8px;color:#c4b5fd;background:rgba(139,92,246,.14);
+  border:1px solid rgba(139,92,246,.35);border-radius:999px;padding:3px 10px;text-transform:uppercase}
+.sw-sub{display:block;font-size:12px;color:#8b8fa3;margin-top:3px}
+.sw-head .su-back{margin-top:4px}
+.sw-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.sw-card{position:relative;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.085);
+  border-radius:18px;padding:15px 17px 14px;overflow:hidden;animation:secIn .4s ease both;
+  transition:border-color .2s ease,box-shadow .2s ease}
+.sw-card:hover{border-color:rgba(139,92,246,.30);box-shadow:0 18px 44px rgba(0,0,0,.35),0 0 34px rgba(99,102,241,.06)}
+.sw-card.sw-wide{grid-column:1 / -1}
+.sw-grid > .sw-card:nth-child(2){animation-delay:.05s}
+.sw-grid > .sw-card:nth-child(3){animation-delay:.1s}
+.sw-card::before{content:'';position:absolute;top:0;left:8%;right:8%;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(139,92,246,.5),rgba(99,102,241,.5),transparent)}
+@keyframes secIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.sw-c-head{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+.sw-c-ic{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;color:#fff;flex:none;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),0 4px 12px rgba(0,0,0,.3)}
+.sw-c-ic.grad{background:linear-gradient(135deg,#8b5cf6,#6366f1)}
+.sw-c-ic.plain{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#a5b4fc}
+.sw-c-tt{flex:1;min-width:0}
+.sw-c-tt b{display:block;font-size:14.5px;font-weight:800;color:#f4f4f8;letter-spacing:.2px}
+.sw-c-tt span{display:block;font-size:11px;color:#8b8fa3;margin-top:1px;line-height:1.4}
+/* сегмент-перемикач групи (1 | 2) — миттєве застосування */
+.seg{display:inline-flex;flex:none;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  border-radius:11px;padding:3px;gap:3px}
+.seg button{border:0;background:transparent;color:#9aa0b4;font-family:inherit;font-size:11.5px;font-weight:800;
+  padding:6px 14px;border-radius:8px;cursor:pointer;transition:all .15s ease;white-space:nowrap}
+.seg button:hover{color:#e0e2f0;background:rgba(255,255,255,.06)}
+.seg button.on{background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff;
+  box-shadow:0 4px 14px rgba(99,102,241,.4)}
+.sw-row{display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:13px;margin-bottom:7px;
+  background:rgba(255,255,255,.028);border:1px solid rgba(255,255,255,.055);transition:all .16s ease}
+.sw-row:last-child{margin-bottom:0}
+.sw-row:hover{border-color:rgba(139,92,246,.3);background:rgba(255,255,255,.045)}
+.sw-row .su-tile{width:34px;height:34px;border-radius:10px}
+.sw-gname{flex:1;min-width:0}
+.sw-gname b{display:block;font-size:12.5px;font-weight:700;color:#f0f1f7}
+.sw-gname span{display:block;font-size:10.5px;color:#8b8fa3;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sum-tch{font-size:11px;color:#9aa0b4;line-height:1.4;margin-top:3px}
 .sum-hint{font-size:11.5px;color:#8b8fa3;line-height:1.55;padding:2px 2px 4px}
 .b-groups{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:12px;
@@ -176,17 +221,7 @@ main.still .card{animation:none!important}
   color:#fff;transform:translateX(-2px);box-shadow:0 6px 18px rgba(99,102,241,.25)}
 .su-back:active{transform:scale(.96)}
 .su-back svg{flex:none}
-.su-sec{position:relative;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.02));
-  border:1px solid rgba(255,255,255,.09);border-radius:20px;padding:15px 16px 13px;margin-bottom:13px;
-  transition:border-color .2s ease,box-shadow .2s ease;animation:secIn .42s ease both}
-.su-sec:hover{border-color:rgba(139,92,246,.30);box-shadow:0 16px 44px rgba(0,0,0,.35),0 0 34px rgba(99,102,241,.07)}
-.su-sec::after{content:'';position:absolute;top:0;left:8%;right:8%;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(139,92,246,.55),rgba(99,102,241,.55),transparent)}
-.setwrap > .su-sec:nth-child(3){animation-delay:.06s}
-.setwrap > .su-sec:nth-child(4){animation-delay:.12s}
-@keyframes secIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-.su-t{display:flex;align-items:center;justify-content:space-between;font-size:10.5px;font-weight:800;
-  letter-spacing:1.4px;text-transform:uppercase;color:#8b8fa3;margin-bottom:10px}
+/* рядки-налаштування (перемикачі) */
 .su-item{display:flex;gap:12px;align-items:center;padding:10px 11px;margin-bottom:8px;border-radius:15px;
   background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06);transition:all .18s ease}
 .su-item:last-child{margin-bottom:0}
@@ -213,13 +248,11 @@ main.still .card{animation:none!important}
 .su-opt.on .ck{opacity:1;transform:scale(1)}
 .s-prog{font-size:10px;font-weight:800;letter-spacing:.6px;color:#a5b4fc;background:rgba(99,102,241,.12);
   border:1px solid rgba(99,102,241,.28);padding:3px 11px;border-radius:999px}
-
-.su-row{display:flex;align-items:center;gap:12px;padding:3px 0}
+.sw-tog-row{display:flex;align-items:center;gap:12px;padding:2px 0}
 .su-ic2{width:36px;height:36px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
   display:grid;place-items:center;color:#a5b4fc;flex:none}
-.su-row .su-body{flex:1;min-width:0}
 .su-body b{display:block;font-size:12.5px;font-weight:700;color:#f0f1f7}
-.su-body span{font-size:10.5px;color:#8b8fa3;display:block;margin-top:2px;line-height:1.4}
+.su-body > span{font-size:10.5px;color:#8b8fa3;display:block;margin-top:2px;line-height:1.4}
 .sw{position:relative;display:inline-block;width:44px;height:25px;flex:none;cursor:pointer}
 .sw input{opacity:0;width:0;height:0;position:absolute}
 .sw i{position:absolute;inset:0;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.12);transition:all .2s ease}
@@ -227,7 +260,7 @@ main.still .card{animation:none!important}
 .sw input:checked + i{background:linear-gradient(135deg,#8b5cf6,#6366f1);border-color:transparent;box-shadow:0 4px 14px rgba(99,102,241,.4)}
 .sw input:checked + i::after{left:22px;background:#fff}
 /* слайдер хвилин до уроку (1–15) */
-.nslider{margin:12px 0 2px 48px;padding:13px 15px 11px;border-radius:15px;background:rgba(255,255,255,.03);
+.nslider{margin:11px 0 2px;padding:13px 15px 11px;border-radius:15px;background:rgba(255,255,255,.03);
   border:1px solid rgba(255,255,255,.07)}
 .ns-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:11px}
 .ns-lbl{font-size:11px;color:#8b8fa3;font-weight:700;letter-spacing:.3px}
@@ -242,8 +275,8 @@ input[type=range]#nMin::-webkit-slider-thumb:hover{transform:scale(1.14)}
 input[type=range]#nMin::-webkit-slider-thumb:active{transform:scale(1.26);box-shadow:0 0 0 7px rgba(129,140,248,.24),0 4px 18px rgba(99,102,241,.6)}
 input[type=range]#nMin::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#fff;border:3px solid #818cf8;cursor:pointer}
 .ns-scale{display:flex;justify-content:space-between;margin-top:8px;font-size:9.5px;color:#6b6f85;font-weight:700;letter-spacing:.4px}
-.su-perm{margin:10px 0 0 48px;font-size:11.5px;font-weight:700;color:#fde68a;background:rgba(245,158,11,.12);
-  border:1px solid rgba(245,158,11,.4);padding:8px 14px;border-radius:12px;cursor:pointer}
+.su-perm{margin:10px 0 0;padding:8px 14px;font-size:11.5px;font-weight:700;color:#fde68a;background:rgba(245,158,11,.12);
+  border:1px solid rgba(245,158,11,.4);border-radius:12px;cursor:pointer;width:100%;text-align:left}
 .b-mini{font-size:11px;font-weight:700;color:#c7d2fe;background:rgba(99,102,241,.14);border:1px solid rgba(99,102,241,.35);
   padding:7px 13px;border-radius:10px;cursor:pointer;transition:all .15s ease;display:inline-flex;align-items:center;gap:6px;flex:none}
 .b-mini:hover{background:rgba(99,102,241,.28);color:#fff}
@@ -252,6 +285,32 @@ input[type=range]#nMin::-moz-range-thumb{width:16px;height:16px;border-radius:50
 .b-save:hover:not(:disabled){filter:brightness(1.14);transform:translateY(-1px)}
 .b-save:active:not(:disabled){transform:scale(.98)}
 .b-save:disabled{opacity:.35;cursor:not-allowed;box-shadow:none}
+/* блок «Про програму» — тут ховається пасхалка режиму розробника (5 тапів по версії) */
+.sw-about{display:flex;align-items:center;gap:12px;margin-top:16px;padding:13px 15px;border-radius:18px;
+  background:rgba(255,255,255,.025);border:1px dashed rgba(255,255,255,.1)}
+.sw-about .lmark img{display:block;border-radius:9px}
+.sw-about .ab-t{flex:1;min-width:0}
+.sw-about .ab-t b{display:block;font-size:13.5px;color:#fff;letter-spacing:.3px}
+.sw-about .ab-t span{display:block;font-size:10.5px;color:#8b8fa3;margin-top:2px}
+.sw-ver{border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#c7cbe0;font-family:inherit;
+  font-size:11px;font-weight:800;padding:7px 13px;border-radius:999px;cursor:pointer;transition:all .15s ease;flex:none;
+  user-select:none;-webkit-user-select:none}
+.sw-ver:hover{border-color:rgba(139,92,246,.45);color:#fff}
+.sw-ver:active{transform:scale(.94)}
+/* секція режиму розробника */
+.sw-card.dev{border-color:rgba(251,191,36,.35);background:linear-gradient(180deg,rgba(251,191,36,.06),rgba(255,255,255,.02))}
+.sw-card.dev::before{background:linear-gradient(90deg,transparent,rgba(251,191,36,.6),rgba(245,158,11,.5),transparent)}
+.dev-btn{display:flex;align-items:center;gap:11px;width:100%;text-align:left;font-family:inherit;font-size:12.5px;
+  font-weight:800;color:#fde68a;background:rgba(251,191,36,.09);border:1px solid rgba(251,191,36,.4);
+  padding:11px 14px;border-radius:13px;cursor:pointer;transition:all .16s ease;margin-bottom:8px}
+.dev-btn:hover{background:rgba(251,191,36,.17);transform:translateY(-1px);box-shadow:0 8px 22px rgba(245,158,11,.15)}
+.dev-btn:active{transform:scale(.98)}
+.dev-btn.ghost{color:#c7cbe0;background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.12)}
+.dev-btn.ghost:hover{background:rgba(255,255,255,.08);box-shadow:none}
+.dev-btn svg{flex:none}
+.dev-btn .dsub{display:block;font-size:10.5px;font-weight:600;color:#8b8fa3;margin-top:2px}
+/* діалог підтвердження режиму розробника (по центру, поверх усього) */
+#devwrap{position:fixed;inset:0;z-index:82;display:flex;align-items:center;justify-content:center;padding:20px}
 
 /* ---------- модальне вікно копіювання (по центру екрана) ---------- */
 #mwrap{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:20px}
@@ -390,8 +449,8 @@ body.ready #app{animation:apin .55s cubic-bezier(.16,1,.3,1) both}
 
 <div id="tbar">
   <div class="tb-l">
-    <span class="lmark" id="logo" aria-hidden="true"></span>
-    <span class="tb-name">Flux Helper</span>
+    <span class="lmark" id="logo" aria-hidden="true"><img src="data:image/png;base64,__LOGO_B64__" width="27" height="27" alt="" decoding="sync" style="display:block;border-radius:8px"></span>
+    <span class="tb-name">FluxHelper</span>
     <span class="tb-ver" id="tbSec">розклад</span>
   </div>
   <div class="tb-r">
@@ -427,65 +486,106 @@ body.ready #app{animation:apin .55s cubic-bezier(.16,1,.3,1) both}
 </div>
 
 <div id="vSetup" class="view hidden">
-  <div class="setwrap">
-    <div class="su-head">
+  <div class="sw-wrap">
+    <div class="sw-head">
+      <div class="sw-head-l">
+        <div class="sw-title-row">
+          <h2>Налаштування</h2>
+          <span class="sw-verpill">FluxHelper для Windows</span>
+        </div>
+        <span class="sw-sub">групи перемикаються на місці · сповіщення · оновлення</span>
+      </div>
       <button class="su-back" id="bBack" title="Назад до розкладу">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-        <span>Назад</span>
-      </button>
-      <div class="su-gear">
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      </div>
-      <div>
-        <h2>Налаштування</h2>
-        <span class="su-sub">групи · сповіщення · оновлення</span>
-      </div>
-    </div>
-
-    <div class="su-sec">
-      <div class="su-t"><span>Мої групи</span><span class="s-prog" id="sSum">—</span></div>
-      <div id="sumRows"></div>
-      <button class="b-groups" id="bGroups">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        Змінити групи
+        <span>Розклад</span>
       </button>
     </div>
 
-    <div class="su-sec">
-      <div class="su-t"><span>Сповіщення</span></div>
-      <div class="su-row">
-        <div class="su-ic2">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+    <div class="sw-grid">
+      <section class="sw-card sw-wide">
+        <div class="sw-c-head">
+          <span class="sw-c-ic grad"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+          <div class="sw-c-tt">
+            <b>Мої групи</b>
+            <span>натисни 1 або 2 — вчитель і посилання підставляться скрізь одразу</span>
+          </div>
+          <span class="s-prog" id="sSum">—</span>
         </div>
-        <div class="su-body">
-          <b>Повідомити про початок уроку</b>
-          <span>сповіщення прийде за кілька хвилин до дзвінка</span>
+        <div id="sumRows"></div>
+        <button class="b-groups" id="bGroups">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Деталі та вчителі обох груп…
+        </button>
+      </section>
+
+      <section class="sw-card">
+        <div class="sw-c-head">
+          <span class="sw-c-ic plain"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span>
+          <div class="sw-c-tt"><b>Сповіщення</b><span>нагадаємо до дзвінка</span></div>
         </div>
-        <label class="sw"><input type="checkbox" id="nOn"><i></i></label>
-      </div>
-      <div class="nslider hidden" id="nMinRow">
-        <div class="ns-top"><span class="ns-lbl">повідомити за</span><span class="ns-val" id="nMinVal">5 хв</span></div>
-        <input type="range" id="nMin" min="1" max="15" step="1" value="5" aria-label="Хвилин до уроку">
-        <div class="ns-scale"><span>1 хв</span><span>5</span><span>10</span><span>15 хв</span></div>
-      </div>
-      <button class="su-perm hidden" id="bPerm">Надати дозвіл на сповіщення</button>
+        <div class="sw-tog-row">
+          <div class="su-ic2">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          </div>
+          <div class="su-body">
+            <b>Повідомити про початок уроку</b>
+            <span>сповіщення Windows з назвою уроку</span>
+          </div>
+          <label class="sw"><input type="checkbox" id="nOn"><i></i></label>
+        </div>
+        <div class="nslider hidden" id="nMinRow">
+          <div class="ns-top"><span class="ns-lbl">повідомити за</span><span class="ns-val" id="nMinVal">5 хв</span></div>
+          <input type="range" id="nMin" min="1" max="15" step="1" value="5" aria-label="Хвилин до уроку">
+          <div class="ns-scale"><span>1 хв</span><span>5</span><span>10</span><span>15 хв</span></div>
+        </div>
+        <button class="su-perm hidden" id="bPerm">Надати дозвіл на сповіщення</button>
+      </section>
+
+      <section class="sw-card">
+        <div class="sw-c-head">
+          <span class="sw-c-ic plain"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
+          <div class="sw-c-tt"><b>Оновлення</b><span>FluxHelper оновлюється сам</span></div>
+        </div>
+        <div class="sw-tog-row">
+          <div class="su-ic2">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M12 12l8-4.5"/><path d="M12 12v9"/><path d="M12 12L4 7.5"/></svg>
+          </div>
+          <div class="su-body">
+            <b>Версія <span id="upCur"></span></b>
+            <span id="upStat">перевіряємо…</span>
+          </div>
+          <button class="b-mini" id="bUpd">Перевірити</button>
+        </div>
+      </section>
+
+      <section class="sw-card dev sw-wide hidden" id="devSec">
+        <div class="sw-c-head">
+          <span class="sw-c-ic" style="background:linear-gradient(135deg,#f59e0b,#f97316)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span>
+          <div class="sw-c-tt">
+            <b>Режим розробника</b>
+            <span>тестові функції — для перевірки сповіщень</span>
+          </div>
+          <span class="s-prog" style="color:#fde68a;background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.4)">DEV</span>
+        </div>
+        <button class="dev-btn" id="bTestNotif">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+          <span>Надіслати тестове сповіщення<span class="dsub" id="devTestSub">приклад: «Урок почнеться через 5 хв»</span></span>
+        </button>
+        <button class="dev-btn ghost" id="bDevOff">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+          <span>Вимкнути режим розробника<span class="dsub">або натисни на версію внизу ще 5 разів</span></span>
+        </button>
+      </section>
     </div>
 
-    <div class="su-sec">
-      <div class="su-t"><span>Оновлення</span></div>
-      <div class="su-row">
-        <div class="su-ic2">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        </div>
-        <div class="su-body">
-          <b>Версія <span id="upCur"></span></b>
-          <span id="upStat">перевіряємо…</span>
-        </div>
-        <button class="b-mini" id="bUpd">Перевірити</button>
+    <div class="sw-about">
+      <span class="lmark"><img src="data:image/png;base64,__LOGO_B64__" width="40" height="40" alt="" decoding="sync"></span>
+      <div class="ab-t">
+        <b>FluxHelper</b>
+        <span>розклад 8-Б класу · автор Blazix</span>
       </div>
+      <button class="sw-ver" id="verTap" title="FluxHelper">версія __APP_VER__</button>
     </div>
-
-    <div class="set-foot">Flux Helper · версія __APP_VER__</div>
   </div>
 </div>
 
@@ -522,9 +622,25 @@ body.ready #app{animation:apin .55s cubic-bezier(.16,1,.3,1) both}
 
 <div id="toast"></div>
 
+<div id="devwrap" class="hidden">
+  <div class="mback" id="devback"></div>
+  <div class="modal" style="width:min(400px,100%)">
+    <div class="m-head">
+      <div class="m-ic" style="background:linear-gradient(135deg,#f59e0b,#f97316)">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      </div>
+      <div class="m-tt"><b id="devTitle">Увімкнути режим розробника?</b><span id="devSub">з'явиться тестове сповіщення у налаштуваннях</span></div>
+    </div>
+    <div class="g-foot" style="margin-top:2px">
+      <button class="b-mini" id="devCancel">Скасувати</button>
+      <button class="b-save" id="devOk" style="width:auto">Увімкнути</button>
+    </div>
+  </div>
+</div>
+
 <div id="boot">
   <div class="bt-mark" id="btMark"><img src="data:image/png;base64,__LOGO_B64__" width="92" height="92" alt="" decoding="sync" fetchpriority="high" style="display:block;border-radius:20px"></div>
-  <div class="bt-name">Flux Helper</div>
+  <div class="bt-name">FluxHelper</div>
   <div class="bt-bar"><i id="btFill"></i></div>
   <div class="bt-pct" id="btPct">0%</div>
 </div>
@@ -533,7 +649,7 @@ body.ready #app{animation:apin .55s cubic-bezier(.16,1,.3,1) both}
   <div class="us-card">
     <div class="us-logo" id="neLogo"></div>
     <h2>Немає з'єднання</h2>
-    <p class="us-sub" id="neStat">Flux Helper бере розклад з інтернету — увімкни мережу і спробуй ще раз.</p>
+    <p class="us-sub" id="neStat">FluxHelper бере розклад з інтернету — увімкни мережу і спробуй ще раз.</p>
     <button class="us-btn" id="neRetry">Спробувати ще раз</button>
   </div>
 </div>
@@ -1082,6 +1198,7 @@ function showSetup() {
   if (bb) bb.style.display = FIRST ? 'none' : '';     // у майстрі першого запуску немає «назад»
   buildSummary();
   refreshNotifUI();
+  refreshDev();
   markNav('setup');
   setTbSec('налаштування');
 }
@@ -1102,7 +1219,10 @@ function markNav(view) {
   if (t) t.classList.add('on');
 }
 
-// ---------------- налаштування: зведення груп на сторінці ----------------
+// ---------------- налаштування: групи з сегмент-перемикачами (ПК) ----------------
+// Десктопний стиль: кожен предмет — рядок із перемикачем [1 | 2], зміна
+// застосовується ОДРАЗУ (без модального вікна). Модалка «Деталі…» лишається
+// для першого запуску і для перегляду вчителів обох груп.
 function splitInfo(k) {
   const sub = subjFor(k) || {}, tch = teachFor(k) || {};
   const lbls = (sub.lbl && sub.lbl.length === 2) ? [String(sub.lbl[0]), String(sub.lbl[1])]
@@ -1110,6 +1230,18 @@ function splitInfo(k) {
   return { sub: sub, tch: tch, lbls: lbls };
 }
 function dispName(key) { return key ? key.charAt(0).toUpperCase() + key.slice(1) : ''; }
+function saveGroupInstant(k, v) {
+  if (!S) S = {};
+  S[k] = v;
+  try { localStorage.setItem('fh_groups2', JSON.stringify(S)); } catch (e) {}
+  if (!host('fh:save|' + JSON.stringify(oldKeyMap(S)))) {
+    try { localStorage.setItem('fh_groups', JSON.stringify(oldKeyMap(S))); } catch (e) {}
+  }
+  render(false);
+  buildSummary();
+  toast(infName(k) + ' — ' + v + '-ша група ✓');
+}
+function infName(k) { return dispName(k); }
 function buildSummary() {
   const rows = byId('sumRows');
   if (!rows) return;
@@ -1120,22 +1252,28 @@ function buildSummary() {
   if (sp) sp.textContent = done + '/' + keys.length;
   if (!done) {
     rows.appendChild(el('div', 'sum-hint',
-      'Групи ще не обрано. Натисни «Змінити групи» — і застосунок скрізь підставить саме твоїх вчителів і посилання.'));
+      'Групи ще не обрано. Натисни 1 або 2 біля предмета — і застосунок скрізь підставить саме твоїх вчителів і посилання.'));
     return;
   }
-  keys.forEach(function (k) {
+  keys.forEach(function (k, idx) {
     const inf = splitInfo(k);
     const g = (S && (S[k] === 1 || S[k] === 2)) ? S[k] : 0;
-    const row = el('div', 'su-item');
+    const row = el('div', 'sw-row');
     const ic = el('div', 'su-tile');
-    ic.innerHTML = icon(inf.sub.icon || 'book', 16);
+    ic.innerHTML = icon(inf.sub.icon || 'book', 15);
     ic.style.background = tileGrad(k);
-    const body = el('div', 'su-body');
-    const nm = el('div', 'su-name'); nm.textContent = dispName(k);
-    const sub2 = el('div', 'sum-tch');
-    sub2.textContent = g ? (String(inf.tch[String(g)] || '') + ' · ' + inf.lbls[g - 1]) : 'не обрано';
-    body.append(nm, sub2);
-    row.append(ic, body);
+    const nm = el('div', 'sw-gname');
+    const bE = el('b'); bE.textContent = dispName(k);
+    const sE = el('span'); sE.textContent = g ? (String(inf.tch[String(g)] || '') + ' · ' + inf.lbls[g - 1]) : 'не обрано';
+    nm.append(bE, sE);
+    const seg = el('div', 'seg');
+    [1, 2].forEach(function (v) {
+      const b2 = el('button'); b2.type = 'button'; b2.textContent = inf.lbls[v - 1] || (v + ' група');
+      b2.classList.toggle('on', g === v);
+      b2.onclick = function (ev) { ev.stopPropagation(); if (g !== v) saveGroupInstant(k, v); };
+      seg.appendChild(b2);
+    });
+    row.append(ic, nm, seg);
     rows.appendChild(row);
   });
 }
@@ -1200,6 +1338,71 @@ function oldKeyMap(s) {
   const o = {};
   for (const ok in OLDKEY) o[ok] = (s[OLDKEY[ok]] === 2) ? 2 : 1;
   return o;
+}
+// ---------------- РЕЖИМ РОЗРОБНИКА ----------------
+// 5 натискань на версію внизу налаштувань -> діалог -> тестові функції.
+// Стан зберігається у localStorage (fh_dev). Працює і на ПК, і на телефоні.
+let DEV = false;
+try { DEV = localStorage.getItem('fh_dev') === '1'; } catch (e) {}
+let devTaps = 0, devTapT = null;
+function tapVersion() {
+  devTaps++;
+  clearTimeout(devTapT);
+  devTapT = setTimeout(function () { devTaps = 0; }, 1600);
+  if (devTaps >= 5) {
+    devTaps = 0;
+    askDev(!DEV);
+  } else if (devTaps >= 3) {
+    toast(DEV ? ('вимкнути? ще ' + (5 - devTaps) + '…') : ('ще ' + (5 - devTaps) + ' натискання…'));
+  }
+}
+function askDev(on) {
+  const w = byId('devwrap');
+  if (!w) { setDev(on); return; }
+  byId('devTitle').textContent = on ? 'Увімкнути режим розробника?' : 'Вимкнути режим розробника?';
+  byId('devSub').textContent = on ? 'у налаштуваннях з’явиться тестове сповіщення'
+                                  : 'тестові функції будуть сховані';
+  byId('devOk').textContent = on ? 'Увімкнути' : 'Вимкнути';
+  byId('devOk').onclick = function () { setDev(on); w.classList.add('hidden'); };
+  w.classList.remove('hidden');
+}
+function setDev(on) {
+  DEV = on;
+  try { localStorage.setItem('fh_dev', on ? '1' : '0'); } catch (e) {}
+  refreshDev();
+  toast(on ? 'Режим розробника увімкнено' : 'Режим розробника вимкнено');
+}
+function refreshDev() {
+  const s = byId('devSec');
+  if (s) s.classList.toggle('hidden', !DEV);
+  const ts = byId('devTestSub');
+  if (ts) ts.textContent = 'приклад: «Урок почнеться через ' + NOTIF.min + ' хв»';
+}
+// тестове сповіщення: беремо НАСТУПНИЙ урок із реального розкладу
+function nextLessonName() {
+  resolveLessons();
+  const ti = todayIdx();
+  const m = nowMin();
+  const days = [RES[ti] || [], RES[(ti + 1) % 5] || []];
+  for (let d = 0; d < 2; ++d) {
+    for (let i = 0; i < days[d].length; ++i) {
+      const a = toMin(days[d][i].t);
+      if (a && (d === 1 || a > m)) return days[d][i].name || 'Урок';
+    }
+  }
+  return (days[0][0] && days[0][0].name) || 'Урок';
+}
+function sendTestNotif() {
+  const nm = nextLessonName();
+  const title = '🔔 Скоро почнеться урок';
+  const text = nm + ' почнеться через ' + NOTIF.min + ' хв (тест)';
+  if (ANDROID) {
+    try { AndroidHost.testNotif(title, text); toast('Тестове сповіщення надіслано ✓'); return; } catch (e) {}
+  }
+  if (host('fh:notif-test|' + JSON.stringify({ title: title, text: text }))) {
+    toast('Тестове сповіщення надіслано ✓'); return;
+  }
+  toast('Сповіщення недоступні на цьому пристрої');
 }
 function saveSettings() {
   const keys = splitKeys();
@@ -1669,7 +1872,8 @@ function bootLoop() {
 }
 function init() {
   if (ANDROID) { document.body.classList.add('android'); document.documentElement.classList.add('android'); }
-  byId('logo').innerHTML = logoMark(27);
+  // лого в титульній панелі ТЕПЕР СТАТИЧНИЙ <img> у HTML — малюється разом
+  // із першим кадром (раніше його вставляв JS -> «іконки вгорі немає»)
   const dwl = byId('dwLogo'); if (dwl) dwl.innerHTML = logoMark(36);
   byId('upCur').textContent = APP_VER;
   const st = byId('upStat'); if (st) st.textContent = 'встановлена версія ' + APP_VER;  // рядок у налаштуваннях
@@ -1700,6 +1904,14 @@ function init() {
     nMinSl.onchange = function () { saveNotif(); pushNotifSched(); };
   }
   byId('bPerm').onclick = function () { if (ANDROID) { try { AndroidHost.requestNotifPerm(); pollNotifPerm(); } catch (e) {} } };
+  // --- режим розробника: 5 тапів на версію в блоці «Про програму» ---
+  const vt = byId('verTap');
+  if (vt) vt.onclick = tapVersion;
+  const dc = byId('devCancel'); if (dc) dc.onclick = function () { byId('devwrap').classList.add('hidden'); };
+  const db2 = byId('devback'); if (db2) db2.onclick = function () { byId('devwrap').classList.add('hidden'); };
+  const btn = byId('bTestNotif'); if (btn) btn.onclick = sendTestNotif;
+  const boff = byId('bDevOff'); if (boff) boff.onclick = function () { setDev(false); };
+  refreshDev();
   byId('mback').onclick = closeModal;
   byId('nbOn').onclick = function () {
     if (ANDROID) { try { AndroidHost.requestNotifPerm(); pollNotifPerm(); } catch (e) {} }
@@ -1729,6 +1941,8 @@ function init() {
     if (updOpen()) return;   // блокуюча модалка оновлення — керування вимкнено
     if (e.key === 'Escape') {
       if (groupsOpen()) { closeGroups(); return; }
+      const dw2 = byId('devwrap');
+      if (dw2 && !dw2.classList.contains('hidden')) { dw2.classList.add('hidden'); return; }
       if (drawerOpen()) { closeDrawer(); return; }
       closeModal();
       return;
@@ -1813,7 +2027,9 @@ window.__fh = {
     for (const l of day) if (l.split) { openModal(l); return; }
   },
   setFake: function (h, m, d) { FAKENOW = h * 60 + m; FAKEDOW = d; sel = (d >= 1 && d <= 5) ? d - 1 : 0; render(false); },
-  st: function () { return { S: S, NOTIF: NOTIF, sel: sel, DBD: DBD, FIRST: FIRST, APP_VER: APP_VER, UPDATE_REPO: UPDATE_REPO }; }
+  st: function () { return { S: S, NOTIF: NOTIF, sel: sel, DBD: DBD, FIRST: FIRST, APP_VER: APP_VER, UPDATE_REPO: UPDATE_REPO, DEV: DEV }; },
+  tapVersion: tapVersion, setDev: setDev, devOn: function () { return DEV; },
+  sendTestNotif: sendTestNotif
 };
 
 try { init(); } catch (err) {

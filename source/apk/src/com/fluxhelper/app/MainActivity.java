@@ -37,6 +37,7 @@ import java.net.URL;
  *  • AndroidHost.open(url)   — відкриття посилання
  *  • AndroidHost.setNotif(json) — сповіщення про початок уроку (AlarmManager)
  *  • AndroidHost.hasNotifPerm() / requestNotifPerm() — дозвіл на сповіщення
+ *  • AndroidHost.testNotif(title, text) — тестове сповіщення (режим розробника)
  *  • AndroidHost.upd(json)   — завантаження APK-оновлення з GitHub + встановлення
  */
 public class MainActivity extends Activity {
@@ -292,6 +293,13 @@ public class MainActivity extends Activity {
                     }
                 }
             });
+        }
+
+        /** РЕЖИМ РОЗРОБНИКА: тестове сповіщення з інтерфейсу (показ одразу). */
+        @JavascriptInterface
+        public void testNotif(String title, String text) {
+            Notifs.ensureChannel(MainActivity.this);
+            Notifs.showNow(MainActivity.this, title, text);
         }
     }
 }
