@@ -1,5 +1,0 @@
-keys/*.keystore
-apk/build/
-src/build/*
-!src/build/logo.ico
-src/WebView2Loader.dll
