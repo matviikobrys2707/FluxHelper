@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>FluxHelper — повернення після входу</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(1200px 700px at 50% -10%, #1b1030 0%, #050508 55%);
+    color: #e8eaf2; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; padding: 20px;
+  }
+  .card {
+    width: 100%; max-width: 420px; text-align: center; padding: 34px 26px;
+    background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.09); border-radius: 20px;
+  }
+  .logo {
+    width: 64px; height: 64px; margin: 0 auto 14px; border-radius: 18px; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #8b5cf6, #c026d3); font-size: 30px; font-weight: 800; color: #fff;
+    box-shadow: 0 10px 30px rgba(139,92,246,.35);
+  }
+  h1 { font-size: 19px; margin: 0 0 8px; }
+  p  { color: #9aa0b4; font-size: 14px; line-height: 1.5; margin: 6px 0; }
+  .spin {
+    width: 26px; height: 26px; margin: 18px auto 4px; border-radius: 50%;
+    border: 3px solid rgba(139,92,246,.25); border-top-color: #a78bfa; animation: r 1s linear infinite;
+  }
+  @keyframes r { to { transform: rotate(360deg); } }
+  .btn {
+    display: none; margin: 16px auto 2px; padding: 13px 22px; border: 0; border-radius: 12px; cursor: pointer;
+    background: linear-gradient(135deg, #8b5cf6, #c026d3); color: #fff; font-size: 15px; font-weight: 600;
+  }
+  .btn.show { display: inline-block; }
+  .err { display: none; margin-top: 12px; color: #ff8f8f; font-size: 13px; word-break: break-word; }
+  .err.show { display: block; }
+  .hint { margin-top: 14px; color: #767b90; font-size: 12px; }
+  code { background: rgba(255,255,255,.08); padding: 1px 6px; border-radius: 6px; font-size: 12px; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">F</div>
+    <h1>Вхід у FluxHelper</h1>
+    <p id="msg">Перенаправляю тебе назад у застосунок…</p>
+    <div class="spin" id="spin"></div>
+    <button class="btn" id="go">Повернутись у FluxHelper</button>
+    <div class="err" id="err"></div>
+    <p class="hint">Цю вкладку можна закрити, щойно застосунок відкриється</p>
+  </div>
+<script>
+// Брокер повернення Google OAuth (Custom Scheme) для FluxHelper.
+// Google повертає сюди код через HTTPS (redirect_uri, зареєстрований у консолі),
+// а ця сторінка ОДРАЗУ передає код застосунку глибоким посиланням
+//   kyiv1.blazix1.blazix1://oauth?code=...&state=...
+// Схему ловить FluxHelper (AndroidManifest, MainActivity, intent-filter).
+(function () {
+  var q = {};
+  try {
+    var s = location.search.replace(/^\?/, '');
+    if (s) s.split('&').forEach(function (kv) {
+      var i = kv.indexOf('=');
+      if (i > 0) q[decodeURIComponent(kv.slice(0, i))] = decodeURIComponent(kv.slice(i + 1).replace(/\+/g, '%20'));
+    });
+  } catch (e) {}
+  var SCHEME = 'kyiv1.blazix1.blazix1://oauth';
+  var back = SCHEME;
+  var msg = document.getElementById('msg');
+  var err = document.getElementById('err');
+  var btn = document.getElementById('go');
+  var spin = document.getElementById('spin');
+
+  if (q.error) {
+    // Google повернув помилку (наприклад access_denied) — передаємо в застосунок
+    back = SCHEME + '?error=' + encodeURIComponent(q.error);
+    if (msg) msg.textContent = 'Google повідомив про помилку входу. Повертаю у застосунок…';
+    if (err) { err.textContent = 'Google: ' + q.error; err.classList.add('show'); }
+  } else if (q.code) {
+    back = SCHEME + '?code=' + encodeURIComponent(q.code) +
+           (q.state ? '&state=' + encodeURIComponent(q.state) : '');
+  } else {
+    if (msg) msg.textContent = 'Не надійшов код підтвердження. Закрий цю вкладку і почни вхід у застосунку ще раз.';
+    if (spin) spin.style.display = 'none';
+    return;
+  }
+
+  function goBack() { try { location.replace(back); } catch (e) { try { location.href = back; } catch (e2) {} } }
+
+  // авто-перехід у застосунок (Chrome може показати діалог «Відкрити у FluxHelper?»)
+  setTimeout(goBack, 350);
+
+  // якщо авто-перехід заблоковано — лишаємо явну кнопку (user gesture спрацьовує завжди)
+  setTimeout(function () {
+    btn.href = back;            // на випадок, якщо браузер зробить із неї посилання
+    btn.onclick = function (ev) { ev.preventDefault(); goBack(); };
+    btn.classList.add('show');
+    if (spin) spin.style.display = 'none';
+    if (msg && q.code) msg.textContent = 'Якщо застосунок не відкрився сам — натисни кнопку нижче.';
+  }, 1600);
+})();
+</script>
+</body>
+</html>
