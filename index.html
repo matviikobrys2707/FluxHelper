@@ -107,37 +107,28 @@ $('app').style.display='';
 // D1 REST не читається з браузера (CORS preflight 405), але «simple request»
 // з Content-Type: text/plain проходить БЕЗ preflight — пишемо «наосліп»,
 // а валідація коду (існування/свіжість) відбувається в UPDATE ... WHERE t>...
-$('gbtn').disabled=false;
-$('gbtn').onclick=go;
-
 function go(){
-  if(!window.google||!google.accounts||!google.accounts.oauth2){fail('Google не завантажився — онови сторінку.');return;}
-  $('gbtn').disabled=true;
-  stat('<span class="spin"></span>відкриваю вікно Google…');
-  var tc=google.accounts.oauth2.initTokenClient({
-    client_id:CLIENT,scope:'openid email profile',prompt:'',
+  if(!window.google||!google.accounts||!google.accounts.id){setTimeout(go,350);return;}
+  stat('')
+  google.accounts.id.initialize({
+    client_id:CLIENT,
     callback:function(r){
-      if(!r||!r.access_token){fail('Вхід скасовано. Натисни кнопку ще раз.');return;}
-      stat('<span class="spin"></span>читаю профіль…');
-      fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+r.access_token}})
-        .then(function(x){return x.ok?x.json():null;})
-        .then(function(p){
-          if(!p||!p.sub){fail('Не вдалося прочитати профіль Google.');return;}
-          var prof={sub:String(p.sub),name:String(p.name||'Користувач'),email:String(p.email||''),pic:String(p.picture||'')};
-          stat('<span class="spin"></span>передаю у застосунок…');
-          // «сліпий» запис: свіжий непогашений ключ -> payload (валідація в WHERE)
-          var body=JSON.stringify({sql:'UPDATE auth_cb SET payload=? WHERE state=? AND t>? AND payload IS NULL',
-                                   params:[JSON.stringify(prof),k,Date.now()-5*60*1000]});
-          fetch('https://api.cloudflare.com/client/v4/accounts/'+ACC+'/d1/database/'+DB+'/query',{
-            method:'POST',headers:{'Content-Type':'text/plain'},body:body
-          }).catch(function(){});
-          setTimeout(done,900);   // запис іде «наосліп» — перевірить сам застосунок
-        })
-        .catch(function(){fail('Не вдалося зв\u2019язатися з Google.');});
-    },
-    error_callback:function(){fail('Вхід скасовано. Натисни кнопку ще раз.');}
+      if(!r||!r.credential){fail('Вхід скасовано. Натисни кнопку ще раз.');return;}
+      stat('<span class="spin"></span>передаю у застосунок…');
+      // ID-токен (JWT) -> протокол застосунку; застосунок перевірить його
+      // через публічний tokeninfo Google (підпис валідує Google сам)
+      var u='fluxhelper://auth?d='+r.credential;
+      var ok=false;
+      try{ var f=document.createElement('iframe'); f.style.display='none';
+        document.body.appendChild(f); f.src=u;
+        setTimeout(function(){ try{ document.body.removeChild(f); }catch(e){} },2500);
+        ok=true;
+      }catch(e){}
+      setTimeout(function(){ try{ location.replace(u); }catch(e){} },350);
+      setTimeout(done,1300);
+    }
   });
-  tc.requestAccessToken();
+  google.accounts.id.renderButton($('gbtn'),{theme:'outline',size:'large',width:320,text:'signin_with',locale:'uk'});
 }
 function done(){
   $('cardLogin').classList.add('hidden');
@@ -145,10 +136,9 @@ function done(){
   $('st2').classList.add('on');
   if(/android|iphone|ipad|mobile/i.test(navigator.userAgent)){
     $('doneSub').innerHTML='Повернись у додаток FluxHelper —<br>він увійде в акаунт автоматично.';
-    $('doneHint').textContent='Якщо застосунок не увійшов протягом хвилини — відкрий його і натисни «Увійти» ще раз (код живе 5 хвилин).';
+    $('doneHint').textContent='Якщо застосунок не відкрився сам — розгорни FluxHelper зі списку застосунків: вхід уже виконано.';
   } else {
-    $('doneHint').textContent='Якщо застосунок не увійшов сам — натисни кнопку вище або почни вхід ще раз (код живе 5 хвилин).';
-    setTimeout(function(){try{location.replace('fluxhelper://open');}catch(e){}},900);
+    $('doneHint').textContent='Якщо Windows спитав «Відкрити FluxHelper?» — підтверди. Якщо ні — розгорни застосунок: вхід уже виконано.';
   }
 }
 })();
