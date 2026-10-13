@@ -1,0 +1,8 @@
+name = "fluxhelper"
+compatibility_date = "2026-09-01"
+pages_build_output_dir = "."
+
+[[d1_databases]]
+binding = "DB"
+database_name = "fluxhelper"
+database_id = "89424274-f50b-4931-838e-0d6f384bbc20"
