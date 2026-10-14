@@ -200,7 +200,21 @@ function go(){
   (function wait(){
     if(gisReady()){
       var t=ensureTc();
-      if(t){busy=false;try{t.requestToken({prompt:''});}catch(e){busy=false;gbtn(true,'Увійти через Google');stat('Не вдалося відкрити Google Вхід. Спробуй ще раз.',true);}return;}
+      if(t){
+        busy=false;
+        try{
+          // 2.7.5: GIS сьогодні віддає метод requestAccessToken (стара назва
+          // requestToken більше не існує на об'єкті) — викликаємо той, що є
+          var rq=t.requestToken||t.requestAccessToken;
+          if(!rq) throw new Error('no request method');
+          rq.call(t,{prompt:''});
+        }catch(e){
+          busy=false;
+          gbtn(true,'Увійти через Google');
+          stat('Не вдалося відкрити Google Вхід. Спробуй ще раз.',true);
+        }
+        return;
+      }
     }
     if(tries-->0){setTimeout(wait,300);return;}
     busy=false; gbtn(true,'Спробувати ще раз');
