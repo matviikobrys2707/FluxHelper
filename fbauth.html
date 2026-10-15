@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FluxHelper</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="favicon.svg?v=282">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a12;color:#eef0f8;
+  display:flex;align-items:center;justify-content:center;-webkit-user-select:none;user-select:none}
+.t{font-size:12px;color:#9aa0b4}
+</style>
+</head>
+<body>
+<span class="t">…</span>
+<script>
+/* ================================================================
+   FluxHelper 2.8.2 — fbauth.html (міст Firebase Authentication)
+   Програма (ПК/телефон) відкриває цю сторінку в ПРИХОВАНОМУ iframe:
+       https://fluxhelper.pages.dev/fbauth.html#t=<access_token або id_token>
+   Тільки запити з реферером fluxhelper.pages.dev пропускає ключ Firebase,
+   тому реєстрація користувача в Authentication -> Users робиться ЗВІДСИЛЬ.
+   Результат повертається батьку: postMessage({__fhFb:{ok,...}}, '*').
+   ================================================================ */
+(function () {
+  'use strict';
+  var h = {}, seg = (location.hash || '').replace(/^#/, '').split('&');
+  for (var i = 0; i < seg.length; ++i) {
+    var kv = seg[i].split('=');
+    if (kv[0]) h[decodeURIComponent(kv[0])] = decodeURIComponent((kv[1] || '').replace(/\+/g, ' '));
+  }
+  var T = h.t || '';
+  var KEY = 'AIzaSyCDWpF3QTMEFBN9ravDxH_woKnBpcMRDvI';   // Web API key проєкту fluxhelper-1
+
+  function reply(ok, extra) {
+    var m = { __fhFb: { ok: !!ok } };
+    if (extra) for (var k in extra) m.__fhFb[k] = extra[k];
+    try { if (window.parent && window.parent !== window) window.parent.postMessage(m, '*'); } catch (e) {}
+  }
+
+  if (!T || T.length < 10) { reply(false, { err: 'no_token' }); return; }
+  var el = document.querySelector('.t');
+  if (el) el.textContent = 'FluxHelper: підтверджуємо вхід…';
+
+  fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=' + KEY, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      postBody: 'access_token=' + encodeURIComponent(T) + '&providerId=google.com',
+      requestUri: 'http://localhost',
+      returnIdpCredential: true,
+      returnSecureToken: true
+    })
+  }).then(function (r) { return r.json(); }).then(function (j) {
+    if (j && (j.localId || j.idToken)) {
+      reply(true, { localId: j.localId || '', email: j.email || '' });
+    } else {
+      reply(false, { err: (j && j.error && j.error.message) ? j.error.message : 'fb_error' });
+    }
+  }).catch(function (e) { reply(false, { err: 'network' }); });
+})();
+</script>
+</body>
+</html>

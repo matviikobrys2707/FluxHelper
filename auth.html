@@ -6,7 +6,7 @@
 <title>FluxHelper — вхід</title>
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#0a0a12">
-<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/svg+xml" href="favicon.svg?v=282">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%}
@@ -18,18 +18,18 @@ body{
 }
 .card{position:relative;width:100%;max-width:372px;text-align:center;
   background:linear-gradient(180deg,rgba(30,31,52,.98),rgba(19,20,36,.98));
-  border:1px solid rgba(139,92,246,.32);border-radius:24px;padding:34px 26px 24px;
+  border:1px solid rgba(139,92,246,.32);border-radius:24px;padding:24px 24px 16px;
   box-shadow:0 32px 90px rgba(0,0,0,.66),0 16px 44px rgba(99,102,241,.18);overflow:hidden}
 .card::before{content:'';position:absolute;inset:0;border-radius:24px;padding:1px;
   background:linear-gradient(135deg,rgba(167,139,250,.55),rgba(129,140,248,.06) 35%,rgba(129,140,248,.06) 65%,rgba(167,139,250,.4));
   -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
 .glow{position:absolute;top:-70px;left:50%;transform:translateX(-50%);width:240px;height:110px;
   background:radial-gradient(closest-side,rgba(139,92,246,.4),transparent);pointer-events:none}
-.lg{width:64px;height:64px;margin:0 auto 14px;border-radius:18px;display:grid;place-items:center;
+.lg{width:54px;height:54px;margin:0 auto 10px;border-radius:15px;display:grid;place-items:center;
   background:linear-gradient(135deg,#8b5cf6,#6366f1);box-shadow:0 10px 30px rgba(99,102,241,.5)}
 .lg svg{display:block}
-h1{font-size:19px;font-weight:800;letter-spacing:.2px}
-.sub{font-size:12.5px;color:#9aa0b4;line-height:1.55;margin:7px 4px 0}
+h1{font-size:18px;font-weight:800;letter-spacing:.2px}
+.sub{font-size:12px;color:#9aa0b4;line-height:1.5;margin:6px 2px 0}
 .who{display:none;align-items:center;gap:10px;margin:16px auto 0;padding:9px 14px 9px 10px;max-width:290px;
   background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:14px;text-align:left}
 .who.on{display:flex}
@@ -38,7 +38,7 @@ h1{font-size:19px;font-weight:800;letter-spacing:.2px}
 .who .tt{min-width:0}
 .who .tt b{display:block;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .who .tt span{display:block;font-size:10.5px;color:#8b8fa3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.gbtn{width:100%;justify-content:center;display:flex;align-items:center;gap:10px;height:46px;margin-top:18px;
+.gbtn{width:100%;justify-content:center;display:flex;align-items:center;gap:10px;height:44px;margin-top:14px;
   border-radius:13px;font-size:14px;font-weight:700;font-family:inherit;background:#fff;border:0;color:#1f2937;cursor:pointer;
   box-shadow:0 10px 26px rgba(0,0,0,.45);transition:transform .12s ease,box-shadow .2s ease}
 .gbtn:hover{transform:translateY(-1px);box-shadow:0 14px 32px rgba(0,0,0,.5)}
@@ -47,11 +47,11 @@ h1{font-size:19px;font-weight:800;letter-spacing:.2px}
 .gbtn svg{flex:none}
 .spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(196,181,253,.35);border-top-color:#c4b5fd;border-radius:50%;vertical-align:-2px;margin-right:7px;animation:fhsp .8s linear infinite}
 @keyframes fhsp{to{transform:rotate(360deg)}}
-.stat{min-height:20px;font-size:12px;color:#9aa0b4;margin-top:13px;line-height:1.5}
+.stat{min-height:17px;font-size:12px;color:#9aa0b4;margin-top:10px;line-height:1.45}
 .stat.err{color:#fda4af}
 .stat.ok{color:#6ee7b7}
-.foot{font-size:10.5px;color:#6b7086;margin-top:14px;letter-spacing:.3px}
-.mini{display:flex;justify-content:center;gap:6px;margin-top:15px;flex-wrap:wrap}
+.foot{font-size:10.5px;color:#6b7086;margin-top:10px;letter-spacing:.3px}
+.mini{display:flex;justify-content:center;gap:6px;margin-top:11px;flex-wrap:wrap}
 .mini span{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:#a7abc2;
   background:rgba(148,163,184,.07);border:1px solid rgba(148,163,184,.13);border-radius:99px;padding:4.5px 10px}
 .done .k{width:56px;height:56px;margin:0 auto 14px;border-radius:18px;display:grid;place-items:center;
@@ -157,12 +157,31 @@ h1{font-size:19px;font-weight:800;letter-spacing:.2px}
       'Вітаємо, <b>' + String(prof.name).replace(/[<>&]/g, '') + '</b>!<br>Повернись у FluxHelper — акаунт уже підтверджено.<br>Цю вкладку можна закрити.';
   }
 
+  /* 2.8.2: реєстрація входу в Firebase Authentication проєкту (Users -> Users):
+     ключ пускає лише запити з реферером fluxhelper.pages.dev — саме тому це
+     робиться тут, на сайті. Best effort: не блокує вхід у програму. */
+  var FH_FB_KEY = 'AIzaSyCDWpF3QTMEFBN9ravDxH_woKnBpcMRDvI';
+  function fbRegister(accessTok) {
+    try {
+      fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=' + FH_FB_KEY, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          postBody: 'access_token=' + encodeURIComponent(accessTok) + '&providerId=google.com',
+          requestUri: 'http://localhost',
+          returnIdpCredential: true,
+          returnSecureToken: true
+        })
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
   function gotToken(resp) {
     if (!resp || !resp.access_token) {
       busy(false, 'Спробувати ще раз');
       setStat(resp && resp.error === 'access_denied' ? 'Вхід скасовано. Спробуй ще раз.' : 'Google не підтвердив вхід. Спробуй ще раз.', 'err');
       return;
     }
+    fbRegister(resp.access_token);
     setStat('<span class="spin"></span>Передаю профіль у програму…');
     fetch('https://openidconnect.googleapis.com/v1/userinfo', { headers: { Authorization: 'Bearer ' + resp.access_token } })
       .then(function (r) { return r.ok ? r.json() : null; })
