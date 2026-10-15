@@ -298,6 +298,36 @@ if (!K) {
   document.head.appendChild(scr);
 }
 
+/* ---------- доставка профілю в застосунок ---------- */
+function deliver(u) {
+  busy(true, 'Передаємо профіль програмі…');
+  var payload = JSON.stringify({ sub: esc(u.sub), name: esc(u.name), email: esc(u.email), pic: esc(u.pic), ts: Date.now() });
+  fetch(RTDB + '/stats/login/' + K + '.json', { method: 'PUT', body: payload })
+    .then(function (r) { if (!r.ok) throw new Error('rtdb ' + r.status); return r.json(); })
+    .then(function () { finish(u); })
+    .catch(function (e2) {
+      busy(false);
+      err('Не вдалося передати профіль програмі (хмара недоступна). Перевір інтернет і спробуй ще раз.');
+    });
+}
+function finish(u) {
+  busy(false); err('');
+  show(byId('lgStepBtn'), false); show(byId('lgStepOk'), true);
+  byId('lgName').textContent = u.name || 'Користувач';
+  byId('lgMail').textContent = u.email || '';
+  var im = byId('lgAva'), ph = byId('lgAvaPh');
+  if (u.pic) { im.src = u.pic; show(im, true); show(ph, false); }
+  else { show(im, false); show(ph, true); ph.textContent = (u.name || '?').charAt(0).toUpperCase(); }
+  /* ПК: миттєве повернення у програму через зареєстрований протокол.
+     Якщо браузер покаже питання — користувач підтвердить; якщо ні, програма
+     все одно забере профіль полінгом за 2–3 секунди. */
+  if (PL === 'pc') { try { location.href = 'fluxhelper://authok?k=' + encodeURIComponent(K); } catch (e) {} }
+  /* Телефон: брідж усередині застосунку (overlay WebView) */
+  if (INAPP) {
+    try { AndroidHost.authDone(JSON.stringify({ sub: u.sub, name: u.name, email: u.email, pic: u.pic })); } catch (e) {}
+  }
+}
+
 /* ---------- Google Identity Services (веб-клієнт проєкту fluxhelper-1) ---------- */
 var GIS_CLIENT = '668834523935-k470ldmdv0r9am0720v6lgaatm6rtuf3.apps.googleusercontent.com';
 var GIS_READY = false;
