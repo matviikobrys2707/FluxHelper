@@ -7,11 +7,11 @@
 <meta name="robots" content="noindex">
 <meta name="description" content="FluxHelper — розклад уроків 8-Б з посиланнями на Zoom, групами, сповіщеннями та синхронізацією. Вхід захищає Google.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%238b5cf6' d='M13 2 4.5 13.5H11L9.5 22 19 9.5h-6.5z'/%3E%3C/svg%3E">
-<!-- 2.7.6: сайт — вітрина й завантаження. Вхід тепер РІДНИЙ у застосунку
-     (Google відкривається у вікні програми / браузері телефона, відповідь
-     перехоплює застосунок через com.googleusercontent.apps.… — кастомна схема
-     DESKTOP-клієнта приймається без налаштувань у Google Cloud, тож
-     «Error 400: redirect_uri_mismatch» неможливий у принципі). -->
+<!-- 2.7.8: сайт — вітрина, завантаження і СТОРІНКА ВХОДУ.
+     Вхід: Firebase Auth (проєкт fluxhelper-1) signInWithPopup(Google) —
+     сплив-вікно Google зі списком акаунтів (імена + аватарки), як у monobank.
+     Профіль передається застосунку через Firebase RTDB (stats/login/<k>) —
+     ПК чекає його в браузері за ключем ?k=, телефон — у вікні всередині програми. -->
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 ::selection{background:rgba(99,102,241,.35);color:#e0e7ff}
@@ -83,12 +83,42 @@ a{color:inherit;text-decoration:none}
 .un.m i{color:#fda4af;background:rgba(244,63,94,.2)}
 .un small{display:block;font-size:12px;color:#8b8fa3;margin-top:2px}
 
-/* ---------- вхід ---------- */
-.login-note{width:min(680px,100%);display:flex;align-items:center;gap:14px;background:rgba(255,255,255,.035);
-  border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:15px 18px;margin-bottom:26px;text-align:left}
-.login-note .gl{width:34px;height:34px;border-radius:10px;background:#fff;display:grid;place-items:center;flex:none}
-.login-note b{display:block;font-size:13.5px}
-.login-note span{display:block;font-size:12px;color:#9aa0b4;line-height:1.5;margin-top:2px}
+/* ---------- вхід (показується лише за посиланням із програми) ---------- */
+.lg-wrap{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;padding:22px;
+  background:radial-gradient(120% 90% at 50% 0%,rgba(72,58,148,.45),transparent 55%),rgba(6,6,12,.97)}
+.lg-card{width:min(400px,100%);background:linear-gradient(165deg,rgba(139,92,246,.14),rgba(255,255,255,.04) 60%,rgba(255,255,255,.02));
+  border:1px solid rgba(139,92,246,.35);border-radius:24px;padding:30px 28px 26px;text-align:center;
+  box-shadow:0 30px 90px rgba(0,0,0,.6),0 0 0 1px rgba(139,92,246,.08)}
+.lg-card.embed{width:min(360px,100%);border-radius:26px}
+.lg-mark{width:56px;height:56px;border-radius:17px;margin:0 auto 14px;display:grid;place-items:center;
+  background:linear-gradient(135deg,#8b5cf6,#6366f1);box-shadow:0 14px 34px rgba(99,102,241,.45)}
+.lg-card h2{font-size:19px;margin-bottom:8px}
+.lg-card .lg-sub{font-size:13px;color:#9aa0b4;line-height:1.6;margin-bottom:20px}
+.lg-card .lg-sub b{color:#c7cbe0}
+.lg-gbtn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:14px 18px;
+  border-radius:14px;border:none;background:#fff;color:#1f2937;font-size:14.5px;font-weight:800;
+  font-family:inherit;cursor:pointer;box-shadow:0 10px 26px rgba(0,0,0,.35);transition:transform .15s ease,opacity .2s ease}
+.lg-gbtn:hover{transform:translateY(-1px)}
+.lg-gbtn:active{transform:scale(.98)}
+.lg-gbtn[disabled]{opacity:.55;cursor:default;transform:none}
+.lg-gbtn svg{flex:none}
+.lg-alt{margin-top:14px;font-size:12px;color:#8b8fa3;line-height:1.55}
+.lg-alt button{background:none;border:none;color:#c4b5fd;font:inherit;font-weight:700;cursor:pointer;text-decoration:underline}
+.lg-state{display:flex;align-items:center;justify-content:center;gap:10px;font-size:13px;color:#c9cbe0;min-height:46px}
+.spin{width:16px;height:16px;border-radius:50%;border:2px solid rgba(139,92,246,.25);border-top-color:#a78bfa;
+  animation:lgspin .8s linear infinite}
+@keyframes lgspin{to{transform:rotate(360deg)}}
+.lg-err{font-size:12.5px;color:#fda4af;background:rgba(244,63,94,.10);border:1px solid rgba(244,63,94,.25);
+  border-radius:12px;padding:10px 14px;line-height:1.5;margin-bottom:6px;text-align:left}
+.lg-ok{width:64px;height:64px;border-radius:20px;margin:0 auto 14px;display:grid;place-items:center;
+  background:linear-gradient(135deg,#10b981,#34d399);box-shadow:0 14px 34px rgba(16,185,129,.35)}
+.lg-ava{width:64px;height:64px;border-radius:50%;margin:0 auto 12px;display:block;border:2px solid rgba(139,92,246,.5);
+  background:rgba(139,92,246,.15);object-fit:cover}
+.lg-ava-ph{width:64px;height:64px;border-radius:50%;margin:0 auto 12px;display:grid;place-items:center;
+  background:linear-gradient(135deg,#8b5cf6,#6366f1);font-size:24px;font-weight:800}
+.lg-name{font-size:15.5px;font-weight:700;margin-bottom:2px}
+.lg-mail{font-size:12.5px;color:#9aa0b4;margin-bottom:14px;word-break:break-all}
+.lg-foot{margin-top:16px;font-size:11px;color:#6b7086;line-height:1.6}
 
 /* ---------- футер ---------- */
 .foot{font-size:11px;color:#6b7086;letter-spacing:.3px;text-align:center;line-height:1.8}
@@ -98,17 +128,62 @@ a{color:inherit;text-decoration:none}
   body{padding:24px 14px 20px}
   .hero .logo-big{width:68px;height:68px;border-radius:18px}
   .btn{width:100%;justify-content:center}
+  .lg-card{padding:24px 20px 20px}
 }
 </style>
 </head>
 <body>
+
+<!-- ==================== РЕЖИМ ВХОДУ (?k=…) ==================== -->
+<div id="lgWrap" class="lg-wrap hidden">
+  <div class="lg-card" id="lgCard">
+    <!-- крок 1: кнопка -->
+    <div id="lgStepBtn">
+      <div class="lg-mark"><svg width="30" height="30" viewBox="0 0 24 24"><path fill="#fff" d="M13 2 4.5 13.5H11L9.5 22 19 9.5h-6.5z"/></svg></div>
+      <h2>Вхід у FluxHelper</h2>
+      <p class="lg-sub">Натисни кнопку й обери свій <b>Google-акаунт</b> у сплив-вікні —
+      профіль автоматично передасться програмі.</p>
+      <button class="lg-gbtn" id="lgGo">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Увійти через Google
+      </button>
+      <div class="lg-state hidden" id="lgBusy"><span class="spin"></span><span id="lgBusyTxt">Відкриваю Google…</span></div>
+      <div class="lg-err hidden" id="lgErr"></div>
+      <button class="lg-gbtn hidden" id="lgOpen" style="margin-top:10px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Увійти у системному браузері
+      </button>
+      <div class="lg-alt hidden" id="lgAlt"></div>
+      <div class="lg-foot">Вхід захищає Google · програма не бачить твій пароль</div>
+    </div>
+    <!-- крок 2: готово -->
+    <div id="lgStepOk" class="hidden">
+      <div class="lg-ok"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <h2>Готово!</h2>
+      <img id="lgAva" class="lg-ava hidden" alt="" referrerpolicy="no-referrer">
+      <div id="lgAvaPh" class="lg-ava-ph hidden">?</div>
+      <div class="lg-name" id="lgName"></div>
+      <div class="lg-mail" id="lgMail"></div>
+      <p class="lg-sub" style="margin-bottom:0">Профіль передано застосунку.<br><b>Повернись у FluxHelper</b> — акаунт уже увійшов.</p>
+      <div class="lg-foot">Цю сторінку можна закрити</div>
+    </div>
+    <!-- крок 3: без ключа -->
+    <div id="lgStepNoK" class="hidden">
+      <div class="lg-mark"><svg width="30" height="30" viewBox="0 0 24 24"><path fill="#fff" d="M13 2 4.5 13.5H11L9.5 22 19 9.5h-6.5z"/></svg></div>
+      <h2>Вхід — із програми</h2>
+      <p class="lg-sub">Ця сторінка працює разом із застосунком FluxHelper.<br>
+      Відкрий <b>FluxHelper</b> і натисни <b>«Увійти через Google»</b> — програма сама відкриє цю сторінку.</p>
+      <div class="lg-foot">FluxHelper 2.7.8 · автор Blazix</div>
+    </div>
+  </div>
+</div>
 
 <header class="top">
   <div class="brand">
     <span class="mark"><svg width="22" height="22" viewBox="0 0 24 24"><path fill="#fff" d="M13 2 4.5 13.5H11L9.5 22 19 9.5h-6.5z"/></svg></span>
     <b>FluxHelper</b>
   </div>
-  <span class="vpill">2.7.6 · beta</span>
+  <span class="vpill">2.7.8 · beta</span>
 </header>
 
 <section class="hero">
@@ -117,16 +192,16 @@ a{color:inherit;text-decoration:none}
   <p class="sub">Уроки, вчителі, групи й посилання на <b>Zoom</b> — в одному темному вікні.
      Сповіщення про початок уроку, синхронізація між пристроями, вхід через <b>Google</b>.</p>
   <div class="dl" id="dl">
-    <a class="btn btn-g" href="versions/beta/2.7.6/FluxHelper.exe" id="dlWin">
+    <a class="btn btn-g" href="versions/beta/2.7.8/FluxHelper.exe" id="dlWin">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.5l7.5-1v7H3v-6zm0 13v-6h7.5v7L3 18.5zm8.5 1.6v-7.6H21v8.9l-9.5-1.3zm0-15.2L21 3.6v8.9h-9.5V4.9z"/></svg>
       Завантажити для Windows
     </a>
-    <a class="btn btn-o" href="versions/beta/2.7.6/FluxHelper.apk" id="dlAnd">
+    <a class="btn btn-o" href="versions/beta/2.7.8/FluxHelper.apk" id="dlAnd">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M17.6 9.48l1.84-3.18c.16-.31.04-.7-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24a11.43 11.43 0 0 0-4.94 0L9.65 5.67c-.19-.29-.58-.38-.87-.2-.28.18-.37.54-.22.83L10.4 9.48C6.85 10.62 4.24 13.5 4 17h16c-.24-3.5-2.85-6.38-6.4-7.52zM9 14.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm6 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>
       Завантажити для Android
     </a>
   </div>
-  <p class="dl-note">бета-збірка 2.7.6 · встановлення не потрібне (Windows — один exe) · оновлення приходять самі</p>
+  <p class="dl-note">бета-збірка 2.7.8 · встановлення не потрібне (Windows — один exe) · оновлення приходять самі</p>
 </section>
 
 <div class="login-note">
@@ -134,9 +209,9 @@ a{color:inherit;text-decoration:none}
     <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
   </span>
   <div>
-    <b>Вхід — прямо в застосунку</b>
-    <span>натисни «Увійти через Google» у програмі: Google відкриється у вікні програми або в браузері телефона,
-    і жодних паролів програма не бачить. Сторінка сайту для входу більше не потрібна.</span>
+    <b>Вхід через сплив-вікно Google</b>
+    <span>на ПК програма відкриє сайт у браузері — обери акаунт у вікні Google (як у monobank);
+    на телефоні вікно входу з'являється прямо в застосунку. Пароль програма не бачить ніколи.</span>
   </div>
 </div>
 
@@ -165,27 +240,169 @@ a{color:inherit;text-decoration:none}
 
 <section class="whats">
   <span class="chip">що нового</span>
-  <h2>FluxHelper <b>2.7.6</b></h2>
-  <div class="un n"><i>N</i><div><b>Повністю нова система входу Google</b><small>Google відкривається у вікні програми (на телефоні — в браузері), відповідь перехоплює сам застосунок. Жодних сторінок входу, очікувань у хмарі й помилки «redirect_uri_mismatch».</small></div></div>
-  <div class="un n"><i>N</i><div><b>Справжня титульна панель вікна</b><small>панель малює Windows, а не сторінка: логотип, «Розклад | Налаштування», «Згорнути» і «Закрити» видно завжди — більше нічого не зникає після запуску.</small></div></div>
-  <div class="un"><i>+</i><div><b>Акаунт у налаштуваннях</b><small>аватар, синхронізація і вихід — на картці «Акаунт».</small></div></div>
-  <div class="un"><i>+</i><div><b>Оновлення з бета-каналу</b><small>бета-версії тепер приходять автоматично, якщо бета увімкнена.</small></div></div>
-  <div class="un m"><i>−</i><div><b>Виправлено</b><small>зникнення панелі з кнопками, зависання входу, зайві повідомлення про мережу.</small></div></div>
+  <h2>FluxHelper <b>2.7.8</b></h2>
+  <div class="un n"><i>N</i><div><b>Новий вхід через Firebase Google</b><small>сплив-вікно Google зі списком твоїх акаунтів (імена, аватарки) — як у monobank. Жодних помилок «redirect_uri_mismatch»: вхід працює через Firebase (fluxhelper-1).</small></div></div>
+  <div class="un n"><i>N</i><div><b>ПК: вхід у браузері</b><small>програма відкриває сайт fluxhelper.pages.dev у звичайному браузері, профіль повертається автоматично — титульна панель програми нікуди не зникає.</small></div></div>
+  <div class="un n"><i>N</i><div><b>Телефон: вікно входу в застосунку</b><small>вхід відкривається плаваючим вікном поверх програми, вікно Google — поверх нього. Нікуди перемикатися не треба.</small></div></div>
+  <div class="un m"><i>−</i><div><b>Виправлено</b><small>вхід більше не залежить від видалених OAuth-клієнтів Google Cloud — тепер ним керує Firebase.</small></div></div>
 </section>
 
 <footer class="foot">
-  <b>FluxHelper 2.7.6</b> · вхід захищає Google<br>
+  <b>FluxHelper 2.7.8</b> · вхід захищає Google (Firebase)<br>
   автор Blazix · розклад 8-Б класу
 </footer>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script>
 "use strict";
-// у WebView2 застосунку кнопки завантаження не потрібні — програма вже відкрита
+/* ================= FluxHelper 2.7.8 — вітрина + вхід =================
+   Вхід через Firebase Auth (signInWithPopup -> вікно Google зі списком
+   акаунтів). Профіль -> Firebase RTDB stats/login/<k>. Застосунок (ПК або
+   телефон) читає його за ключем k із посилання. */
+var QS = new URLSearchParams(location.search);
+var K = (QS.get('k') || '').replace(/[^A-Za-z0-9_-]/g, '');
+var PL = QS.get('pl') === 'android' ? 'android' : (QS.get('pl') === 'pc' ? 'pc' : '');
+var EMBED = QS.get('embed') === '1' || PL === 'android';
+var RTDB = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app';
+var INAPP = false;   // WebView усередині застосунку (AndroidHost брідж)
+try { INAPP = !!(window.AndroidHost && window.AndroidHost.ver); } catch (e) {}
+try { if (window.chrome && window.chrome.webview) { document.getElementById('dl').classList.add('hidden'); } } catch (e) {}
+
+/* ---------- утиліти інтерфейсу ---------- */
+function byId(x) { return document.getElementById(x); }
+function show(el, on) { if (el) el.classList[on ? 'remove' : 'add']('hidden'); }
+function busy(on, txt) { show(byId('lgBusy'), !!on); if (txt) byId('lgBusyTxt').textContent = txt; var b = byId('lgGo'); if (b) b.disabled = !!on; }
+function err(m) {
+  var e = byId('lgErr'); var ob = byId('lgOpen');
+  if (!m) { show(e, false); show(ob, false); return; }
+  e.textContent = m; show(e, true);
+  /* у застосунку: якщо вікно Google не відкрилось — запропонувати
+     системний браузер за тим самим ключем (профіль все одно прийде
+     в програму через Firebase RTDB) */
+  if (INAPP && ob) show(ob, true);
+}
+function esc(t) { return String(t == null ? '' : t).replace(/"/g, '').replace(/\\/g, ''); }
+
+/* ---------- режим сторінки ---------- */
+if (!K) {
+  show(byId('lgWrap'), true); show(byId('lgCard'), true);
+  show(byId('lgStepBtn'), false); show(byId('lgStepOk'), false); show(byId('lgStepNoK'), true);
+} else {
+  if (EMBED) byId('lgCard').classList.add('embed');
+  show(byId('lgWrap'), true); show(byId('lgCard'), true);
+  show(byId('lgStepBtn'), true); show(byId('lgStepOk'), false); show(byId('lgStepNoK'), false);
+  var scr = document.createElement('style');
+  scr.textContent = '.top,.hero,.login-note,.perks,.whats,.foot{display:none}body{padding:0}';
+  document.head.appendChild(scr);
+}
+
+/* ---------- Firebase Auth ---------- */
+var FB_OK = false, auth = null, provider = null;
 try {
-  if (window.chrome && window.chrome.webview) {
-    document.getElementById('dl').classList.add('hidden');
+  firebase.initializeApp({
+    apiKey: 'AIzaSyCDWpF3QTMEFBN9ravDxH_woKnBpcMRDvI',
+    authDomain: 'fluxhelper-1.firebaseapp.com',
+    projectId: 'fluxhelper-1',
+    databaseURL: RTDB,
+    storageBucket: 'fluxhelper-1.appspot.com'
+  });
+  auth = firebase.auth();
+  provider = new firebase.auth.GoogleAuthProvider();
+  provider.addScope('openid');
+  provider.addScope('email');
+  provider.addScope('profile');
+  provider.setCustomParameters({ prompt: 'select_account' });
+  FB_OK = true;
+} catch (e) { FB_OK = false; }
+
+/* ---------- доставка профілю ---------- */
+function deliver(u) {
+  busy(true, 'Передаємо профіль програмі…');
+  var payload = JSON.stringify({ sub: esc(u.sub), name: esc(u.name), email: esc(u.email), pic: esc(u.pic), ts: Date.now() });
+  fetch(RTDB + '/stats/login/' + K + '.json', { method: 'PUT', body: payload })
+    .then(function (r) { if (!r.ok) throw new Error('rtdb ' + r.status); return r.json(); })
+    .then(function () { finish(u); })
+    .catch(function (e2) {
+      busy(false);
+      err('Не вдалося передати профіль програмі (хмара недоступна). Перевір інтернет і спробуй ще раз.');
+    });
+}
+function finish(u) {
+  busy(false); err('');
+  show(byId('lgStepBtn'), false); show(byId('lgStepOk'), true);
+  byId('lgName').textContent = u.name || 'Користувач';
+  byId('lgMail').textContent = u.email || '';
+  var im = byId('lgAva'), ph = byId('lgAvaPh');
+  if (u.pic) { im.src = u.pic; im.style.display = 'block'; show(im, true); show(ph, false); }
+  else { show(im, false); show(ph, true); ph.textContent = (u.name || '?').charAt(0).toUpperCase(); }
+  /* ПК: миттєве повернення у програму через зареєстрований протокол.
+     Якщо браузер покаже питання — користувач підтвердить; якщо ні, програма
+     все одно забере профіль полінгом за 2–3 секунди. */
+  if (PL === 'pc') { try { location.href = 'fluxhelper://authok?k=' + encodeURIComponent(K); } catch (e) {} }
+  /* Телефон: брідж усередині застосунку (overlay WebView) */
+  if (INAPP) {
+    try { AndroidHost.authDone(JSON.stringify({ sub: u.sub, name: u.name, email: u.email, pic: u.pic })); } catch (e) {}
   }
-} catch (e) {}
+}
+
+/* ---------- вхід ---------- */
+function loginFlow() {
+  if (!K) return;
+  if (!FB_OK) { err('Сервіс входу недоступний. Онови сторінку (F5) і спробуй ще раз.'); return; }
+  busy(true, 'Відкриваю Google…'); err('');
+  auth.signInWithPopup(provider).then(function (res) {
+    profileOf(res && res.user);
+  }).catch(function (e) {
+    var c = String((e && e.code) || '');
+    if (c === 'auth/popup-blocked' || c === 'auth/operation-not-supported-in-this-environment' ||
+        c === 'auth/popup-failed-to-open' || c === 'auth/cancelled-popup-request') {
+      /* вікно заблоковане -> редірект у цьому ж вікні (працює і в WebView) */
+      busy(true, 'Відкриваю Google…');
+      try { auth.signInWithRedirect(provider); return; } catch (e2) {}
+    }
+    busy(false);
+    if (c.indexOf('popup-closed') >= 0 || c === 'auth/user-cancelled') err('Вхід скасовано. Натисни кнопку ще раз.');
+    else if (c === 'auth/unauthorized-domain') err('Домен сайту не додано у Firebase. Повідом автору.');
+    else if (c === 'auth/network-request-failed') err('Немає зв\u2019язку з Google. Перевір інтернет і спробуй ще раз.');
+    else err('Не вдалося увійти (' + (c || 'помилка') + '). Спробуй ще раз.');
+  });
+}
+function profileOf(user) {
+  if (!user) { busy(false); err('Google не повернув профіль. Спробуй ще раз.'); return; }
+  busy(true, 'Читаємо профіль…');
+  var sub = '', name = '', email = '', pic = '';
+  try { if (user.providerData && user.providerData[0]) sub = String(user.providerData[0].uid || ''); } catch (e) {}
+  if (!sub) sub = String(user.uid || '');
+  name = String(user.displayName || '');
+  email = String(user.email || '');
+  pic = String(user.photoURL || '');
+  if (!name && email) name = email.split('@')[0];
+  if (!sub) { busy(false); err('Не вдалося прочитати профіль Google. Спробуй ще раз.'); return; }
+  deliver({ sub: sub, name: name, email: email, pic: pic });
+}
+
+/* редірект-повернення (фолбек після блокування попапа) */
+if (K && FB_OK) {
+  try { auth.getRedirectResult().then(function (res) { if (res && res.user) profileOf(res.user); }).catch(function (e) {
+    var c = String((e && e.code) || '');
+    if (c && c !== 'auth/null-user') err('Не вдалося завершити вхід (' + c + '). Спробуй ще раз.');
+  }); } catch (e) {}
+}
+
+var goBtn = byId('lgGo');
+if (goBtn) goBtn.addEventListener('click', loginFlow);
+var openBtn = byId('lgOpen');
+if (openBtn) openBtn.addEventListener('click', function () {
+  /* вікно Google не відкрилось у застосунку -> системний браузер за тим самим
+     ключем; профіль усе одно потрапить у програму через Firebase RTDB */
+  try { AndroidHost.open(location.href); } catch (e) {}
+});
+
+/* міст для телефону: сайт може сказати застосунку «скасовано»/«закрий вікно» */
+window.__fhSite = {
+  cancel: function () { if (INAPP) { try { AndroidHost.loginCancel(); } catch (e) {} } }
+};
 </script>
 </body>
 </html>
