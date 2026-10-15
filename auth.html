@@ -6,7 +6,7 @@
 <title>FluxHelper — вхід</title>
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#0a0a12">
-<link rel="icon" type="image/svg+xml" href="favicon.svg?v=282">
+<link rel="icon" type="image/svg+xml" href="favicon.svg?v=283">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%}
@@ -157,22 +157,27 @@ h1{font-size:18px;font-weight:800;letter-spacing:.2px}
       'Вітаємо, <b>' + String(prof.name).replace(/[<>&]/g, '') + '</b>!<br>Повернись у FluxHelper — акаунт уже підтверджено.<br>Цю вкладку можна закрити.';
   }
 
-  /* 2.8.2: реєстрація входу в Firebase Authentication проєкту (Users -> Users):
-     ключ пускає лише запити з реферером fluxhelper.pages.dev — саме тому це
+  /* 2.8.3: реєстрація входу в Firebase Authentication проєкту (Users -> Users)
+     + ПОВЕРТАЄМО UID (localId) — саме він відтепер є ключем користувача в D1.
+     Ключ пускає лише запити з реферером fluxhelper.pages.dev — саме тому це
      робиться тут, на сайті. Best effort: не блокує вхід у програму. */
   var FH_FB_KEY = 'AIzaSyCDWpF3QTMEFBN9ravDxH_woKnBpcMRDvI';
   function fbRegister(accessTok) {
-    try {
-      fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=' + FH_FB_KEY, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          postBody: 'access_token=' + encodeURIComponent(accessTok) + '&providerId=google.com',
-          requestUri: 'http://localhost',
-          returnIdpCredential: true,
-          returnSecureToken: true
-        })
-      }).catch(function () {});
-    } catch (e) {}
+    return new Promise(function (res) {
+      try {
+        fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=' + FH_FB_KEY, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            postBody: 'access_token=' + encodeURIComponent(accessTok) + '&providerId=google.com',
+            requestUri: 'http://localhost',
+            returnIdpCredential: true,
+            returnSecureToken: true
+          })
+        }).then(function (r) { return r.json(); }).then(function (j) {
+          res((j && j.localId) ? String(j.localId) : null);
+        }).catch(function () { res(null); });
+      } catch (e) { res(null); }
+    });
   }
 
   function gotToken(resp) {
@@ -181,21 +186,24 @@ h1{font-size:18px;font-weight:800;letter-spacing:.2px}
       setStat(resp && resp.error === 'access_denied' ? 'Вхід скасовано. Спробуй ще раз.' : 'Google не підтвердив вхід. Спробуй ще раз.', 'err');
       return;
     }
-    fbRegister(resp.access_token);
     setStat('<span class="spin"></span>Передаю профіль у програму…');
-    fetch('https://openidconnect.googleapis.com/v1/userinfo', { headers: { Authorization: 'Bearer ' + resp.access_token } })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (u) {
+    Promise.all([
+      fbRegister(resp.access_token),
+      fetch('https://openidconnect.googleapis.com/v1/userinfo', { headers: { Authorization: 'Bearer ' + resp.access_token } })
+        .then(function (r) { return r.ok ? r.json() : null; })
+    ]).then(function (rr) {
+      var fid = rr[0];
+      var u = rr[1];
         if (!u || !u.sub) throw new Error('profile');
         deliver(
-          { sub: String(u.sub), name: String(u.name || ''), email: String(u.email || ''), picture: String(u.picture || '') },
+          { sub: String(u.sub), name: String(u.name || ''), email: String(u.email || ''), picture: String(u.picture || ''), fid: fid || '' },
           finishOk,
           function () {
             busy(false, 'Спробувати ще раз');
             setStat('Не вдалося передати профіль у програму. Перевір, чи програма відкрита, і спробуй ще раз.', 'err');
           }
         );
-      })
+    })
       .catch(function () {
         busy(false, 'Спробувати ще раз');
         setStat('Не вдалося прочитати профіль Google. Спробуй ще раз.', 'err');

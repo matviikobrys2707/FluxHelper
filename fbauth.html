@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>FluxHelper</title>
 <meta name="robots" content="noindex">
-<link rel="icon" type="image/svg+xml" href="favicon.svg?v=282">
+<link rel="icon" type="image/svg+xml" href="favicon.svg?v=283">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%}
@@ -18,12 +18,15 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a12;color:#eef0f
 <span class="t">…</span>
 <script>
 /* ================================================================
-   FluxHelper 2.8.2 — fbauth.html (міст Firebase Authentication)
+   FluxHelper 2.8.3 — fbauth.html (міст Firebase Authentication)
    Програма (ПК/телефон) відкриває цю сторінку в ПРИХОВАНОМУ iframe:
-       https://fluxhelper.pages.dev/fbauth.html#t=<access_token або id_token>
+       https://fluxhelper.pages.dev/fbauth.html#t=<id_token | access_token>
    Тільки запити з реферером fluxhelper.pages.dev пропускає ключ Firebase,
    тому реєстрація користувача в Authentication -> Users робиться ЗВІДСИЛЬ.
-   Результат повертається батьку: postMessage({__fhFb:{ok,...}}, '*').
+   2.8.3: підтримано id_token (JWT від Credential Manager — головний канал
+   нативного входу на телефоні) і access_token (браузерний шлях).
+   Результат повертається батьку: postMessage({__fhFb:{ok, localId, email}}, '*'),
+   де localId — UID користувача у Firebase Authentication (ключ запису в D1).
    ================================================================ */
 (function () {
   'use strict';
@@ -45,10 +48,16 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a12;color:#eef0f
   var el = document.querySelector('.t');
   if (el) el.textContent = 'FluxHelper: підтверджуємо вхід…';
 
+  // JWT (дві крапки) -> id_token; інакше вважаємо це access_token (шлях 2.8.2)
+  var isJwt = (T.match(/\./g) || []).length === 2;
+  var post = isJwt
+    ? 'id_token=' + encodeURIComponent(T) + '&providerId=google.com'
+    : 'access_token=' + encodeURIComponent(T) + '&providerId=google.com';
+
   fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=' + KEY, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      postBody: 'access_token=' + encodeURIComponent(T) + '&providerId=google.com',
+      postBody: post,
       requestUri: 'http://localhost',
       returnIdpCredential: true,
       returnSecureToken: true
