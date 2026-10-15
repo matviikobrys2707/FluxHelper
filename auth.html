@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FluxHelper — вхід</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0a0a12">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:'Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif;
+  background:radial-gradient(120% 90% at 50% 0%,rgba(72,58,148,.5),transparent 55%),radial-gradient(90% 70% at 85% 100%,rgba(99,102,241,.25),transparent 60%),#06060c;
+  color:#eef0f8;display:flex;align-items:center;justify-content:center;padding:22px;
+  -webkit-user-select:none;user-select:none;
+}
+.card{position:relative;width:100%;max-width:372px;text-align:center;
+  background:linear-gradient(180deg,rgba(30,31,52,.98),rgba(19,20,36,.98));
+  border:1px solid rgba(139,92,246,.32);border-radius:24px;padding:34px 26px 24px;
+  box-shadow:0 32px 90px rgba(0,0,0,.66),0 16px 44px rgba(99,102,241,.18);overflow:hidden}
+.card::before{content:'';position:absolute;inset:0;border-radius:24px;padding:1px;
+  background:linear-gradient(135deg,rgba(167,139,250,.55),rgba(129,140,248,.06) 35%,rgba(129,140,248,.06) 65%,rgba(167,139,250,.4));
+  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.glow{position:absolute;top:-70px;left:50%;transform:translateX(-50%);width:240px;height:110px;
+  background:radial-gradient(closest-side,rgba(139,92,246,.4),transparent);pointer-events:none}
+.lg{width:64px;height:64px;margin:0 auto 14px;border-radius:18px;display:grid;place-items:center;
+  background:linear-gradient(135deg,#8b5cf6,#6366f1);box-shadow:0 10px 30px rgba(99,102,241,.5)}
+.lg svg{display:block}
+h1{font-size:19px;font-weight:800;letter-spacing:.2px}
+.sub{font-size:12.5px;color:#9aa0b4;line-height:1.55;margin:7px 4px 0}
+.who{display:none;align-items:center;gap:10px;margin:16px auto 0;padding:9px 14px 9px 10px;max-width:290px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:14px;text-align:left}
+.who.on{display:flex}
+.who .av{width:30px;height:30px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:800;font-size:13px;
+  color:#fff;background:linear-gradient(135deg,#8b5cf6,#6366f1)}
+.who .tt{min-width:0}
+.who .tt b{display:block;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who .tt span{display:block;font-size:10.5px;color:#8b8fa3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gbtn{width:100%;justify-content:center;display:flex;align-items:center;gap:10px;height:46px;margin-top:18px;
+  border-radius:13px;font-size:14px;font-weight:700;font-family:inherit;background:#fff;border:0;color:#1f2937;cursor:pointer;
+  box-shadow:0 10px 26px rgba(0,0,0,.45);transition:transform .12s ease,box-shadow .2s ease}
+.gbtn:hover{transform:translateY(-1px);box-shadow:0 14px 32px rgba(0,0,0,.5)}
+.gbtn:active{transform:scale(.985)}
+.gbtn:disabled{opacity:.6;cursor:default;transform:none}
+.gbtn svg{flex:none}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(196,181,253,.35);border-top-color:#c4b5fd;border-radius:50%;vertical-align:-2px;margin-right:7px;animation:fhsp .8s linear infinite}
+@keyframes fhsp{to{transform:rotate(360deg)}}
+.stat{min-height:20px;font-size:12px;color:#9aa0b4;margin-top:13px;line-height:1.5}
+.stat.err{color:#fda4af}
+.stat.ok{color:#6ee7b7}
+.foot{font-size:10.5px;color:#6b7086;margin-top:14px;letter-spacing:.3px}
+.mini{display:flex;justify-content:center;gap:6px;margin-top:15px;flex-wrap:wrap}
+.mini span{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:#a7abc2;
+  background:rgba(148,163,184,.07);border:1px solid rgba(148,163,184,.13);border-radius:99px;padding:4.5px 10px}
+.done .k{width:56px;height:56px;margin:0 auto 14px;border-radius:18px;display:grid;place-items:center;
+  background:linear-gradient(135deg,#10b981,#059669);font-size:28px;color:#fff;box-shadow:0 10px 30px rgba(16,185,129,.4)}
+.done h1{font-size:18px}
+</style>
+</head>
+<body>
+<div class="card" id="card">
+  <div class="glow"></div>
+
+  <div id="stForm">
+    <div class="lg">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+        <path d="M13.2 2.2 5.6 12.4c-.4.5 0 1.3.6 1.3h4.1l-1.5 7.6c-.1.7.7 1.1 1.2.6l7.6-10.2c.4-.5 0-1.3-.6-1.3h-4.1l1.5-7.6c.1-.7-.7-1.1-1.2-.6z" fill="#fff"/>
+      </svg>
+    </div>
+    <h1>Вхід у FluxHelper</h1>
+    <p class="sub">Підтверди акаунт Google — і програма на комп'ютері або телефоні
+    увійде автоматично. Цю вкладку після входу можна закрити.</p>
+    <div class="who" id="who"><div class="av" id="whoAv">G</div><div class="tt"><b id="whoName">акаунт Google</b><span id="whoMail"></span></div></div>
+    <button class="gbtn" id="go">
+      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.1 5.7l6.2 5.2C40.9 35.6 44 30.3 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
+      <span id="goT">Продовжити</span>
+    </button>
+    <div class="stat" id="stat"></div>
+    <div class="mini"><span>синхронізація</span><span>безпечно</span><span>нічого не губиться</span></div>
+    <div class="foot">FluxHelper · вхід захищає Google</div>
+  </div>
+
+  <div id="stDone" style="display:none" class="done">
+    <div class="k">&#10003;</div>
+    <h1>Все готово!</h1>
+    <p class="sub" id="doneSub">Повернись у FluxHelper — акаунт уже підтверджено.<br>Цю вкладку можна закрити.</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  // параметри з програми: s = одноразовий ключ сесії, p = порт локального
+  // слухача на ПК (необов'язково), h = підказка акаунта (телефон)
+  var h = {}, seg = (location.hash || '').replace(/^#/, '').split('&');
+  for (var i = 0; i < seg.length; ++i) { var kv = seg[i].split('='); if (kv[0]) h[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1] || ''); }
+  var STATE = h.s || '', PORT = h.p || '', HINT = h.h || '';
+  var RTDB = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app';
+  var GIS_CLIENT = '668834523935-k470ldmdv0r9am0720v6lgaatm6rtuf3.apps.googleusercontent.com';
+
+  var go = document.getElementById('go'), goT = document.getElementById('goT'),
+      stat = document.getElementById('stat'), card = document.getElementById('card');
+
+  function setStat(t, cls) { stat.className = 'stat' + (cls ? ' ' + cls : ''); stat.innerHTML = t || ''; }
+  function busy(on, txt) { go.disabled = !!on; goT.textContent = txt; }
+
+  if (!STATE) {
+    // сторінку відкрито безпосередньо (не з програми)
+    document.getElementById('stForm').innerHTML =
+      '<div class="lg"><svg width="36" height="36" viewBox="0 0 24 24"><path d="M13.2 2.2 5.6 12.4c-.4.5 0 1.3.6 1.3h4.1l-1.5 7.6c-.1.7.7 1.1 1.2.6l7.6-10.2c.4-.5 0-1.3-.6-1.3h-4.1l1.5-7.6c.1-.7-.7-1.1-1.2-.6z" fill="#fff"/></svg></div>' +
+      '<h1>Це сторінка входу FluxHelper</h1><p class="sub">Відкрий програму FluxHelper і натисни там ' +
+      '«Увійти через Google» — вона сама приведе тебе на цю сторінку з потрібними параметрами.</p>';
+    return;
+  }
+
+  if (HINT && HINT.indexOf('@') > 0) {
+    var w = document.getElementById('who');
+    document.getElementById('whoMail').textContent = HINT;
+    document.getElementById('whoName').textContent = HINT.split('@')[0];
+    document.getElementById('whoAv').textContent = HINT.charAt(0).toUpperCase();
+    w.classList.add('on');
+    goT.textContent = 'Продовжити як ' + HINT.split('@')[0];
+  } else {
+    goT.textContent = 'Увійти через Google';
+  }
+
+  function deliver(prof, ok, fail) {
+    var sent = false, left = 2;
+    function fin(good) { left--; if (good) sent = true; if (left <= 0) (sent ? ok : fail)(); }
+    // канал 1 (ПК): локальний слухач програми — миттєво
+    if (PORT) {
+      try {
+        fetch('http://127.0.0.1:' + PORT + '/cb?state=' + encodeURIComponent(STATE) + '&d=' + encodeURIComponent(JSON.stringify(prof)), { mode: 'cors', cache: 'no-store' })
+          .then(function (r) { fin(!!r && r.ok); })
+          .catch(function () { fin(false); });
+      } catch (e) { fin(false); }
+    } else fin(false);
+    // канал 2 (усі платформи): Firebase — програма опитує цей ключ
+    try {
+      fetch(RTDB + '/update/auth_cb/' + encodeURIComponent(STATE) + '.json', {
+        method: 'PUT', cache: 'no-store',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ d: prof, t: Date.now() })
+      }).then(function (r) { fin(!!r && r.ok); }).catch(function () { fin(false); });
+    } catch (e) { fin(false); }
+    // якщо loopback підтвердив швидко — не чекаємо Firebase
+    setTimeout(function () { if (sent) { left = -1; ok(); } }, 900);
+  }
+
+  function finishOk(prof) {
+    busy(false, 'Готово');
+    document.getElementById('stForm').style.display = 'none';
+    var d = document.getElementById('stDone'); d.style.display = '';
+    if (prof && prof.name) document.getElementById('doneSub').innerHTML =
+      'Вітаємо, <b>' + String(prof.name).replace(/[<>&]/g, '') + '</b>!<br>Повернись у FluxHelper — акаунт уже підтверджено.<br>Цю вкладку можна закрити.';
+  }
+
+  function gotToken(resp) {
+    if (!resp || !resp.access_token) {
+      busy(false, 'Спробувати ще раз');
+      setStat(resp && resp.error === 'access_denied' ? 'Вхід скасовано. Спробуй ще раз.' : 'Google не підтвердив вхід. Спробуй ще раз.', 'err');
+      return;
+    }
+    setStat('<span class="spin"></span>Передаю профіль у програму…');
+    fetch('https://openidconnect.googleapis.com/v1/userinfo', { headers: { Authorization: 'Bearer ' + resp.access_token } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (u) {
+        if (!u || !u.sub) throw new Error('profile');
+        deliver(
+          { sub: String(u.sub), name: String(u.name || ''), email: String(u.email || ''), picture: String(u.picture || '') },
+          finishOk,
+          function () {
+            busy(false, 'Спробувати ще раз');
+            setStat('Не вдалося передати профіль у програму. Перевір, чи програма відкрита, і спробуй ще раз.', 'err');
+          }
+        );
+      })
+      .catch(function () {
+        busy(false, 'Спробувати ще раз');
+        setStat('Не вдалося прочитати профіль Google. Спробуй ще раз.', 'err');
+      });
+  }
+
+  var tc = null;
+  go.onclick = function () {
+    if (!window.google || !google.accounts || !google.accounts.oauth2) {
+      setStat('<span class="spin"></span>Завантажую Google…');
+      setTimeout(function () { go.onclick(); }, 600);
+      return;
+    }
+    busy(true, 'Зачекай…'); setStat('');
+    try {
+      if (!tc) {
+        tc = google.accounts.oauth2.initTokenClient({
+          client_id: GIS_CLIENT,
+          scope: 'openid email profile',
+          prompt: '',
+          callback: gotToken
+        });
+      }
+      tc.requestAccessToken({ hint: (HINT && HINT.indexOf('@') > 0) ? HINT : undefined });
+    } catch (e) {
+      busy(false, 'Спробувати ще раз');
+      setStat('Не вдалося відкрити вікно Google. Дозволь спливні вікна і спробуй ще раз.', 'err');
+    }
+  };
+
+  // самі підтягуємо бібліотеку Google (показуємо стан, якщо блокується)
+  setStat('<span class="spin"></span>Готуємо вхід…');
+  var s = document.createElement('script');
+  s.src = 'https://accounts.google.com/gsi/client';
+  s.async = true; s.defer = true;
+  s.onload = function () { setStat(''); };
+  s.onerror = function () { setStat('Не вдалося завантажити Google Sign-In. Перевір інтернет.', 'err'); };
+  document.head.appendChild(s);
+})();
+</script>
+</body>
+</html>
