@@ -5,47 +5,53 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>FluxHelper — вхід</title>
 <meta name="robots" content="noindex">
-<meta name="theme-color" content="#0a0a12">
+<meta name="theme-color" content="#06060c">
 <link rel="icon" type="image/svg+xml" href="favicon.svg?v=290">
 <style>
+/* ================================================================
+   2.9.3 — сторінку входу перемальовано:
+   - виправлено зламаний селектор «html, .lstat» (через нього вся
+     верстка розповзалась: html отримав display:inline-flex);
+   - іконка застосунку — велика, САМОСТІЙНА (без фіолетової плитки
+     і рамки навколо неї);
+   - картка без подвійного градієнтного обведення.
+   Уся логіка входу не змінена.
+   ================================================================ */
 *{margin:0;padding:0;box-sizing:border-box}
-html,  .lstat{display:inline-flex;align-items:center;gap:7px;margin:0 auto 14px;padding:7px 14px;border-radius:999px;font-size:13px;font-weight:600;letter-spacing:.2px}
-  .lstat i{width:8px;height:8px;border-radius:50%;display:block}
-  .lstat.ok{background:rgba(34,197,94,.14);color:#4ade80;box-shadow:inset 0 0 0 1px rgba(34,197,94,.35)}
-  .lstat.ok i{background:#4ade80;box-shadow:0 0 10px rgba(74,222,128,.9)}
-  .lstat.bad{background:rgba(239,68,68,.13);color:#f87171;box-shadow:inset 0 0 0 1px rgba(239,68,68,.35)}
-  .lstat.bad i{background:#f87171;box-shadow:0 0 10px rgba(248,113,113,.9)}
-body{height:100%}
+html,body{height:100%}
 body{
   font-family:'Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif;
   background:radial-gradient(120% 90% at 50% 0%,rgba(72,58,148,.5),transparent 55%),radial-gradient(90% 70% at 85% 100%,rgba(99,102,241,.25),transparent 60%),#06060c;
   color:#eef0f8;display:flex;align-items:center;justify-content:center;padding:22px;
   -webkit-user-select:none;user-select:none;
 }
-.card{position:relative;width:100%;max-width:372px;text-align:center;
-  background:linear-gradient(180deg,rgba(30,31,52,.98),rgba(19,20,36,.98));
-  border:1px solid rgba(139,92,246,.32);border-radius:24px;padding:24px 24px 16px;
-  box-shadow:0 32px 90px rgba(0,0,0,.66),0 16px 44px rgba(99,102,241,.18);overflow:hidden}
-.card::before{content:'';position:absolute;inset:0;border-radius:24px;padding:1px;
-  background:linear-gradient(135deg,rgba(167,139,250,.55),rgba(129,140,248,.06) 35%,rgba(129,140,248,.06) 65%,rgba(167,139,250,.4));
-  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
-.glow{position:absolute;top:-70px;left:50%;transform:translateX(-50%);width:240px;height:110px;
-  background:radial-gradient(closest-side,rgba(139,92,246,.4),transparent);pointer-events:none}
-.lg{width:54px;height:54px;margin:0 auto 10px;border-radius:15px;display:grid;place-items:center;
-  background:linear-gradient(135deg,#8b5cf6,#6366f1);box-shadow:0 10px 30px rgba(99,102,241,.5)}
-.lg svg{display:block}
-h1{font-size:18px;font-weight:800;letter-spacing:.2px}
-.sub{font-size:12px;color:#9aa0b4;line-height:1.5;margin:6px 2px 0}
-.who{display:none;align-items:center;gap:10px;margin:16px auto 0;padding:9px 14px 9px 10px;max-width:290px;
+.card{position:relative;width:100%;max-width:400px;text-align:center;
+  background:linear-gradient(180deg,rgba(30,31,52,.97),rgba(19,20,36,.97));
+  border:1px solid rgba(139,92,246,.28);border-radius:26px;padding:30px 28px 20px;
+  box-shadow:0 32px 90px rgba(0,0,0,.66),0 16px 44px rgba(99,102,241,.16);overflow:hidden}
+.glow{position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:260px;height:120px;
+  background:radial-gradient(closest-side,rgba(139,92,246,.35),transparent);pointer-events:none}
+.lstat{display:inline-flex;align-items:center;gap:7px;margin:0 auto 16px;padding:7px 14px;border-radius:999px;font-size:13px;font-weight:600;letter-spacing:.2px}
+.lstat i{width:8px;height:8px;border-radius:50%;display:block}
+.lstat.ok{background:rgba(34,197,94,.14);color:#4ade80;box-shadow:inset 0 0 0 1px rgba(34,197,94,.35)}
+.lstat.ok i{background:#4ade80;box-shadow:0 0 10px rgba(74,222,128,.9)}
+.lstat.bad{background:rgba(239,68,68,.13);color:#f87171;box-shadow:inset 0 0 0 1px rgba(239,68,68,.35)}
+.lstat.bad i{background:#f87171;box-shadow:0 0 10px rgba(248,113,113,.9)}
+.lg{margin:0 auto 14px;width:78px;height:78px;border-radius:22px;overflow:hidden;
+  box-shadow:0 14px 38px rgba(0,0,0,.55),0 6px 20px rgba(99,102,241,.35)}
+.lg img{width:78px;height:78px;display:block;border-radius:22px}
+h1{font-size:20px;font-weight:800;letter-spacing:.2px}
+.sub{font-size:13px;color:#9aa3b8;line-height:1.55;margin:8px 4px 0}
+.who{display:none;align-items:center;gap:10px;margin:16px auto 0;padding:9px 14px 9px 10px;max-width:300px;
   background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:14px;text-align:left}
 .who.on{display:flex}
-.who .av{width:30px;height:30px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:800;font-size:13px;
+.who .av{width:32px;height:32px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:800;font-size:14px;
   color:#fff;background:linear-gradient(135deg,#8b5cf6,#6366f1)}
 .who .tt{min-width:0}
-.who .tt b{display:block;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.who .tt span{display:block;font-size:10.5px;color:#8b8fa3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.gbtn{width:100%;justify-content:center;display:flex;align-items:center;gap:10px;height:44px;margin-top:14px;
-  border-radius:13px;font-size:14px;font-weight:700;font-family:inherit;background:#fff;border:0;color:#1f2937;cursor:pointer;
+.who .tt b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who .tt span{display:block;font-size:11px;color:#8b8fa3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gbtn{width:100%;justify-content:center;display:flex;align-items:center;gap:10px;height:48px;margin-top:16px;
+  border-radius:14px;font-size:14.5px;font-weight:700;font-family:inherit;background:#fff;border:0;color:#1f2937;cursor:pointer;
   box-shadow:0 10px 26px rgba(0,0,0,.45);transition:transform .12s ease,box-shadow .2s ease}
 .gbtn:hover{transform:translateY(-1px);box-shadow:0 14px 32px rgba(0,0,0,.5)}
 .gbtn:active{transform:scale(.985)}
@@ -53,16 +59,16 @@ h1{font-size:18px;font-weight:800;letter-spacing:.2px}
 .gbtn svg{flex:none}
 .spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(196,181,253,.35);border-top-color:#c4b5fd;border-radius:50%;vertical-align:-2px;margin-right:7px;animation:fhsp .8s linear infinite}
 @keyframes fhsp{to{transform:rotate(360deg)}}
-.stat{min-height:17px;font-size:12px;color:#9aa0b4;margin-top:10px;line-height:1.45}
+.stat{min-height:18px;font-size:12.5px;color:#9aa3b8;margin-top:11px;line-height:1.45}
 .stat.err{color:#fda4af}
 .stat.ok{color:#6ee7b7}
-.foot{font-size:10.5px;color:#6b7086;margin-top:10px;letter-spacing:.3px}
-.mini{display:flex;justify-content:center;gap:6px;margin-top:11px;flex-wrap:wrap}
-.mini span{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:#a7abc2;
-  background:rgba(148,163,184,.07);border:1px solid rgba(148,163,184,.13);border-radius:99px;padding:4.5px 10px}
-.done .k{width:56px;height:56px;margin:0 auto 14px;border-radius:18px;display:grid;place-items:center;
-  background:linear-gradient(135deg,#10b981,#059669);font-size:28px;color:#fff;box-shadow:0 10px 30px rgba(16,185,129,.4)}
-.done h1{font-size:18px}
+.foot{font-size:11px;color:#6b7086;margin-top:12px;letter-spacing:.3px}
+.mini{display:flex;justify-content:center;gap:6px;margin-top:12px;flex-wrap:wrap}
+.mini span{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:#a7abc2;
+  background:rgba(148,163,184,.07);border:1px solid rgba(148,163,184,.13);border-radius:99px;padding:5px 11px}
+.done .k{width:64px;height:64px;margin:0 auto 16px;border-radius:20px;display:grid;place-items:center;
+  background:linear-gradient(135deg,#10b981,#059669);font-size:32px;color:#fff;box-shadow:0 10px 30px rgba(16,185,129,.4)}
+.done h1{font-size:20px}
 </style>
 </head>
 <body>
@@ -71,7 +77,7 @@ h1{font-size:18px;font-weight:800;letter-spacing:.2px}
 
   <div id="stForm">
     <div class="lg">
-      <img src="icon-192.png" alt="FluxHelper" width="38" height="38" style="border-radius:10px;display:block">
+      <img src="icon-192.png" alt="FluxHelper">
     </div>
     <h1>Вхід у FluxHelper</h1>
     <p class="sub">Підтверди акаунт Google — і програма на комп'ютері або телефоні
@@ -120,7 +126,7 @@ h1{font-size:18px;font-weight:800;letter-spacing:.2px}
   if (!STATE) {
     // сторінку відкрито безпосередньо (не з програми)
     document.getElementById('stForm').innerHTML =
-      '<div class="lg"><img src="icon-192.png" alt="FluxHelper" width="38" height="38" style="border-radius:10px;display:block"></div>' +
+      '<div class="lg"><img src="icon-192.png" alt="FluxHelper"></div>' +
       '<h1>Посилання неактивне</h1>' +
       '<p class="sub">Це одноразове посилання входу: воно створюється програмою FluxHelper ' +
       'лише в момент входу і працює один раз.<br><br>' +
