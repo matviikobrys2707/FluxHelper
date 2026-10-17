@@ -9,7 +9,13 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg?v=290">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%}
+html,  .lstat{display:inline-flex;align-items:center;gap:7px;margin:0 auto 14px;padding:7px 14px;border-radius:999px;font-size:13px;font-weight:600;letter-spacing:.2px}
+  .lstat i{width:8px;height:8px;border-radius:50%;display:block}
+  .lstat.ok{background:rgba(34,197,94,.14);color:#4ade80;box-shadow:inset 0 0 0 1px rgba(34,197,94,.35)}
+  .lstat.ok i{background:#4ade80;box-shadow:0 0 10px rgba(74,222,128,.9)}
+  .lstat.bad{background:rgba(239,68,68,.13);color:#f87171;box-shadow:inset 0 0 0 1px rgba(239,68,68,.35)}
+  .lstat.bad i{background:#f87171;box-shadow:0 0 10px rgba(248,113,113,.9)}
+body{height:100%}
 body{
   font-family:'Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif;
   background:radial-gradient(120% 90% at 50% 0%,rgba(72,58,148,.5),transparent 55%),radial-gradient(90% 70% at 85% 100%,rgba(99,102,241,.25),transparent 60%),#06060c;
@@ -65,9 +71,7 @@ h1{font-size:18px;font-weight:800;letter-spacing:.2px}
 
   <div id="stForm">
     <div class="lg">
-      <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-        <path d="M13.2 2.2 5.6 12.4c-.4.5 0 1.3.6 1.3h4.1l-1.5 7.6c-.1.7.7 1.1 1.2.6l7.6-10.2c.4-.5 0-1.3-.6-1.3h-4.1l1.5-7.6c.1-.7-.7-1.1-1.2-.6z" fill="#fff"/>
-      </svg>
+      <img src="icon-192.png" alt="FluxHelper" width="38" height="38" style="border-radius:10px;display:block">
     </div>
     <h1>Вхід у FluxHelper</h1>
     <p class="sub">Підтверди акаунт Google — і програма на комп'ютері або телефоні
@@ -100,6 +104,13 @@ h1{font-size:18px;font-weight:800;letter-spacing:.2px}
   var RTDB = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app';
   var GIS_CLIENT = '668834523935-k470ldmdv0r9am0720v6lgaatm6rtuf3.apps.googleusercontent.com';
 
+  var LSTAT = document.createElement('div');
+  LSTAT.className = 'lstat ' + (STATE ? 'ok' : 'bad');
+  LSTAT.innerHTML = '<i></i>' + (STATE
+    ? 'Посилання активне \u2014 підтверди акаунт'
+    : 'Посилання неактивне або недійсне');
+  var CARD = document.getElementById('card');
+  if (CARD) CARD.insertBefore(LSTAT, CARD.firstChild);
   var go = document.getElementById('go'), goT = document.getElementById('goT'),
       stat = document.getElementById('stat'), card = document.getElementById('card');
 
@@ -109,9 +120,12 @@ h1{font-size:18px;font-weight:800;letter-spacing:.2px}
   if (!STATE) {
     // сторінку відкрито безпосередньо (не з програми)
     document.getElementById('stForm').innerHTML =
-      '<div class="lg"><svg width="36" height="36" viewBox="0 0 24 24"><path d="M13.2 2.2 5.6 12.4c-.4.5 0 1.3.6 1.3h4.1l-1.5 7.6c-.1.7.7 1.1 1.2.6l7.6-10.2c.4-.5 0-1.3-.6-1.3h-4.1l1.5-7.6c.1-.7-.7-1.1-1.2-.6z" fill="#fff"/></svg></div>' +
-      '<h1>Це сторінка входу FluxHelper</h1><p class="sub">Відкрий програму FluxHelper і натисни там ' +
-      '«Увійти через Google» — вона сама приведе тебе на цю сторінку з потрібними параметрами.</p>';
+      '<div class="lg"><img src="icon-192.png" alt="FluxHelper" width="38" height="38" style="border-radius:10px;display:block"></div>' +
+      '<h1>Посилання неактивне</h1>' +
+      '<p class="sub">Це одноразове посилання входу: воно створюється програмою FluxHelper ' +
+      'лише в момент входу і працює один раз.<br><br>' +
+      '<b>Як увійти:</b> відкрий FluxHelper на комп&rsquo;ютері або телефоні й натисни ' +
+      '«Увійти через Google» — програма сама відкриє свіже активне посилання.</p>';
     return;
   }
 
