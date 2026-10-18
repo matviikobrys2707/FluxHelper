@@ -223,19 +223,18 @@ a{color:inherit;text-decoration:none}
   <p class="sub">Уроки, вчителі, групи й посилання на <b>Zoom</b> — в одному темному вікні.
      Сповіщення про початок уроку, синхронізація між пристроями, вхід через <b>Google</b>.</p>
   <div class="dl" id="dl">
-    <!-- 3.2.1: актуальна версія з виправленнями («немає інтернету» на ПК,
-         «немає зв'язку з базою» на телефоні) + нова адмін-панель.
-         Стабільний канал (release) лишається на 2.4.2. -->
-    <a class="btn btn-g" href="versions/beta/3.2.1/FluxHelper.exe" id="dlWin">
+    <!-- 3.2.2: фікс запуску на ПК («libc++-.dll not found» — тепер статична
+         лінковка). Стабільний канал (release) лишається на 2.4.2. -->
+    <a class="btn btn-g" href="versions/beta/3.2.2/FluxHelper.exe" id="dlWin">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.5l7.5-1v7H3v-6zm0 13v-6h7.5v7L3 18.5zm8.5 1.6v-7.6H21v8.9l-9.5-1.3zm0-15.2L21 3.6v8.9h-9.5V4.9z"/></svg>
       Завантажити для Windows
     </a>
-    <a class="btn btn-o" href="versions/beta/3.2.1/FluxHelper.apk" id="dlAnd">
+    <a class="btn btn-o" href="versions/beta/3.2.2/FluxHelper.apk" id="dlAnd">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M17.6 9.48l1.84-3.18c.16-.31.04-.7-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24a11.43 11.43 0 0 0-4.94 0L9.65 5.67c-.19-.29-.58-.38-.87-.2-.28.18-.37.54-.22.83L10.4 9.48C6.85 10.62 4.24 13.5 4 17h16c-.24-3.5-2.85-6.38-6.4-7.52zM9 14.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm6 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>
       Завантажити для Android
     </a>
   </div>
-  <p class="dl-note">версія 3.2.1 з GitHub · встановлення не потрібне (Windows — один exe) · Android: видаліть стару версію один раз, далі оновлення приходитимуть самі</p>
+  <p class="dl-note">версія 3.2.2 з GitHub · встановлення не потрібне (Windows — один exe) · оновлення приходять самі (ПК — автоматично, Android — за запитом)</p>
 </section>
 
 <div class="login-note reveal" style="animation-delay:.14s">
@@ -274,15 +273,14 @@ a{color:inherit;text-decoration:none}
 
 <section class="whats reveal" style="animation-delay:.26s">
   <span class="chip">що нового</span>
-  <h2>FluxHelper <b>3.2.1</b> — повернення до надійної архітектури</h2>
-  <div class="un n"><i>N</i><div><b>ПК: виправлено «немає інтернет-з'єднання»</b><small>застосунок більше не залежить від зламаної системної перевірки — розклад і база завантажуються завжди, коли інтернет є (архітектура 2.8.0).</small></div></div>
-  <div class="un n"><i>N</i><div><b>Телефон: виправлено «немає зв'язку з базою»</b><small>іконки, вчителі й розклад знову тягнуться з бази напряму; збереження в адмін-панелі працює навіть якщо нативний канал відмовив.</small></div></div>
-  <div class="un n"><i>N</i><div><b>Нова адмін-панель</b><small>окрема рамка «Редагування розкладу» (Розклад / Zoom і вчителі / Іконки), рамка «Тижні» з великим календарем, нові кнопки й підтвердження видалення уроку.</small></div></div>
-  <div class="un"><i>+</i><div><b>ПК: файли інтерфейсу в %APPDATA%\FluxHelper\UI</b><small>як у перевірених версіях 2.8.0 — HTML/CSS/JS розпаковуються при кожному запуску свіжими, а вся логіка лишається в коді програми.</small></div></div>
+  <h2>FluxHelper <b>3.2.2</b> — фікс запуску на ПК</h2>
+  <div class="un n"><i>N</i><div><b>ПК: виправлено «libc++-.dll / libunwind.dll not found»</b><small>через цю помилку 3.2.1 взагалі не запускався на Windows — тепер обидві бібліотеки вбудовано в exe (статична лінковка), потрібні лише системні DLL Windows 10/11.</small></div></div>
+  <div class="un"><i>+</i><div><b>Телефон: оновлення без перевстановлення</b><small>функціональних змін на Android немає (фікс бази з 3.2.1), а ключ підпису той самий — 3.2.2 стає простою заміною поверх 3.2.1.</small></div></div>
+  <div class="un"><i>+</i><div><b>Усе з 3.2.1 на місці</b><small>адмін-панель «Редагування розкладу», рамка «Тижні» з великим календарем, підтвердження видалення уроку, прямий доступ до бази (архітектура 2.8.0).</small></div></div>
 </section>
 
 <footer class="foot">
-  <b>FluxHelper 3.2.1</b> · вхід захищає Google (Firebase)<br>
+  <b>FluxHelper 3.2.2</b> · вхід захищає Google (Firebase)<br>
   автор Blazix · розклад 8-Б класу
 </footer>
 </div>
