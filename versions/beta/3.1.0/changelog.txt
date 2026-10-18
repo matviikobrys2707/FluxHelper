@@ -79,3 +79,41 @@ textContent) — інтерфейс не сіпається. Повний пер
   * SQL-файрвол у Cloud.java (той самий захист, що на ПК);
   * pollSchedule 30 с + SSE — менше трафіку й розряду батареї;
   * усі 7 тем у налаштуваннях.
+
+3.1.0 FINAL — завершення безпеки (до реліз-кандидата)
+=========================================================
+* CFQ COMMAND WHITELIST: сирий SQL з JS ВИДАЛЕНО як клас — клієнт шле
+  лише {"cmd","args"} з закритого списку (bootstrap/device_ping/sync_push/
+  settings_push/sync_flag/get_role/sync_pull/sts_get/settings_get/
+  user_exists/find_email/account_merge); SQL жорстко зашитий у C++/Java
+  з параметризацією '?'. Міграції схеми (CREATE/ALTER/DROP) виконує ЛИШЕ
+  нативний хост при старті (D1Bootstrap) — ліковано schema-drift (beta).
+* BOOT TOKEN: кожне повідомлення моста ПК несе одноразовий токен сесії
+  (RandHex(16), живе в ОЗУ); сторінка, відкрита поза застосунком,
+  моста не бачить.
+* NATIVE ZOOM: посилання з паролями (?pwd=...) видалені з ui.js/
+  ui_desktop_js.h/ui_desktop_data.h — живуть ТІЛЬКИ в XOR-обфускованих
+  масивах у C++/Java; клік «Приєднатися» шле fh:zoomjoin|<предмет>|<група>
+  (ПК) / AndroidHost.zoom (телефон) ПІСЛЯ перевірки входу. URL у JS
+  не з'являється НІКОЛИ; у fbget-відповідях НЕ-адмінам значення link/links
+  замінені на маркер "#z#". Копіювання уроку більше не містить посилання.
+* STRICT TLS: видалено SECURITY_FLAG_IGNORE_* у WinHTTP та WinINet —
+  MITM-сніффери (Fiddler/Charles) більше не можуть перехопити токен бази.
+* Токен D1: однобайтове XOR 0x5A -> 8-байтовий ключ (C++) / 7-байтовий
+  (Java); буфери витираються після формування заголовка (SecureZeroMemory).
+* ГЕЙТ ЗАПИСУ RTDB: schedule/subjects/teachers відкриті лише ролі
+  admin/developer, підтвердженій НАТИВНО (D1 sessions JOIN на ПК;
+  приватні fh_auth prefs + кеш ролі на Android — JS роль довести не може).
+  Записи додають auth=<Firebase ID token> (нативний signInWithIdp, <50 хв).
+* ФІКС 3.0.0: подвійний .json у fh:fbput/fh:fbdel писав розклад у
+  смітникові вузли «*.json.json» — протокол вирівняно (суфікс додає хост).
+* Мережа: SSE/EventSource і прямі fetch(DB_URL) із JS видалені; читання
+  лише через нативні мости (fh:fbget / AndroidHost.fbGet). Поллінг 30 с
+  (видимий екран), пауза у фоні, doFetch 45 с — страховка.
+* SKELETON/SHIMMER при завантаженні розкладу + анімація адмін-модалки;
+  logo.png — один файл замість 4 дублікатів base64 (-500 КБ розпухання).
+* Оновлення ПК: SHA-256 контрольна сума завантаженого exe (з вузла /update
+  або сайдкара <файл>.sha256) + обов'язкова PE-магія MZ — битий бинарник
+  не встановлюється НІКОЛИ.
+* Android 14+: foregroundServiceType="specialUse" + PROPERTY_SPECIAL_USE
+  (ліковано MissingForegroundServiceTypeException у LoginKeepService).
