@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>FluxHelper — Авторизація</title>
 <meta name="robots" content="noindex">
-<meta name="theme-color" content="#06060c">
+<meta name="theme-color" content="#050508">
 <link rel="icon" type="image/svg+xml" href="favicon.svg?v=290">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=290">
 <link rel="shortcut icon" href="favicon.ico?v=290">
@@ -13,184 +13,139 @@
 <link rel="manifest" href="manifest.json">
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-html {
-  min-height: 100%;
-  background: #06060c;
-}
-body {
-  min-height: 100vh;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  background:
-    radial-gradient(120% 90% at 50% 0%, rgba(88, 68, 180, 0.45), transparent 60%),
-    radial-gradient(90% 70% at 85% 100%, rgba(99, 102, 241, 0.22), transparent 60%),
-    #06060c;
-  color: #eef0f8;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px 16px;
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+  font-family: 'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -webkit-user-select: none;
   user-select: none;
+  background:
+    radial-gradient(540px 360px at 14% -10%, rgba(124,58,237,.17), transparent 68%),
+    radial-gradient(580px 400px at 88% 114%, rgba(79,70,229,.14), transparent 66%),
+    #050508;
+  color: #f4f4f8;
 }
 
-/* Фонове атмосферне світіння */
-.bg-glow {
-  position: fixed;
-  border-radius: 50%;
-  filter: blur(100px);
-  opacity: 0.4;
-  pointer-events: none;
-  z-index: 0;
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 30px 20px;
 }
-.bg-glow.g1 { width: 380px; height: 380px; background: rgba(139, 92, 246, 0.25); top: -100px; left: -80px; }
-.bg-glow.g2 { width: 420px; height: 420px; background: rgba(99, 102, 241, 0.2); bottom: -120px; right: -80px; }
 
-/* Картка-вікно у стилі застосунку */
-.app-window {
+/* Центральний контейнер — точна копія екранного #agate з програми */
+.gate-card {
   position: relative;
-  z-index: 1;
   width: 100%;
-  max-width: 410px;
-  background: linear-gradient(180deg, rgba(25, 26, 45, 0.96), rgba(15, 16, 28, 0.98));
-  border: 1px solid rgba(139, 92, 246, 0.32);
-  border-radius: 24px;
-  box-shadow:
-    0 32px 90px rgba(0, 0, 0, 0.75),
-    0 0 0 1px rgba(139, 92, 246, 0.15),
-    0 12px 40px rgba(99, 102, 241, 0.18);
-  overflow: hidden;
-  animation: winIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 10px 0;
+  animation: agFade .45s ease both;
 }
 
-@keyframes winIn {
-  from { opacity: 0; transform: translateY(18px) scale(0.97); filter: blur(6px); }
+@keyframes agFade { from { opacity: 0; } to { opacity: 1; } }
+
+.ag-glow {
+  position: absolute;
+  top: calc(50% - 240px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 320px;
+  height: 180px;
+  background: radial-gradient(closest-side, rgba(139,92,246,.35), transparent);
+  pointer-events: none;
+  animation: agGlow 5.5s ease-in-out infinite alternate;
+}
+@keyframes agGlow {
+  from { opacity: .5; transform: translateX(-50%) scale(1); }
+  to { opacity: 1; transform: translateX(-50%) scale(1.2); }
+}
+
+@keyframes agIn {
+  from { opacity: 0; transform: translateY(16px) scale(.97); filter: blur(5px); }
   to { opacity: 1; transform: none; filter: none; }
 }
 
-/* Імітація заголовка вікна програми */
-.win-tbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 18px 10px;
-  background: rgba(255, 255, 255, 0.03);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-.win-tbar-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.win-logo-mini {
-  width: 18px;
-  height: 18px;
-  border-radius: 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #8b5cf6, #6366f1);
-  overflow: hidden;
-}
-.win-logo-mini img { width: 100%; height: 100%; display: block; }
-.win-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: #9aa0b4;
-  letter-spacing: 0.3px;
-}
-.win-dots {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.win-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
-}
-
-/* Внутрішній вміст картки */
-.win-body {
-  padding: 26px 24px 22px;
-  text-align: center;
-}
-
-/* Статус-пігулка */
-.lstat {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  margin: 0 auto 18px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.2px;
-}
-.lstat i {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  display: block;
-}
-.lstat.ok {
-  background: rgba(34, 197, 94, 0.12);
-  color: #4ade80;
-  border: 1px solid rgba(34, 197, 94, 0.3);
-}
-.lstat.ok i {
-  background: #4ade80;
-  box-shadow: 0 0 8px rgba(74, 222, 128, 0.9);
-}
-.lstat.bad {
-  background: rgba(239, 68, 68, 0.12);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.3);
-}
-.lstat.bad i {
-  background: #f87171;
-  box-shadow: 0 0 8px rgba(248, 113, 113, 0.9);
-}
-
-/* Головний логотип */
-.app-logo {
-  width: 62px;
-  height: 62px;
-  margin: 0 auto 14px;
-  border-radius: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #8b5cf6, #6366f1);
-  box-shadow: 0 12px 32px rgba(99, 102, 241, 0.45);
+.us-logo {
   position: relative;
-  overflow: hidden;
+  z-index: 1;
+  animation: agIn .65s cubic-bezier(.16,1,.3,1) both;
 }
-.app-logo img {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+.us-logo img {
+  width: 84px;
+  height: 84px;
+  border-radius: 20px;
   display: block;
+  margin: 0 auto 10px;
+  box-shadow: 0 18px 44px rgba(0,0,0,.5), 0 0 0 1px rgba(148,163,184,.14) inset;
+  filter: drop-shadow(0 10px 26px rgba(99,102,241,.45));
 }
 
-h1 {
+.us-chip {
+  display: inline-block;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: #c4b5fd;
+  background: rgba(139,92,246,.16);
+  border: 1px solid rgba(139,92,246,.35);
+  border-radius: 99px;
+  padding: 3px 10px;
+  margin-bottom: 5px;
+  animation: agIn .65s cubic-bezier(.16,1,.3,1) .09s both;
+}
+
+h2 {
   font-size: 20px;
   font-weight: 800;
-  letter-spacing: 0.2px;
-  margin-bottom: 8px;
   color: #ffffff;
+  margin: 12px 0 7px;
+  letter-spacing: .2px;
+  text-align: center;
+  animation: agIn .65s cubic-bezier(.16,1,.3,1) .17s both;
 }
-.sub {
+
+.ag-sub {
   font-size: 12.5px;
   color: #9aa0b4;
   line-height: 1.55;
-  margin: 0 auto 16px;
+  margin: 0 6px 16px;
   max-width: 320px;
+  text-align: center;
+  animation: agIn .65s cubic-bezier(.16,1,.3,1) .25s both;
 }
 
-/* Картка користувача при hint */
+.ag-mini {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: 0 0 20px;
+  flex-wrap: wrap;
+  animation: agIn .65s cubic-bezier(.16,1,.3,1) .35s both;
+}
+.ag-mini span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #a7abc2;
+  background: rgba(148,163,184,.07);
+  border: 1px solid rgba(148,163,184,.13);
+  border-radius: 99px;
+  padding: 4.5px 10px;
+}
+.ag-mini span svg { opacity: .8; flex: none; }
+
+/* Картка обраного акаунта за наявності hint */
 .who {
   display: none;
   align-items: center;
@@ -201,252 +156,190 @@ h1 {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 14px;
   text-align: left;
+  max-width: 300px;
+  width: 100%;
 }
 .who.on { display: flex; }
 .who .av {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   flex: none;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 800;
-  font-size: 14px;
+  font-size: 13px;
   color: #fff;
   background: linear-gradient(135deg, #8b5cf6, #6366f1);
 }
-.who .tt { min-width: 0; }
-.who .tt b { display: block; font-size: 13px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.who .tt span { display: block; font-size: 11px; color: #8b8fa3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.who .tt { min-width: 0; flex: 1; }
+.who .tt b { display: block; font-size: 12.5px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.who .tt span { display: block; font-size: 10.5px; color: #8b8fa3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* Кнопка Google Sign-In */
-.gbtn {
+/* Кнопка Google входу — копія .ag-go */
+.ag-go {
   width: 100%;
-  height: 48px;
+  max-width: 300px;
+  justify-content: center;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
+  gap: 10px;
+  height: 46px;
   border-radius: 14px;
-  font-size: 14.5px;
+  font-size: 14px;
   font-weight: 700;
-  font-family: inherit;
+  letter-spacing: .1px;
   background: #ffffff;
+  box-shadow: 0 10px 26px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.25) inset;
   border: 0;
   color: #1f2937;
   cursor: pointer;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
-  transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  font-family: inherit;
+  transition: transform .12s ease, box-shadow .2s ease;
+  animation: agIn .65s cubic-bezier(.16,1,.3,1) .42s both;
 }
-.gbtn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+.ag-go:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 32px rgba(0,0,0,.5), 0 1px 0 rgba(255,255,255,.25) inset;
 }
-.gbtn:active {
-  transform: scale(0.985);
-}
-.gbtn:disabled {
-  opacity: 0.65;
-  cursor: default;
-  transform: none;
-}
-.gbtn svg { flex: none; }
+.ag-go:active { transform: scale(.97); }
+.ag-go:disabled { opacity: .62; cursor: default; transform: none; filter: none; }
+.ag-go svg { flex: none; }
 
-/* Спінер */
+.ag-stat {
+  min-height: 18px;
+  font-size: 11.5px;
+  color: #9aa0b4;
+  margin-top: 14px;
+  line-height: 1.45;
+  text-align: center;
+  animation: agIn .65s cubic-bezier(.16,1,.3,1) .52s both;
+}
+.ag-stat.err { color: #fda4af; }
+
 .spin {
   display: inline-block;
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(196, 181, 253, 0.35);
-  border-top-color: #c4b5fd;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255,255,255,.25);
+  border-top-color: #8b5cf6;
   border-radius: 50%;
   vertical-align: -2px;
-  margin-right: 8px;
-  animation: fhsp 0.8s linear infinite;
+  margin-right: 6px;
+  animation: fhsp .7s linear infinite;
 }
 @keyframes fhsp { to { transform: rotate(360deg); } }
 
-/* Повідомлення стану */
-.stat {
-  min-height: 20px;
-  font-size: 12px;
-  color: #9aa0b4;
-  margin-top: 12px;
-  line-height: 1.5;
-}
-.stat.err { color: #fca5a5; }
-.stat.ok { color: #86efac; }
-
-/* Міні-бейджі переваг */
-.mini-badges {
-  display: flex;
-  justify-content: center;
-  gap: 7px;
-  margin-top: 18px;
-  flex-wrap: wrap;
-}
-.mini-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 10.5px;
-  font-weight: 700;
-  color: #a7abc2;
-  background: rgba(148, 163, 184, 0.06);
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  border-radius: 99px;
-  padding: 5px 11px;
-}
-.mini-badge svg { flex: none; stroke: currentColor; fill: none; }
-
-/* Футер */
-.foot {
-  font-size: 11px;
-  color: #6b7086;
-  margin-top: 16px;
-  letter-spacing: 0.3px;
-}
-
-/* Стан успіху */
-.done {
-  padding: 10px 0;
-  animation: winIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+/* Стан готовності (успішний вхід) */
+.done-box {
+  animation: agIn .55s cubic-bezier(.16,1,.3,1) both;
 }
 .done-icon {
-  width: 64px;
-  height: 64px;
-  margin: 0 auto 16px;
+  width: 72px;
+  height: 72px;
   border-radius: 20px;
+  margin: 0 auto 16px;
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  color: #4ade80;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: #ffffff;
-  box-shadow: 0 12px 32px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 12px 30px rgba(34, 197, 94, 0.25);
 }
-.done-icon svg { width: 32px; height: 32px; stroke: #fff; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-.done h1 { font-size: 21px; margin-bottom: 10px; }
-.done .sub { font-size: 13px; color: #a5b4fc; line-height: 1.6; }
+.done-icon svg {
+  width: 36px;
+  height: 36px;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 </style>
 </head>
 <body>
 
-<div class="bg-glow g1"></div>
-<div class="bg-glow g2"></div>
+<div class="gate-card">
+  <div class="ag-glow"></div>
 
-<div class="app-window" id="card">
-  <!-- Заголовок вікна у стилі програми -->
-  <div class="win-tbar">
-    <div class="win-tbar-left">
-      <div class="win-logo-mini">
-        <img src="icon-192.png" alt="FluxHelper" onerror="this.style.display='none'">
+  <!-- Основна форма авторизації -->
+  <div id="stForm" style="width:100%;display:flex;flex-direction:column;align-items:center;">
+    <div class="us-logo">
+      <img src="icon-192.png" alt="FluxHelper" onerror="this.src='favicon-32.png'">
+    </div>
+    <div class="us-chip">Синхронізація розкладу</div>
+    <h2>Ввійдіть у FluxHelper</h2>
+    <p class="ag-sub">Увійдіть з акаунтом Google — єдиним, через що синхронізується розклад на всіх ваших пристроях.</p>
+
+    <div class="who" id="who">
+      <div class="av" id="whoAv">G</div>
+      <div class="tt">
+        <b id="whoName">акаунт Google</b>
+        <span id="whoMail"></span>
       </div>
-      <span class="win-title">FluxHelper · Авторизація</span>
     </div>
-    <div class="win-dots">
-      <span class="win-dot"></span>
-      <span class="win-dot"></span>
-      <span class="win-dot"></span>
+
+    <div class="ag-mini">
+      <span>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9"/><polyline points="21 3 21 9 15 9"/></svg>
+        Автосинхронізація
+      </span>
+      <span>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Безпека
+      </span>
+      <span>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        Доступ до розкладу
+      </span>
     </div>
+
+    <button class="ag-go" id="go" type="button">
+      <svg width="17" height="17" viewBox="0 0 48 48">
+        <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/>
+        <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
+        <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
+        <path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.1 5.7l6.2 5.2C40.9 35.6 44 30.3 44 24c0-1.3-.1-2.6-.4-3.9z"/>
+      </svg>
+      <span id="goT">Увійти через Google</span>
+    </button>
+
+    <div class="ag-stat" id="stat"></div>
   </div>
 
-  <div class="win-body">
-    <!-- Статус посилання -->
-    <div id="lstatHolder"></div>
-
-    <!-- Основний екран входу -->
-    <div id="stForm">
-      <div class="app-logo">
-        <img src="icon-192.png" alt="FluxHelper" onerror="this.src='favicon-32.png'">
-      </div>
-      <h1>Вхід у FluxHelper</h1>
-      <p class="sub">Підтверди акаунт Google для синхронізації розкладу, груп та налаштувань. Вхід у програму відбудеться автоматично.</p>
-
-      <div class="who" id="who">
-        <div class="av" id="whoAv">G</div>
-        <div class="tt">
-          <b id="whoName">акаунт Google</b>
-          <span id="whoMail"></span>
-        </div>
-      </div>
-
-      <button class="gbtn" id="go" type="button">
-        <svg width="20" height="20" viewBox="0 0 48 48">
-          <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/>
-          <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
-          <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
-          <path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.1 5.7l6.2 5.2C40.9 35.6 44 30.3 44 24c0-1.3-.1-2.6-.4-3.9z"/>
-        </svg>
-        <span id="goT">Продовжити через Google</span>
-      </button>
-
-      <div class="stat" id="stat"></div>
-
-      <div class="mini-badges">
-        <span class="mini-badge">
-          <svg width="12" height="12" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          Захищено Google
-        </span>
-        <span class="mini-badge">
-          <svg width="12" height="12" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-          Миттєвий вхід
-        </span>
-        <span class="mini-badge">
-          <svg width="12" height="12" viewBox="0 0 24 24"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
-          Синхронізація
-        </span>
-      </div>
-
-      <div class="foot">FluxHelper · Безпечний вхід для ПК та Android</div>
+  <!-- Екран успіху -->
+  <div id="stDone" style="display:none;width:100%" class="done-box">
+    <div class="done-icon">
+      <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
     </div>
-
-    <!-- Екран успіху -->
-    <div id="stDone" style="display:none" class="done">
-      <div class="done-icon">
-        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-      </div>
-      <h1>Все готово!</h1>
-      <p class="sub" id="doneSub">Повернись у FluxHelper — акаунт уже підтверджено.<br>Цю вкладку браузера можна безпечно закрити.</p>
-    </div>
+    <h2>Все готово!</h2>
+    <p class="ag-sub" id="doneSub">Поверніться у FluxHelper — акаунт уже підтверджено.<br>Цю вкладку браузера можна закрити.</p>
   </div>
 </div>
 
 <script>
 (function () {
   'use strict';
-  // Параметри з програми:
-  // s = одноразовий токен стану сесії, p = локальний порт ПК, h = підказка email
   var h = {}, seg = (location.hash || '').replace(/^#/, '').split('&');
   for (var i = 0; i < seg.length; ++i) { var kv = seg[i].split('='); if (kv[0]) h[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1] || ''); }
   var STATE = h.s || '', PORT = h.p || '', HINT = h.h || '';
   var RTDB = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app';
   var GIS_CLIENT = '668834523935-k470ldmdv0r9am0720v6lgaatm6rtuf3.apps.googleusercontent.com';
 
-  var lstatHolder = document.getElementById('lstatHolder');
-  var LSTAT = document.createElement('div');
-  LSTAT.className = 'lstat ' + (STATE ? 'ok' : 'bad');
-  LSTAT.innerHTML = '<i></i>' + (STATE
-    ? 'Сесія підключення активна'
-    : 'Посилання недійсне або застаріло');
-  if (lstatHolder) lstatHolder.appendChild(LSTAT);
-
   var go = document.getElementById('go'), goT = document.getElementById('goT'),
       stat = document.getElementById('stat');
 
-  function setStat(t, cls) { stat.className = 'stat' + (cls ? ' ' + cls : ''); stat.innerHTML = t || ''; }
+  function setStat(t, cls) { stat.className = 'ag-stat' + (cls ? ' ' + cls : ''); stat.innerHTML = t || ''; }
   function busy(on, txt) { go.disabled = !!on; goT.textContent = txt; }
 
   if (!STATE) {
-    // Сторінку відкрито напряму без параметра сесії
     document.getElementById('stForm').innerHTML =
-      '<div class="app-logo"><img src="icon-192.png" alt="FluxHelper" onerror="this.src=\'favicon-32.png\'"></div>' +
-      '<h1>Посилання неактивне</h1>' +
-      '<p class="sub">Це захищене посилання створюється програмою FluxHelper ' +
-      'лише в момент авторизації й діє один раз.<br><br>' +
-      '<b>Щоб увійти:</b> відкрий FluxHelper на комп&rsquo;ютері або телефоні та натисни ' +
-      '«Увійти через Google» — програма сама відкриє актуальне посилання.</p>' +
-      '<div class="foot">FluxHelper · Безпечний вхід</div>';
+      '<div class="us-logo"><img src="icon-192.png" alt="FluxHelper" onerror="this.src=\'favicon-32.png\'"></div>' +
+      '<h2>Посилання неактивне</h2>' +
+      '<p class="ag-sub">Це захищене посилання діє один раз.<br><br>' +
+      'Відкрийте FluxHelper на комп&rsquo;ютері або телефоні та натисніть «Увійти через Google».</p>';
     return;
   }
 
@@ -456,15 +349,14 @@ h1 {
     document.getElementById('whoName').textContent = HINT.split('@')[0];
     document.getElementById('whoAv').textContent = HINT.charAt(0).toUpperCase();
     w.classList.add('on');
-    goT.textContent = 'Продовжити як ' + HINT.split('@')[0];
+    goT.textContent = 'Увійти як ' + HINT.split('@')[0];
   } else {
-    goT.textContent = 'Продовжити через Google';
+    goT.textContent = 'Увійти через Google';
   }
 
   function deliver(prof, ok, fail) {
     var sent = false, left = 2;
     function fin(good) { left--; if (good) sent = true; if (left <= 0) (sent ? ok : fail)(); }
-    // Канал 1 (ПК): локальний слухач програми — миттєво
     if (PORT) {
       try {
         fetch('http://127.0.0.1:' + PORT + '/cb?state=' + encodeURIComponent(STATE) + '&d=' + encodeURIComponent(JSON.stringify(prof)), { mode: 'cors', cache: 'no-store' })
@@ -472,7 +364,6 @@ h1 {
           .catch(function () { fin(false); });
       } catch (e) { fin(false); }
     } else fin(false);
-    // Канал 2 (усі платформи): Firebase RTDB — програма опитує цей ключ
     try {
       fetch(RTDB + '/update/auth_cb/' + encodeURIComponent(STATE) + '.json', {
         method: 'PUT', cache: 'no-store',
@@ -480,21 +371,19 @@ h1 {
         body: JSON.stringify({ d: prof, t: Date.now() })
       }).then(function (r) { fin(!!r && r.ok); }).catch(function () { fin(false); });
     } catch (e) { fin(false); }
-    // Якщо локальний порт підтвердив швидко — не чекаємо Firebase
     setTimeout(function () { if (sent) { left = -1; ok(); } }, 900);
   }
 
   function finishOk(prof) {
     busy(false, 'Готово');
     document.getElementById('stForm').style.display = 'none';
-    var d = document.getElementById('stDone'); d.style.display = '';
+    var d = document.getElementById('stDone'); d.style.display = 'block';
     if (prof && prof.name) {
       document.getElementById('doneSub').innerHTML =
-        'Вітаємо, <b>' + String(prof.name).replace(/[<>&]/g, '') + '</b>!<br>Повернись у FluxHelper — акаунт уже підтверджено.<br>Цю вкладку браузера можна безпечно закрити.';
+        'Вітаємо, <b>' + String(prof.name).replace(/[<>&]/g, '') + '</b>!<br>Поверніться у FluxHelper — акаунт уже підтверджено.<br>Цю вкладку браузера можна закрити.';
     }
   }
 
-  /* Реєстрація входу в Firebase Authentication проєкту */
   var FH_FB_KEY = 'AIzaSyCDWpF3QTMEFBN9ravDxH_woKnBpcMRDvI';
   function fbRegister(accessTok) {
     return new Promise(function (res) {
@@ -517,10 +406,10 @@ h1 {
   function gotToken(resp) {
     if (!resp || !resp.access_token) {
       busy(false, 'Спробувати ще раз');
-      setStat(resp && resp.error === 'access_denied' ? 'Вхід скасовано. Спробуй ще раз.' : 'Google не підтвердив вхід. Спробуй ще раз.', 'err');
+      setStat(resp && resp.error === 'access_denied' ? 'Вхід скасовано. Спробуйте ще раз.' : 'Google не підтвердив вхід. Спробуйте ще раз.', 'err');
       return;
     }
-    setStat('<span class="spin"></span>Передаю профіль у програму…');
+    setStat('<span class="spin"></span>Передаємо профіль у програму…');
     Promise.all([
       fbRegister(resp.access_token),
       fetch('https://openidconnect.googleapis.com/v1/userinfo', { headers: { Authorization: 'Bearer ' + resp.access_token } })
@@ -534,23 +423,23 @@ h1 {
         finishOk,
         function () {
           busy(false, 'Спробувати ще раз');
-          setStat('Не вдалося передати профіль у програму. Перевір, чи програма відкрита, і спробуй ще раз.', 'err');
+          setStat('Не вдалося передати профіль у програму. Перевірте, чи програма відкрита, і спробуйте ще раз.', 'err');
         }
       );
     }).catch(function () {
       busy(false, 'Спробувати ще раз');
-      setStat('Не вдалося прочитати профіль Google. Спробуй ще раз.', 'err');
+      setStat('Не вдалося прочитати профіль Google. Спробуйте ще раз.', 'err');
     });
   }
 
   var tc = null;
   go.onclick = function () {
     if (!window.google || !google.accounts || !google.accounts.oauth2) {
-      setStat('<span class="spin"></span>Завантажую Google…');
+      setStat('<span class="spin"></span>Завантажуємо Google…');
       setTimeout(function () { go.onclick(); }, 600);
       return;
     }
-    busy(true, 'Зачекай…'); setStat('');
+    busy(true, 'Зачекайте…'); setStat('');
     try {
       if (!tc) {
         tc = google.accounts.oauth2.initTokenClient({
@@ -563,17 +452,16 @@ h1 {
       tc.requestAccessToken({ hint: (HINT && HINT.indexOf('@') > 0) ? HINT : undefined });
     } catch (e) {
       busy(false, 'Спробувати ще раз');
-      setStat('Не вдалося відкрити вікно Google. Дозволь спливні вікна і спробуй ще раз.', 'err');
+      setStat('Не вдалося відкрити вікно Google. Дозвольте спливні вікна і спробуйте ще раз.', 'err');
     }
   };
 
-  // Завантажуємо бібліотеку Google Identity Services
   setStat('<span class="spin"></span>Підготовка Google-входу…');
   var s = document.createElement('script');
   s.src = 'https://accounts.google.com/gsi/client';
   s.async = true; s.defer = true;
   s.onload = function () { setStat(''); };
-  s.onerror = function () { setStat('Не вдалося завантажити Google Sign-In. Перевір інтернет.', 'err'); };
+  s.onerror = function () { setStat('Не вдалося завантажити Google Sign-In. Перевірте інтернет.', 'err'); };
   document.head.appendChild(s);
 })();
 </script>
