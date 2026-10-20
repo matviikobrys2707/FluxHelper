@@ -14,6 +14,7 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#050508">
 <meta property="og:title" content="FluxHelper — розклад 8-Б класу">
+<meta property="og:site_name" content="FluxHelper">
 <meta property="og:description" content="Уроки, вчителі, групи й посилання на Zoom — в одному темному вікні. Вхід захищає Google.">
 <meta property="og:image" content="icon-192.png?v=290">
 <style>
@@ -55,10 +56,10 @@ a{color:inherit;text-decoration:none}
 .vpill{font-size:10px;font-weight:800;letter-spacing:1.4px;color:#c4b5fd;background:rgba(139,92,246,.14);
   border:1px solid rgba(139,92,246,.35);border-radius:99px;padding:5px 12px;text-transform:uppercase}
 
-/* ---------- герой ---------- */
-.hero{text-align:center;margin-bottom:30px}
-.logo-big{width:96px;height:96px;border-radius:26px;margin:0 auto 20px;display:grid;place-items:center;position:relative;
-  box-shadow:0 18px 50px rgba(99,102,241,.5),0 0 0 1px rgba(167,139,250,.25);overflow:hidden;
+/* ---------- герой (3.4.10: іконка -> назва -> опис -> кнопки) ---------- */
+.hero{text-align:center;margin-bottom:34px}
+.logo-big{width:104px;height:104px;border-radius:28px;margin:6px auto 22px;display:grid;place-items:center;position:relative;
+  box-shadow:0 22px 60px rgba(99,102,241,.55),0 0 0 1px rgba(167,139,250,.28),0 0 90px rgba(124,58,237,.35);overflow:hidden;
   animation:lgfloat 5s ease-in-out infinite}
 .logo-big img{width:100%;height:100%;display:block}
 .logo-big::after{content:'';position:absolute;inset:-38%;border-radius:50%;
@@ -66,14 +67,20 @@ a{color:inherit;text-decoration:none}
   animation:lgspin 6s linear infinite;pointer-events:none}
 @keyframes lgspin{to{transform:rotate(360deg)}}
 @keyframes lgfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
-.hero h1{font-size:clamp(28px,6vw,42px);font-weight:800;letter-spacing:.4px;
-  background:linear-gradient(90deg,#fff,#c7d2fe 60%,#a78bfa);-webkit-background-clip:text;background-clip:text;color:transparent}
-.hero .sub{font-size:15px;color:#9aa0b4;line-height:1.65;margin:13px auto 26px;max-width:560px}
+.hero h1{font-size:clamp(34px,7vw,52px);font-weight:800;letter-spacing:.6px;
+  background:linear-gradient(90deg,#fff,#c7d2fe 55%,#a78bfa);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero .tagline{font-size:12px;font-weight:800;letter-spacing:2.6px;text-transform:uppercase;color:#8b8fa3;margin:10px 0 0}
+.hero .sub{font-size:15px;color:#9aa0b4;line-height:1.7;margin:16px auto 28px;max-width:600px}
 .hero .sub b{color:#c7cbe0}
+.btn-col{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left}
+.btn-col b{font-size:14.5px;line-height:1.2}
+.btn-col small{font-size:11px;font-weight:600;opacity:.82;letter-spacing:.2px}
+.btn-a{background:linear-gradient(135deg,#22c55e,#10b981);color:#fff;box-shadow:0 12px 30px rgba(16,185,129,.32)}
+.btn-a:hover{box-shadow:0 16px 36px rgba(16,185,129,.45)}
 
 /* ---------- кнопки завантаження ---------- */
-.dl{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:12px}
-.btn{display:inline-flex;align-items:center;gap:10px;padding:14px 26px;border-radius:14px;font-size:14.5px;
+.dl{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:14px}
+.btn{display:inline-flex;align-items:center;gap:12px;padding:15px 28px;border-radius:16px;font-size:14.5px;
   font-weight:800;font-family:inherit;cursor:pointer;border:1px solid transparent;transition:transform .15s ease,box-shadow .2s ease}
 .btn:hover{transform:translateY(-2px)}
 .btn:active{transform:scale(.98)}
@@ -215,64 +222,84 @@ a{color:inherit;text-decoration:none}
 </div>
 
 <div class="wrap">
-<header class="top reveal">
-  <div class="brand">
-    <span class="mark"><img src="icon-192.png?v=290" alt="FluxHelper" width="42" height="42"></span>
-    <b>FluxHelper</b>
-  </div>
-</header>
 
-<section class="hero reveal" style="animation-delay:.08s">
+<!-- ==================== ГЕРОЙ: іконка -> назва -> опис -> кнопки ==================== -->
+<section class="hero reveal" style="animation-delay:.05s">
   <div class="logo-big"><img src="icon-512.png?v=290" alt="FluxHelper" width="96" height="96"></div>
-  <h1>Розклад 8-Б — завжди під рукою</h1>
-  <p class="sub">Уроки, вчителі, групи й посилання на <b>Zoom</b> — в одному темному вікні.
-     Сповіщення про початок уроку, синхронізація між пристроями, вхід через <b>Google</b>.</p>
+  <h1>FluxHelper</h1>
+  <p class="tagline">розклад 8-Б класу — завжди під рукою</p>
+  <p class="sub">Уроки на тиждень з <b>вчителями</b> і <b>групами</b>, посилання на <b>Zoom</b> в один клік,
+     сповіщення про початок уроку та синхронізація між комп'ютером і телефоном.
+     Вхід захищає <b>Google</b>.</p>
   <div class="dl" id="dl">
-    <!-- 3.4.0: кнопки самі підтягують останню бета-версію (latest.json),
-         запасний канал — release, далі — статичні 2.4.2. -->
-    <a class="btn btn-g" href="https://github.com/matviikobrys2707/FluxHelper/releases/download/v2.4.2/FluxHelper.exe" id="dlWin">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.5l7.5-1v7H3v-6zm0 13v-6h7.5v7L3 18.5zm8.5 1.6v-7.6H21v8.9l-9.5-1.3zm0-15.2L21 3.6v8.9h-9.5V4.9z"/></svg>
-      Завантажити для Windows
+    <!-- 3.4.10: кнопки качають ЛИШЕ останній СТАБІЛЬНИЙ реліз (versions/release).
+         Бета-версії на сайті НЕ видаються взагалі — вони тільки для адмінів
+         і приходять адмінам всередині програми. -->
+    <a class="btn btn-g" href="versions/release/2.4.3/FluxHelper.exe" id="dlWin">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.5l7.5-1v7H3v-6zm0 13v-6h7.5v7L3 18.5zm8.5 1.6v-7.6H21v8.9l-9.5-1.3zm0-15.2L21 3.6v8.9h-9.5V4.9z"/></svg>
+      <span class="btn-col"><b>Завантажити для Windows</b><small id="dlWinV">стабільний реліз</small></span>
     </a>
-    <a class="btn btn-o" href="https://github.com/matviikobrys2707/FluxHelper/releases/download/v2.4.2/FluxHelper.apk" id="dlAnd">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M17.6 9.48l1.84-3.18c.16-.31.04-.7-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24a11.43 11.43 0 0 0-4.94 0L9.65 5.67c-.19-.29-.58-.38-.87-.2-.28.18-.37.54-.22.83L10.4 9.48C6.85 10.62 4.24 13.5 4 17h16c-.24-3.5-2.85-6.38-6.4-7.52zM9 14.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm6 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>
-      Завантажити для Android
+    <a class="btn btn-a" href="versions/release/2.4.3/FluxHelper.apk" id="dlAnd">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.6 9.48l1.84-3.18c.16-.31.04-.7-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24a11.43 11.43 0 0 0-4.94 0L9.65 5.67c-.19-.29-.58-.38-.87-.2-.28.18-.37.54-.22.83L10.4 9.48C6.85 10.62 4.24 13.5 4 17h16c-.24-3.5-2.85-6.38-6.4-7.52zM9 14.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm6 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>
+      <span class="btn-col"><b>Завантажити для Android</b><small id="dlAndV">стабільний реліз</small></span>
     </a>
   </div>
-  <p class="dl-note"><span class="verpill" id="dlPill">версія з GitHub</span> <span id="dlNoteT">встановлення не потрібне (Windows — один exe) · оновлення приходять самі</span></p>
+  <p class="dl-note"><span class="verpill" id="dlPill">стабільний реліз</span> <span id="dlNoteT">встановлення не потрібне (Windows — один exe) · оновлення приходять самі, всередині програми</span></p>
 </section>
 <script>
-/* 3.4.0: кнопки завантаження ПІДТЯГУЮТЬ ОСТАННЮ бета-версію автоматично
-   (versions/beta/latest.json), з запасним каналом release і статичними
-   посиланнями 2.4.2, якщо сервери недоступні. */
+/* 3.4.10: кнопки завантаження беруть ЛИШЕ ОСТАННІЙ СТАБІЛЬНИЙ РЕЛІЗ
+   (versions/release/latest.json -> versions/release/<v>/FluxHelper.exe|apk).
+   БЕТА НА САЙТІ НІКОЛИ НЕ РОЗДАЄТЬСЯ: бета — канал адмінів/тестів,
+   вона приходить лише всередині програми. Джерела за надійністю:
+   1) той самий сайт (fluxhelper.pages.dev — файлы деплоються разом зі сторінкою)
+   2) raw.githubusercontent.com (запасний)
+   3) статичні посилання на останній відомий реліз */
 (function () {
-  var RAW = 'https://raw.githubusercontent.com/matviikobrys2707/FluxHelper/main/versions/';
-  var FB = { win: document.getElementById('dlWin').href, and: document.getElementById('dlAnd').href };
-  function setBtn(id, href, label) {
+  var SITE = 'versions/release/';
+  var RAW = 'https://raw.githubusercontent.com/matviikobrys2707/FluxHelper/main/versions/release/';
+  var FALL = { win: 'versions/release/2.4.3/FluxHelper.exe', and: 'versions/release/2.4.3/FluxHelper.apk', v: '2.4.3' };
+  function setBtn(id, href, vlabel) {
     var a = document.getElementById(id); if (!a) return;
     if (href) a.href = href;
-    var t = a.childNodes[a.childNodes.length - 1];
-    if (t && t.nodeType === 3 && label) t.textContent = label;
+    var s = a.querySelector('small');
+    if (s && vlabel) s.textContent = 'стабільний реліз v' + vlabel;
   }
-  function apply(v, ch) {
-    setBtn('dlWin', RAW + ch + '/' + v + '/FluxHelper.exe', 'Завантажити для Windows · v' + v);
-    setBtn('dlAnd', RAW + ch + '/' + v + '/FluxHelper.apk', 'Завантажити для Android · v' + v);
+  function apply(v) {
+    if (!/^\d+\.\d+\.\d+$/.test(String(v || ''))) return false;
+    setBtn('dlWin', SITE + v + '/FluxHelper.exe', v);
+    setBtn('dlAnd', SITE + v + '/FluxHelper.apk', v);
     var p = document.getElementById('dlPill');
-    if (p) { p.textContent = (ch === 'beta/' ? 'бета ' : 'реліз ') + v; p.classList.add('on'); }
-    var n = document.getElementById('dlNoteT');
-    if (n && ch === 'beta/') n.textContent = 'бета-канал: оновлення приходять усередині програми · встановлення не потрібне (Windows — один exe)';
+    if (p) { p.textContent = 'стабільний реліз v' + v; p.classList.add('on'); }
+    var wv = document.getElementById('relVer'); if (wv) wv.textContent = v;
+    var ft = document.getElementById('ftVer'); if (ft) ft.textContent = v;
+    return true;
   }
-  fetch(RAW + 'beta/latest.json?cb=' + Date.now(), { cache: 'no-store' })
+  fetch(SITE + 'latest.json?cb=' + Date.now(), { cache: 'no-store' })
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (j) {
-      if (j && j.latest) { apply(j.latest, 'beta/'); return null; }
+      if (j && j.latest && apply(j.latest)) {
+        /* список змін останнього релізу (до 4 пунктів) — якщо є */
+        if (j.notes && j.notes.length) {
+          var box = document.getElementById('relNotes');
+          if (box) {
+            box.innerHTML = '';
+            for (var i = 0; i < Math.min(4, j.notes.length); i++) {
+              var d = document.createElement('div'); d.className = 'un';
+              d.innerHTML = '<i>+</i><div></div>';
+              d.lastChild.textContent = String(j.notes[i]).replace(/^[+\-*]\s*/, '');
+              box.appendChild(d);
+            }
+          }
+        }
+        return null;
+      }
       throw 0;
     })
     .catch(function () {
-      fetch(RAW + 'release/latest.json?cb=' + Date.now(), { cache: 'no-store' })
+      fetch(RAW + 'latest.json?cb=' + Date.now(), { cache: 'no-store' })
         .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (j) { if (j && j.latest) apply(j.latest, 'release/'); })
-        .catch(function () { setBtn('dlWin', FB.win, null); setBtn('dlAnd', FB.and, null); });
+        .then(function (j) { if (!(j && j.latest && apply(j.latest))) { setBtn('dlWin', FALL.win, FALL.v); setBtn('dlAnd', FALL.and, FALL.v); var p2 = document.getElementById('dlPill'); if (p2) { p2.textContent = 'стабільний реліз v' + FALL.v; p2.classList.add('on'); } } })
+        .catch(function () { setBtn('dlWin', FALL.win, FALL.v); setBtn('dlAnd', FALL.and, FALL.v); var p3 = document.getElementById('dlPill'); if (p3) { p3.textContent = 'стабільний реліз v' + FALL.v; p3.classList.add('on'); } });
     });
 })();
 </script>
@@ -313,15 +340,17 @@ a{color:inherit;text-decoration:none}
 </section>
 
 <section class="whats reveal" style="animation-delay:.26s">
-  <span class="chip">що нового</span>
-  <h2>FluxHelper <b>2.4.2</b> — стабільний реліз</h2>
-  <div class="un n"><i>N</i><div><b>Система оновлень</b><small>оновлення завантажуються з надійного місця на GitHub (versions/release) і ставляться автоматично, без збоїв і без перевстановлення.</small></div></div>
-  <div class="un n"><i>N</i><div><b>Стабільність понад усе</b><small>розклад, групи, сповіщення й дизайн — перевірені тисячами запусків. Бета-функції доходять до стабільних релізів лише після тестів.</small></div></div>
-  <div class="un"><i>+</i><div><b>Бета-канал — всередині програми</b><small>сайт роздає тільки стабільні релізи. Нові бета-версії приходять автоматично в самій програмі, якщо ти в бета-каналі оновлень.</small></div></div>
+  <span class="chip">стабільний реліз</span>
+  <h2>FluxHelper <b id="relVer">2.4.3</b> — остання стабільна версія</h2>
+  <div id="relNotes">
+    <div class="un"><i>+</i><div><b>Скачування без сюрпризів</b><small>кнопки вище завжди дають ОСТАННІЙ стабільний реліз — перевірений і готовий для всіх. Бета-версії на сайті не публікуються: вони для адмінів і приходять всередині програми.</small></div></div>
+    <div class="un"><i>+</i><div><b>Оновлення самі</b><small>програма перевіряє оновлення і ставить їх автоматично — перевстановлювати нічого не треба.</small></div></div>
+    <div class="un"><i>+</i><div><b>Безпека входу</b><small>вхід через Google, пароль програма не бачить ніколи; дані синхронізуються між пристроями.</small></div></div>
+  </div>
 </section>
 
 <footer class="foot">
-  <b>FluxHelper 2.4.2</b> · вхід захищає Google (Firebase)<br>
+  <b>FluxHelper <span id="ftVer">2.4.3</span></b> · вхід захищає Google (Firebase)<br>
   автор Blazix · розклад 8-Б класу
 </footer>
 </div>
