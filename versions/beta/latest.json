@@ -1,10 +1,10 @@
 {
-  "latest": "3.4.6",
+  "latest": "3.4.7",
   "notes": [],
-  "apk_md5": "12ff24b1bab59d2e30149fd5d429f3bf",
+  "apk_md5": "ea1ffcd9dae495b5733aedd4b7ff1091",
   "apk_size": 2492076,
-  "exe_md5": "50fb4fe6da24bced0550a0cffc0951ca",
-  "exe_sha256": "05fb902c5abe84bab0cead89c515a090799c1859444b47482f66f2d04f8313ce",
-  "exe_size": 1886720,
+  "exe_md5": "a2d8ed80f16d31609d40cb156f78d3a2",
+  "exe_sha256": "1d79dae39f6ee3766bb07be42e20ee96b89b3bbea7d59fe2928e0960d48257d1",
+  "exe_size": 1891328,
   "updated_at": "2026-10-20"
 }
