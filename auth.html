@@ -334,6 +334,38 @@ h2 {
   function setStat(t, cls) { stat.className = 'ag-stat' + (cls ? ' ' + cls : ''); stat.innerHTML = t || ''; }
   function busy(on, txt) { go.disabled = !!on; goT.textContent = txt; }
 
+  /* ===== 3.4.12: ЖИВІСТЬ СТОРІНКИ ВХОДУ =====
+     Програма (ПК) чекає відповідь на локальному слухачі 127.0.0.1. Раніше,
+     якщо користувач ЗАКРИВАВ цю вкладку, кнопка «Увійти через Google» у
+     програмі залишалась неактивною аж до 4-хвилинного таймауту. Тепер:
+     • поки сторінка жива — вона кожні 2.5 с стукає GET /hb (серцебиття);
+     • при закритті вкладки/переході — sendBeacon('/bye') миттєво повідомляє
+       програму, і кнопка ОДРАЗУ знову стає активною («Спробувати ще раз»). */
+  if (STATE && PORT) {
+    var HB_URL = 'http://127.0.0.1:' + PORT + '/hb?state=' + encodeURIComponent(STATE);
+    var BYE_URL = 'http://127.0.0.1:' + PORT + '/bye?state=' + encodeURIComponent(STATE);
+    var hbTimer = 0, delivered = false;
+    function hbBeat() {
+      if (delivered) return;
+      try {
+        fetch(HB_URL, { mode: 'cors', cache: 'no-store', keepalive: true })
+          .then(function () { }, function () { });
+      } catch (e) { }
+    }
+    hbBeat();
+    hbTimer = setInterval(hbBeat, 2500);
+    window.addEventListener('pagehide', function () {
+      if (delivered) return;
+      try { navigator.sendBeacon && navigator.sendBeacon(BYE_URL); } catch (e) { }
+      try { fetch(BYE_URL, { mode: 'cors', keepalive: true }).catch(function () { }); } catch (e) { }
+    });
+    /* delivHook — deliver() позначає delivered, щоб серцебиття не йшли після успіху */
+    window.__fhHbStop = function () {
+      delivered = true;
+      try { clearInterval(hbTimer); } catch (e) { }
+    };
+  }
+
   if (!STATE) {
     document.getElementById('stForm').innerHTML =
       '<div class="us-logo"><img src="icon-192.png" alt="FluxHelper" onerror="this.src=\'favicon-32.png\'"></div>' +
@@ -356,6 +388,7 @@ h2 {
 
   function deliver(prof, ok, fail) {
     var sent = false, left = 2;
+    try { if (window.__fhHbStop) window.__fhHbStop(); } catch (eHB) { }   // 3.4.12: серцебиття більше не потрібне
     function fin(good) { left--; if (good) sent = true; if (left <= 0) (sent ? ok : fail)(); }
     if (PORT) {
       try {
