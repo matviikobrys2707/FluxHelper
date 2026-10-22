@@ -273,20 +273,23 @@ body[data-theme="light"] #boot .bt-bar{background:rgba(139,92,246,.14)}
 .empty{display:flex;flex-direction:column;align-items:center;gap:10px;padding:64px 0;color:var(--sub);font-size:13px}
 .empty svg{opacity:.5}
 
-/* =================== iOS ТАББАР =================== */
-#tabbar,#tabbar2{position:absolute;left:0;right:0;bottom:0;z-index:40;display:flex;
-  padding:6px 10px calc(6px + var(--sab));
-  background:var(--tab-bg);backdrop-filter:blur(18px) saturate(1.7);-webkit-backdrop-filter:blur(18px) saturate(1.7);
-  border-top:1px solid var(--nav-bd)}
-#tabbar3,#tabbar4{position:absolute;left:0;right:0;bottom:0;z-index:40;display:flex;
-  padding:6px 10px calc(6px + var(--sab));
-  background:var(--tab-bg);backdrop-filter:blur(18px) saturate(1.7);-webkit-backdrop-filter:blur(18px) saturate(1.7);
-  border-top:1px solid var(--nav-bd)}
-.tbb{flex:1;display:flex;flex-direction:column;align-items:center;gap:2.5px;padding:5px 0 3px;
-  color:var(--dim);font-size:9.8px;font-weight:700;border-radius:12px;transition:color .2s}
-.tbb.on{color:var(--acc)}
+/* ========= ТАББАР 3.5.6 — ДИЗАЙН ЯК У TELEGRAM =========
+   Плаваюча ОКРУГЛЕНА панель з іконками (підписів немає), активна
+   вкладка — фіолетова пілюля. Порядок: Розклад / Адмін (лише роль) /
+   Налаштування / Профіль (аватарка акаунта). */
+#tabbar,#tabbar2,#tabbar3,#tabbar4{position:absolute;left:10px;right:10px;bottom:calc(9px + var(--sab));z-index:40;display:flex;
+  gap:4px;padding:7px;border-radius:26px;
+  background:var(--tab-bg);backdrop-filter:blur(22px) saturate(1.7);-webkit-backdrop-filter:blur(22px) saturate(1.7);
+  border:1px solid var(--nav-bd);box-shadow:0 12px 34px rgba(0,0,0,.45)}
+.tbb{flex:1;display:flex;align-items:center;justify-content:center;min-width:0;padding:9px 0;
+  color:var(--dim);border-radius:19px;transition:color .18s,background .18s,transform .1s}
+.tbb:active{transform:scale(.93)}
+.tbb.on{color:var(--acc);background:color-mix(in srgb,var(--acc) 13%,transparent);
+  box-shadow:inset 0 0 0 1px rgba(139,92,246,.28)}
 body[data-theme="light"] .tbb.on{color:#7c3aed}
 .tbb svg{display:block}
+/* іконки без підписів — як у Telegram (текст ховаємо, аватар лишається) */
+.tbb > span:not(.tb-ava){display:none}
 /* кнопка «Профіль» — іконкою є ТА САМА аватарка Google (або силует, поки
    не увійшли). Активна — фіолетова світна обводка, як у застосунку */
 .tb-ava{width:23px;height:23px;border-radius:50%;overflow:hidden;display:grid;place-items:center;
@@ -356,7 +359,7 @@ body[data-theme="light"] .tbb.on{color:#7c3aed}
    власник: «скопировать и закинуть дизайн із сурсів». Розміри, радіуси,
    кольори й анімації = сурси 3.5.5. */
 .scrollview{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
-  padding:12px 14px calc(96px + var(--sab));overscroll-behavior:contain}
+  padding:12px 14px calc(124px + var(--sab));overscroll-behavior:contain}
 .ms-lbl{display:flex;align-items:center;justify-content:space-between;font-size:10.5px;font-weight:800;
   letter-spacing:1.6px;text-transform:uppercase;color:#8b8fa3;margin:16px 6px 8px}
 .ms-lbl span{font-size:inherit;font-weight:inherit;letter-spacing:inherit;color:inherit}
@@ -672,6 +675,10 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14.5l2.5 2.5 5-5"/></svg>
         <span>Розклад</span>
       </button>
+      <button class="tbb hidden" id="tbAdm" type="button">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.9 19.4 5.7v5.5c0 4.6-3.1 8-7.4 9.9-4.3-1.9-7.4-5.3-7.4-9.9V5.7L12 2.9z"/><path d="M9 12.2l2.1 2.1 4-4.6"/></svg>
+        <span>Адмін</span>
+      </button>
       <button class="tbb" id="tbSetup" type="button">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         <span>Налаштування</span>
@@ -680,10 +687,7 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
         <span class="tb-ava" id="profAva"></span>
         <span>Профіль</span>
       </button>
-      <button class="tbb hidden" id="tbAdm" type="button">
-        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.9 19.4 5.7v5.5c0 4.6-3.1 8-7.4 9.9-4.3-1.9-7.4-5.3-7.4-9.9V5.7L12 2.9z"/><path d="M9 12.2l2.1 2.1 4-4.6"/></svg>
-        <span>Адмін</span>
-      </button>
+      
     </div>
   </div>
 
@@ -785,6 +789,10 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14.5l2.5 2.5 5-5"/></svg>
         <span>Розклад</span>
       </button>
+      <button class="tbb hidden" id="tbAdm2" type="button">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.9 19.4 5.7v5.5c0 4.6-3.1 8-7.4 9.9-4.3-1.9-7.4-5.3-7.4-9.9V5.7L12 2.9z"/><path d="M9 12.2l2.1 2.1 4-4.6"/></svg>
+        <span>Адмін</span>
+      </button>
       <button class="tbb" id="tbSetup2" type="button">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         <span>Налаштування</span>
@@ -793,10 +801,7 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
         <span class="tb-ava" id="profAva2"></span>
         <span>Профіль</span>
       </button>
-      <button class="tbb hidden" id="tbAdm2" type="button">
-        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.9 19.4 5.7v5.5c0 4.6-3.1 8-7.4 9.9-4.3-1.9-7.4-5.3-7.4-9.9V5.7L12 2.9z"/><path d="M9 12.2l2.1 2.1 4-4.6"/></svg>
-        <span>Адмін</span>
-      </button>
+      
     </div>
   </div>
 
@@ -854,6 +859,10 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14.5l2.5 2.5 5-5"/></svg>
         <span>Розклад</span>
       </button>
+      <button class="tbb hidden" id="tbAdm3" type="button">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.9 19.4 5.7v5.5c0 4.6-3.1 8-7.4 9.9-4.3-1.9-7.4-5.3-7.4-9.9V5.7L12 2.9z"/><path d="M9 12.2l2.1 2.1 4-4.6"/></svg>
+        <span>Адмін</span>
+      </button>
       <button class="tbb" id="tbSetup3" type="button">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         <span>Налаштування</span>
@@ -862,10 +871,7 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
         <span class="tb-ava" id="profAva3"></span>
         <span>Профіль</span>
       </button>
-      <button class="tbb hidden" id="tbAdm3" type="button">
-        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.9 19.4 5.7v5.5c0 4.6-3.1 8-7.4 9.9-4.3-1.9-7.4-5.3-7.4-9.9V5.7L12 2.9z"/><path d="M9 12.2l2.1 2.1 4-4.6"/></svg>
-        <span>Адмін</span>
-      </button>
+      
     </div>
   </div>
 
@@ -900,6 +906,10 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14.5l2.5 2.5 5-5"/></svg>
         <span>Розклад</span>
       </button>
+      <button class="tbb on hidden" id="tbAdm4" type="button">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.9 19.4 5.7v5.5c0 4.6-3.1 8-7.4 9.9-4.3-1.9-7.4-5.3-7.4-9.9V5.7L12 2.9z"/><path d="M9 12.2l2.1 2.1 4-4.6"/></svg>
+        <span>Адмін</span>
+      </button>
       <button class="tbb" id="tbSetup4" type="button">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         <span>Налаштування</span>
@@ -908,10 +918,7 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
         <span class="tb-ava" id="profAva4"></span>
         <span>Профіль</span>
       </button>
-      <button class="tbb on hidden" id="tbAdm4" type="button">
-        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.9 19.4 5.7v5.5c0 4.6-3.1 8-7.4 9.9-4.3-1.9-7.4-5.3-7.4-9.9V5.7L12 2.9z"/><path d="M9 12.2l2.1 2.1 4-4.6"/></svg>
-        <span>Адмін</span>
-      </button>
+      
     </div>
   </div>
 
@@ -979,7 +986,7 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
    Версія 3.5.3 · Web
    ============================================================ */
 
-var APP_VER = '3.5.5';
+var APP_VER = '3.5.6';
 /* 3.5.5: КАНАЛ — сайт завжди поточний, але версію показуємо з підписом «beta»,
    поки линейка 3.5.x бета (реліз буде без слова). Просив власник: «писалось
    3.5.4 beta… якщо реліз — прямо 3.5.4 без надписи beta». */
@@ -1508,6 +1515,10 @@ function ensureTok(cb) {
 }
 const API_SYNC = { v: null };   // null = ще не перевіряли, true/false — результат першої спроби
 function apiGet(cb) {
+  /* 3.5.6: /api/sync на цьому домені більше не існує (D1 і Pages — в різних
+     акаунтах Cloudflare, біндінг неможливий) — після першої невдачі одразу
+     читаємо дзеркало RTDB, без зайвого 404-запиту */
+  if (API_SYNC.v === false) { if (cb) cb(null); return; }
   const k = userKey(ACC.user);
   if (!k) { if (cb) cb(null); return; }
   ensureTok(function (ok) {
@@ -1522,6 +1533,7 @@ function apiGet(cb) {
   });
 }
 function apiPut(p, cb) {
+  if (API_SYNC.v === false) { if (cb) cb(false); return; }   /* 3.5.6: одразу дзеркало */
   const k = userKey(ACC.user);
   if (!k) { if (cb) cb(false); return; }
   ensureTok(function (ok) {
