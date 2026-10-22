@@ -65,7 +65,7 @@ button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer
   --acc:#8b5cf6; --acc2:#6366f1; --acc3:#a855f7;
   --grad:linear-gradient(135deg,#8b5cf6,#6366f1);
   --grad-wide:linear-gradient(135deg,#8b5cf6,#6366f1,#8b5cf6);
-  --r-lg:22px; --r-md:16px; --r-sm:12px;
+  --r-lg:22px; --r-md:18px; --r-sm:12px;
   --sat:env(safe-area-inset-top,0px);
   --sab:env(safe-area-inset-bottom,0px);
 }
@@ -74,13 +74,14 @@ body{
   font-family:-apple-system,'SF Pro Text','SF Pro Display','Segoe UI',system-ui,sans-serif;
   -webkit-font-smoothing:antialiased;
   background:
-    radial-gradient(540px 360px at 14% -10%, rgba(124,58,237,.17), transparent 68%),
-    radial-gradient(580px 400px at 88% 114%, rgba(79,70,229,.14), transparent 66%),
+    radial-gradient(660px 460px at 12% -12%, rgba(124,58,237,.28), transparent 70%),
+    radial-gradient(700px 480px at 90% 112%, rgba(99,70,229,.24), transparent 68%),
+    radial-gradient(560px 340px at 50% 44%, rgba(139,92,246,.08), transparent 70%),
     #050508;
 }
-/* широкий екран (демо з ПК/Android): телефонна колонка по центру */
+/* широкий екран (демо з ПК/Android): телефонна колонка по центру —
+   градієнти лишаємо і тут, щоб фон жив так само, як у застосунку на ПК */
 @media (min-width:560px){
-  body{background:#020204}
   #app,#agate,#boot{max-width:470px;margin:0 auto;box-shadow:0 0 90px rgba(124,58,237,.16)}
 }
 
@@ -101,9 +102,10 @@ body[data-theme="glass"]{color:#f2f3fa;
 /* змінні теми */
 body[data-theme="standard"]{
   --txt:#f4f4f8; --sub:#8b8fa3; --dim:#6b6f85;
-  --card:linear-gradient(165deg,rgba(255,255,255,.052),rgba(255,255,255,.02));
-  --card-bg:rgba(255,255,255,.045);
-  --card-bd:rgba(139,92,246,.20);
+  /* картки уроків — КОЛЬОРИ ПК: нейтральне скло з помітною світлою рамкою */
+  --card:rgba(255,255,255,.032);
+  --card-bg:rgba(255,255,255,.032);
+  --card-bd:rgba(255,255,255,.16);
   --soft-bg:rgba(255,255,255,.04); --soft-bd:rgba(255,255,255,.08);
   --nav-bg:rgba(8,7,16,.72); --tab-bg:rgba(10,9,20,.78); --nav-bd:rgba(139,92,246,.18);
   --tile-bg:rgba(139,92,246,.14); --tile-bd:rgba(139,92,246,.28);
@@ -188,8 +190,7 @@ body[data-theme="light"] #boot .bt-bar{background:rgba(139,92,246,.14)}
 
 /* шапка (iOS large title) */
 .nav{flex:none;padding:calc(10px + var(--sat)) 18px 8px;
-  background:var(--nav-bg);backdrop-filter:blur(16px) saturate(1.6);-webkit-backdrop-filter:blur(16px) saturate(1.6);
-  border-bottom:1px solid var(--nav-bd);z-index:30}
+  background:transparent;z-index:30}
 .nav-row{display:flex;align-items:center;gap:9px}
 .nav-logo{width:29px;height:29px;border-radius:9px;overflow:hidden;box-shadow:0 4px 14px rgba(99,102,241,.45);flex:none}
 .nav-logo img{width:100%;height:100%;display:block}
@@ -256,7 +257,9 @@ body[data-theme="light"] #boot .bt-bar{background:rgba(139,92,246,.14)}
 .now-chip,.next-chip{display:inline-flex;align-items:center;gap:4px;font-size:9.3px;font-weight:900;
   letter-spacing:.6px;padding:2.5px 7px;border-radius:999px}
 .now-chip{color:var(--now);background:color-mix(in srgb,var(--now) 14%,transparent);border:1px solid color-mix(in srgb,var(--now) 38%,transparent)}
-.next-chip{color:var(--next);background:color-mix(in srgb,var(--next) 13%,transparent);border:1px solid color-mix(in srgb,var(--next) 36%,transparent)}
+.next-chip{color:var(--next);background:color-mix(in srgb,var(--next) 14%,transparent);
+  border:1.5px solid color-mix(in srgb,var(--next) 58%,transparent);border-radius:8px;
+  padding:3px 9px;box-shadow:0 0 10px color-mix(in srgb,var(--next) 14%,transparent)}
 .now-chip i,.next-chip i{width:5px;height:5px;border-radius:50%;background:currentColor;animation:blink 1.4s ease infinite}
 @keyframes blink{50%{opacity:.35}}
 .b-join{flex:none;display:inline-flex;align-items:center;gap:6px;padding:9px 13px;border-radius:12px;
@@ -275,7 +278,7 @@ body[data-theme="light"] #boot .bt-bar{background:rgba(139,92,246,.14)}
   padding:6px 10px calc(6px + var(--sab));
   background:var(--tab-bg);backdrop-filter:blur(18px) saturate(1.7);-webkit-backdrop-filter:blur(18px) saturate(1.7);
   border-top:1px solid var(--nav-bd)}
-#tabbar3{position:absolute;left:0;right:0;bottom:0;z-index:40;display:flex;
+#tabbar3,#tabbar4{position:absolute;left:0;right:0;bottom:0;z-index:40;display:flex;
   padding:6px 10px calc(6px + var(--sab));
   background:var(--tab-bg);backdrop-filter:blur(18px) saturate(1.7);-webkit-backdrop-filter:blur(18px) saturate(1.7);
   border-top:1px solid var(--nav-bd)}
@@ -294,6 +297,58 @@ body[data-theme="light"] .tbb.on{color:#7c3aed}
 .tb-ava svg{display:block}
 .tbb.on .tb-ava{box-shadow:0 0 0 2px var(--acc),0 0 16px rgba(139,92,246,.55)}
 .tbb:active .tb-ava{transform:scale(.92)}
+
+/* =================== АДМІН-ПАНЕЛЬ (3.5.4) =================== */
+.adm-days{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:13px}
+.adm-day{padding:7px 2px;border-radius:10px;background:var(--soft-bg);border:1px solid var(--soft-bd);
+  color:var(--sub);font-weight:800;font-size:10.5px;text-align:center;font-family:inherit}
+.adm-day span{display:block;font-size:8.5px;color:var(--dim);font-weight:600;margin-top:1px}
+.adm-day.on{border-color:var(--acc);color:var(--txt);background:color-mix(in srgb,var(--acc) 14%,transparent)}
+.adm-rows{margin-top:10px;display:flex;flex-direction:column;gap:7px}
+.adm-lesson{border:1px solid var(--soft-bd);border-radius:12px;background:var(--card-bg);padding:8px 9px}
+.adm-lrow{display:flex;align-items:center;gap:8px}
+.adm-num{width:16px;text-align:center;font-size:10px;font-weight:800;color:var(--dim);flex:none}
+.adm-tile{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;color:#fff;flex:none;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+.adm-lmain{flex:1;min-width:0}
+.adm-lmain b{display:block;font-size:12px;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adm-lmain span{display:block;font-size:9.5px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adm-lmain span i{color:#34d399;font-style:normal}
+.adm-ltime{text-align:right;flex:none}
+.adm-ltime b{display:block;font-size:11px;color:var(--txt);font-variant-numeric:tabular-nums}
+.adm-ltime span{font-size:9px;color:var(--dim);font-variant-numeric:tabular-nums}
+.adm-lacts{display:flex;flex-direction:column;gap:3px;flex:none}
+.adm-ib{width:26px;height:20px;border-radius:7px;display:grid;place-items:center;background:var(--soft-bg);
+  border:1px solid var(--soft-bd);color:var(--sub);font-family:inherit;padding:0}
+.adm-ib:disabled{opacity:.35}
+.adm-ib.set{color:#c4b5fd}
+.adm-actions{display:flex;gap:8px;margin-top:12px}
+.adm-btn{flex:1;padding:10px;border-radius:12px;font-weight:800;font-size:12px;display:flex;align-items:center;
+  justify-content:center;gap:6px;font-family:inherit;border:0}
+.adm-btn.ghost{background:var(--soft-bg);border:1px solid var(--soft-bd);color:var(--txt)}
+.adm-btn.primary{background:var(--grad);color:#fff}
+.adm-note{margin-top:9px;font-size:10px;color:var(--dim);line-height:1.45}
+.adm-row{border:1px solid var(--soft-bd);border-radius:12px;background:var(--card-bg);padding:10px 11px;margin-top:8px}
+.adm-rowhead{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.adm-rowhead b{font-size:12.5px;color:var(--txt);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adm-inp{width:100%;box-sizing:border-box;padding:8px 10px;border-radius:10px;border:1px solid var(--soft-bd);
+  background:var(--soft-bg);color:var(--txt);font-size:12px;font-family:inherit;outline:none;margin-top:5px}
+.adm-inp:focus{border-color:var(--acc)}
+.adm-in2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.adm-save{margin-top:8px;width:100%;padding:9px;border-radius:10px;background:var(--grad);color:#fff;
+  font-weight:800;font-size:12px;border:0;font-family:inherit}
+.adm-hint{font-size:9.5px;color:var(--dim);margin-top:4px}
+.adm-igrid{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;margin-top:8px}
+.adm-ig{aspect-ratio:1;border-radius:9px;display:grid;place-items:center;background:var(--soft-bg);
+  border:1px solid var(--soft-bd);color:var(--txt);font-family:inherit;padding:0}
+.adm-ig.on{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 16%,transparent);color:#fff}
+/* модалка редагування уроку — та сама анімація mup, що в майстра груп */
+#awrap{position:fixed;inset:0;z-index:85;display:flex;align-items:center;justify-content:center;padding:20px}
+#awrap .g-back{position:absolute;inset:0;background:rgba(3,3,7,.66);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+#aBox{position:relative;width:100%;max-width:420px;max-height:86dvh;overflow-y:auto;
+  background:var(--sheet-bg);border:1px solid var(--card-bd);border-radius:22px;
+  box-shadow:0 24px 70px rgba(0,0,0,.55);animation:mup .26s cubic-bezier(.2,.9,.3,1.15) both;
+  padding:14px 16px calc(14px + var(--sab))}
 </style>
 <style>
 /* =================== НАЛАШТУВАННЯ (iOS grouped list) =================== */
@@ -347,14 +402,16 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;heigh
 
 /* плитки тем */
 .theme-rows{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:12px}
-.theme-tile{display:flex;flex-direction:column;align-items:center;gap:7px;padding:12px 6px 10px;border-radius:13px;
+.theme-tile{display:flex;flex-direction:column;align-items:center;gap:7px;padding:12px 9px 10px;border-radius:13px;
   background:var(--soft-bg);border:1.5px solid var(--soft-bd);transition:transform .12s,border-color .2s}
 .theme-tile:active{transform:scale(.96)}
 .theme-tile.on{border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 22%,transparent)}
-.tp{width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.14)}
-.tp.std{background:linear-gradient(135deg,#151325,#312e52 60%,#8b5cf6)}
-.tp.lit{background:linear-gradient(135deg,#fdfdfe,#e4e6f5 60%,#c4b5fd)}
-.tp.gls{background:linear-gradient(135deg,#0e0a26,#3b2a86 55%,#ec4899)}
+/* превью теми — як у застосунку на Android: широка прямокутна плитка,
+   а не коло */
+.tp{display:block;width:100%;height:34px;border-radius:9px;border:1px solid rgba(255,255,255,.14)}
+.tp.std{background:linear-gradient(135deg,#0b0b14,#221a3f)}
+.tp.lit{background:linear-gradient(135deg,#eef0f8,#dfe3f4)}
+.tp.gls{background:linear-gradient(135deg,#2b1a5e,#7c3aed 55%,#38bdf8)}
 .theme-tile b{font-size:11.5px;color:var(--txt)}
 .theme-tile span{font-size:9.5px;color:var(--sub);margin-top:-4px}
 
@@ -505,14 +562,9 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
 <div id="app" class="hidden">
 
   <!-- ======== РОЗКЛАД ======== -->
+  <!-- 3.5.4: шапку «FluxHelper / розклад» знято — екран розкладу говорить сам за себе,
+       верхня панель має той самий фон, що й сторінка -->
   <div id="vMain" class="view">
-    <div class="nav">
-      <div class="nav-row">
-        <span class="nav-logo"><img src="icon-192.png" alt=""></span>
-        <span class="nav-name">FluxHelper</span>
-        <span class="nav-sec">розклад</span>
-      </div>
-    </div>
     <div id="nban" class="hidden">
       <div class="bn-ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div>
       <div class="bn-t"><b>Сповіщення про початок уроку</b><span>нагадаємо завчасно — щоб ти не запізнився</span></div>
@@ -538,6 +590,10 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
         <span class="tb-ava" id="profAva"></span>
         <span>Профіль</span>
       </button>
+      <button class="tbb hidden" id="tbAdm" type="button">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.9 19.4 5.7v5.5c0 4.6-3.1 8-7.4 9.9-4.3-1.9-7.4-5.3-7.4-9.9V5.7L12 2.9z"/><path d="M9 12.2l2.1 2.1 4-4.6"/></svg>
+        <span>Адмін</span>
+      </button>
     </div>
   </div>
 
@@ -547,7 +603,6 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
       <div class="nav-row">
         <span class="nav-logo"><img src="icon-192.png" alt=""></span>
         <span class="nav-name">FluxHelper</span>
-        <span class="nav-sec">налаштування</span>
       </div>
     </div>
     <div class="scrollview">
@@ -627,14 +682,7 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
         </div>
       </div>
 
-      <div class="ms-lbl"><span>Акаунт</span></div>
-      <div class="ms-card">
-        <div class="ms-row" role="button" id="bAcc">
-          <span class="ac-ava" id="msAva" style="width:30px;height:30px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:grid;place-items:center;color:#fff;font-size:12px;font-weight:800;flex:none">?</span>
-          <span class="ms-body"><b id="msAccName">Акаунт Google</b><span id="msAccSub">увійти, щоб синхронізувати</span></span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--dim)"><polyline points="9 18 15 12 9 6"/></svg>
-        </div>
-      </div>
+      <!-- 3.5.4: рамку «Акаунт» знято — профіль має власну вкладку внизу -->
 
       <div class="ms-hero" id="aboutBox">
         <span class="lmark"><img src="icon-192.png" alt=""></span>
@@ -656,6 +704,10 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
         <span class="tb-ava" id="profAva2"></span>
         <span>Профіль</span>
       </button>
+      <button class="tbb hidden" id="tbAdm2" type="button">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.9 19.4 5.7v5.5c0 4.6-3.1 8-7.4 9.9-4.3-1.9-7.4-5.3-7.4-9.9V5.7L12 2.9z"/><path d="M9 12.2l2.1 2.1 4-4.6"/></svg>
+        <span>Адмін</span>
+      </button>
     </div>
   </div>
 
@@ -663,11 +715,8 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
   <div id="vAcc" class="view hidden">
     <div class="nav">
       <div class="nav-row">
-        <button id="accBack" type="button" aria-label="Назад" style="display:flex;align-items:center;gap:4px;color:var(--acc);font-size:13.5px;font-weight:700">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-          <span>Налаштування</span>
-        </button>
-        <span class="nav-sec">акаунт</span>
+        <span class="nav-logo"><img src="icon-192.png" alt=""></span>
+        <span class="nav-name">FluxHelper</span>
       </div>
     </div>
     <div class="scrollview">
@@ -720,9 +769,59 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         <span>Налаштування</span>
       </button>
-      <button class="tbb on" id="tbProf3" type="button">
+      <button class="tbb" id="tbProf3" type="button">
         <span class="tb-ava" id="profAva3"></span>
         <span>Профіль</span>
+      </button>
+      <button class="tbb hidden" id="tbAdm3" type="button">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.9 19.4 5.7v5.5c0 4.6-3.1 8-7.4 9.9-4.3-1.9-7.4-5.3-7.4-9.9V5.7L12 2.9z"/><path d="M9 12.2l2.1 2.1 4-4.6"/></svg>
+        <span>Адмін</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ======== АДМІН-ПАНЕЛЬ (лише роль admin/developer) ======== -->
+  <div id="vAdmin" class="view hidden">
+    <div class="nav">
+      <div class="nav-row">
+        <span class="nav-logo"><img src="icon-192.png" alt=""></span>
+        <span class="nav-name">FluxHelper</span>
+      </div>
+    </div>
+    <div class="scrollview">
+      <section class="ms-card" style="padding:13px 14px 14px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="ms-tile sm" style="background:var(--grad)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.6" y="5" width="16.8" height="15.4" rx="2"/><path d="M3.6 10h16.8"/><path d="M8.2 2.8v4M15.8 2.8v4"/></svg>
+          </span>
+          <span class="ms-body"><b>Редагування розкладу</b><span>зміни летять у базу — клас отримує їх миттєво</span></span>
+        </div>
+        <div class="seg" id="admSeg" style="margin-top:12px">
+          <button class="seg-b on" data-t="0" type="button"><b>Розклад</b></button>
+          <button class="seg-b" data-t="1" type="button"><b>Zoom</b></button>
+          <button class="seg-b" data-t="2" type="button"><b>Вчителі</b></button>
+          <button class="seg-b" data-t="3" type="button"><b>Іконки</b></button>
+        </div>
+        <div id="admBody"></div>
+      </section>
+      <div class="ac-note">Панель адміна: розклад, Zoom-посилання, вчителі та іконки предметів — усе пишеться прямо в базу. Тижні-перевертні поки що редагуються у застосунку на ПК/Android.</div>
+    </div>
+    <div id="tabbar4">
+      <button class="tbb" id="tbSched4" type="button">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14.5l2.5 2.5 5-5"/></svg>
+        <span>Розклад</span>
+      </button>
+      <button class="tbb" id="tbSetup4" type="button">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Налаштування</span>
+      </button>
+      <button class="tbb" id="tbProf4" type="button">
+        <span class="tb-ava" id="profAva4"></span>
+        <span>Профіль</span>
+      </button>
+      <button class="tbb on hidden" id="tbAdm4" type="button">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.9 19.4 5.7v5.5c0 4.6-3.1 8-7.4 9.9-4.3-1.9-7.4-5.3-7.4-9.9V5.7L12 2.9z"/><path d="M9 12.2l2.1 2.1 4-4.6"/></svg>
+        <span>Адмін</span>
       </button>
     </div>
   </div>
@@ -742,6 +841,12 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
       <button class="g-save" id="gSave" type="button" disabled>Зберегти</button>
     </div>
   </div>
+</div>
+
+<!-- РЕДАГУВАННЯ УРОКУ (адмін-панель) -->
+<div id="awrap" class="hidden">
+  <div class="g-back" id="aBack"></div>
+  <div id="aBox"></div>
 </div>
 
 <!-- ПІДТВЕРДЖЕННЯ ЗАХОДУ -->
@@ -785,7 +890,7 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
    Версія 3.5.3 · Web
    ============================================================ */
 
-var APP_VER = '3.5.3';
+var APP_VER = '3.5.4';
 var DB_URL = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app';
 var GIS_CLIENT = '668834523935-k470ldmdv0r9am0720v6lgaatm6rtuf3.apps.googleusercontent.com';
 var FH_FB_KEY = 'AIzaSyCDWpF3QTMEFBN9ravDxH_woKnBpcMRDvI';
@@ -1188,8 +1293,9 @@ function authStart() {
               if (!name && email) name = email.split('@')[0];
               const u = { sub: String(p.sub), name: name, email: email, pic: String(p.picture || '') };
               setAgStat('<span class="spin"></span>Готуємо акаунт…');
-              fbAuthRegister(resp.access_token, function (fid) {
+              fbAuthRegister(resp.access_token, function (fid, ti) {
                 if (fid) u.fid = String(fid);
+                if (ti) { u.tok = ti.tok; u.rtok = ti.rtok; u.tokT = ti.tokT; }
                 done();
                 authAccept(u);
               });
@@ -1229,7 +1335,18 @@ function fbAuthRegister(tok, cb) {
       returnSecureToken: true
     })
   }).then(function (r) { return r.json(); })
-    .then(function (j) { if (j && j.localId) { if (cb) cb(j.localId); } else if (cb) cb(null); })
+    .then(function (j) {
+      if (j && j.localId) {
+        /* 3.5.4: беремо і Firebase ID token (для /api/sync — запис у D1
+           напряму, як у застосунків), і refresh token (довгі сесії) */
+        let ti = null;
+        if (j.idToken) {
+          const exp = parseInt(j.expiresIn, 10) || 3600;
+          ti = { tok: String(j.idToken), rtok: String(j.refreshToken || ''), tokT: Date.now() + exp * 1000 - 120000 };
+        }
+        if (cb) cb(j.localId, ti);
+      } else if (cb) cb(null);
+    })
     .catch(function () { if (cb) cb(null); });
 }
 function authAccept(u) {
@@ -1250,11 +1367,15 @@ function logout() {
   toast('Ви вийшли з акаунта');
 }
 
-/* ---------------- СИНХРОНІЗАЦІЯ (Firebase RTDB, ключ = Firebase UID) ----------------
-   Знімок налаштувань живе в /update/web/<uid> — і це ТОЙ САМИЙ JSON, що ПК і
-   телефон пишуть у D1 users.settings: { g, n:{on,min,snd,off}, z, th, cf, bt,
-   t, v, sync }. Застосунки 3.5.3+ дзеркалять свій знімок із D1 сюди й читають
-   звідси — тож налаштування з ПК/телефона з'являються на айфоні і навпаки. */
+/* ---------------- СИНХРОНІЗАЦІЯ 3.5.4 ----------------
+   ГОЛОВНИЙ шлях — /api/sync (Pages Function на тому самому домені):
+   сайт читає/пише D1 users.settings — ТОЙ САМИЙ рядок, що й ПК і
+   Android-застосунки всіх версій (починаючи з 2.8.9). Тому «дві хвилини»
+   з ПК з'являються на айфоні навіть якщо застосунки НЕ оновлені.
+   Фолббек, якщо Function недоступна — дзеркало в RTDB
+   /update/web/<uid> (його читають застосунки 3.5.3+). */
+function normRole(r) { if (r === 'development') return 'developer'; return (r === 'admin' || r === 'developer') ? r : 'user'; }
+function staffAcc() { return ACC.role === 'admin' || ACC.role === 'developer'; }
 function webKey() { const k = userKey(ACC.user); return k ? ('update/web/' + encodeURIComponent(k)) : ''; }
 function snapFromLocal() {
   const s = defaultSettings();
@@ -1266,12 +1387,66 @@ function snapFromLocal() {
   s.t = Date.now(); s.v = APP_VER; s.sync = ACC.sync ? 1 : 0;
   return s;
 }
+/* Firebase ID token живе ~1 год — оновлюємо за refresh token заздалегідь */
+function ensureTok(cb) {
+  const u = ACC.user;
+  if (!u) { if (cb) cb(false); return; }
+  if (u.tok && u.tokT && Date.now() < u.tokT - 30000) { if (cb) cb(true); return; }
+  if (!u.rtok) { if (cb) cb(false); return; }
+  fetch('https://securetoken.googleapis.com/v1/token?key=' + FH_FB_KEY, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ grant_type: 'refresh_token', refresh_token: u.rtok })
+  }).then(function (r) { return r.json(); }).then(function (j) {
+    if (j && j.id_token) {
+      u.tok = String(j.id_token);
+      u.rtok = String(j.refresh_token || u.rtok);
+      const exp = parseInt(j.expires_in, 10) || 3600;
+      u.tokT = Date.now() + exp * 1000 - 120000;
+      try { localStorage.setItem('fh_user', JSON.stringify(u)); } catch (e) {}
+      if (cb) cb(true);
+    } else if (cb) cb(false);
+  }).catch(function () { if (cb) cb(false); });
+}
+const API_SYNC = { v: null };   // null = ще не перевіряли, true/false — результат першої спроби
+function apiGet(cb) {
+  const k = userKey(ACC.user);
+  if (!k) { if (cb) cb(null); return; }
+  ensureTok(function (ok) {
+    if (!ok) { if (cb) cb(null); return; }
+    fetch('/api/sync?uid=' + encodeURIComponent(k) + '&tok=' + encodeURIComponent(ACC.user.tok), { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .catch(function () { return null; })
+      .then(function (j) {
+        if (j && j.ok) { API_SYNC.v = true; if (cb) cb(j); }
+        else { API_SYNC.v = false; if (cb) cb(null); }
+      });
+  });
+}
+function apiPut(p, cb) {
+  const k = userKey(ACC.user);
+  if (!k) { if (cb) cb(false); return; }
+  ensureTok(function (ok) {
+    if (!ok) { if (cb) cb(false); return; }
+    fetch('/api/sync', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid: k, tok: ACC.user.tok, snapshot: p,
+        profile: { email: ACC.user.email || '', name: ACC.user.name || '', pic: ACC.user.pic || '' } })
+    }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+      .then(function (j) {
+        if (j && j.ok) { API_SYNC.v = true; if (cb) cb(true); }
+        else { API_SYNC.v = false; if (cb) cb(false); }
+      });
+  });
+}
 function syncUp() {
-  if (!ACC.user || !ACC.sync || !webKey()) return;
+  if (!ACC.user || !ACC.sync || !userKey(ACC.user)) return;
   const p = snapFromLocal();
   syncLastTs = p.t;
   try { localStorage.setItem('fh_sync_ts', String(syncLastTs)); } catch (e) {}
-  fetch(DB_URL + '/' + webKey() + '.json', { method: 'PUT', body: JSON.stringify(p) }).catch(function () {});
+  apiPut(p, function (ok) {
+    if (ok) return;   /* записано в D1 — той самий рядок, що й у застосунків */
+    if (webKey()) fetch(DB_URL + '/' + webKey() + '.json', { method: 'PUT', body: JSON.stringify(p) }).catch(function () {});
+  });
 }
 function syncApply(p, force) {
   if (!p || typeof p !== 'object' || !ACC.user) return;
@@ -1318,6 +1493,25 @@ function cloudGroupsOk(p) {
 }
 function syncPull(force, cb) {
   if (!ACC.user) { if (cb) cb('offline'); return; }
+  if (!userKey(ACC.user)) { if (cb) cb('offline'); return; }
+  /* ГОЛОВНИЙ шлях — D1 через /api/sync: і роль, і налаштування одним запитом */
+  apiGet(function (j) {
+    if (!ACC.user) return;
+    if (j) {
+      if (j.role) { ACC.role = normRole(j.role); }
+      if (typeof j.sync !== 'undefined') { ACC.sync = !!j.sync; try { localStorage.setItem('fh_sync', ACC.sync ? '1' : '0'); } catch (e) {} }
+      refreshAccUI();
+      const p = j.settings;
+      if (p && typeof p === 'object' && (p.g || p.n || p.th || p.z)) {
+        syncApply(p, force);
+        if (cb) cb(cloudGroupsOk(p) ? 'ok' : 'master');
+      } else if (cb) cb('master');   /* перший вхід акаунта — майстер груп */
+      return;
+    }
+    legacyPull(force, cb);   /* /api/sync недоступна — дзеркало RTDB */
+  });
+}
+function legacyPull(force, cb) {
   const k = webKey();
   if (!k) { if (cb) cb('offline'); return; }
   fetch(DB_URL + '/' + k + '.json?cb=' + Date.now(), { cache: 'no-store' })
@@ -1343,17 +1537,30 @@ function syncWatchStop() { clearTimeout(syncWatchT); syncWatchT = 0; }
 function syncWatchTick() {
   syncWatchT = 0;
   if (!ACC.user || !ACC.sync) return;
-  const k = webKey();
-  if (!k) { if (ACC.user && ACC.sync) syncWatchT = setTimeout(syncWatchTick, 5000); return; }
-  fetch(DB_URL + '/' + k + '.json?cb=' + Date.now(), { cache: 'no-store' })
-    .then(function (r) { return r.ok ? r.json() : null; })
-    .then(function (j) {
-      if (!ACC.user || !ACC.sync) return;
-      const p = (j && j.st && typeof j.st === 'object' && !j.g) ? j.st : j;
-      if (p && typeof p === 'object' && parseInt(p.t, 10) > syncLastTs) syncApply(p, false);
+  if (!userKey(ACC.user)) { if (ACC.user && ACC.sync) syncWatchT = setTimeout(syncWatchTick, 5000); return; }
+  /* 3.5.4: спершу D1 (/api/sync) — так на айфоні миттєво видно зміни з ПК/телефона;
+     якщо Function недоступна — дзеркало RTDB, як раніше */
+  apiGet(function (j) {
+    if (!ACC.user || !ACC.sync) return;
+    if (j) {
+      if (j.role && j.role !== ACC.role) { ACC.role = normRole(j.role); refreshAccUI(); }
+      const p = j.settings;
+      if (p && typeof p === 'object' && (p.g || p.n || p.th || p.z) && parseInt(p.t, 10) > syncLastTs) syncApply(p, false);
       if (ACC.user && ACC.sync && !syncWatchT) syncWatchT = setTimeout(syncWatchTick, 5000);
-    })
-    .catch(function () { if (ACC.user && ACC.sync && !syncWatchT) syncWatchT = setTimeout(syncWatchTick, 5000); });
+      return;
+    }
+    const k = webKey();
+    if (!k) { if (ACC.user && ACC.sync) syncWatchT = setTimeout(syncWatchTick, 5000); return; }
+    fetch(DB_URL + '/' + k + '.json?cb=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (m) {
+        if (!ACC.user || !ACC.sync) return;
+        const p = (m && m.st && typeof m.st === 'object' && !m.g) ? m.st : m;
+        if (p && typeof p === 'object' && parseInt(p.t, 10) > syncLastTs) syncApply(p, false);
+        if (ACC.user && ACC.sync && !syncWatchT) syncWatchT = setTimeout(syncWatchTick, 5000);
+      })
+      .catch(function () { if (ACC.user && ACC.sync && !syncWatchT) syncWatchT = setTimeout(syncWatchTick, 5000); });
+  });
 }
 function syncWatchStart() {
   syncWatchStop();
@@ -1719,7 +1926,7 @@ function showView(id) {
   const t = Date.now();
   if (t - lastSwapT < 600) return;
   lastSwapT = t;
-  ['vMain', 'vSetup', 'vAcc'].forEach(function (v) {
+  ['vMain', 'vSetup', 'vAcc', 'vAdmin'].forEach(function (v) {
     const e = byId(v);
     if (!e) return;
     if (v === id) e.classList.remove('hidden'); else e.classList.add('hidden');
@@ -1742,18 +1949,26 @@ function showAcc() {
   markTab('acc');
   refreshAccUI();
 }
+/* 3.5.4: вкладка АДМІН — лише для акаунтів з роллю admin/developer у базі */
+function showAdmin() {
+  if (!ACC.user || !staffAcc()) { toast('Адмін-панель доступна лише адмінам'); return; }
+  showView('vAdmin');
+  markTab('adm');
+  admRender();
+}
 /* тап по «Профіль»: без акаунта — екран входу; з акаунтом — сторінка профілю */
 function profTap() {
   if (!ACC.user) { gateShow(); return; }
   showAcc();
 }
-function markTab(mode) {   // 'sched' | 'setup' | 'acc' — однаково на всіх трьох таббарах
-  const rows = [['tbSched', 'tbSetup', 'tbProf'], ['tbSched2', 'tbSetup2', 'tbProf2'], ['tbSched3', 'tbSetup3', 'tbProf3']];
+function markTab(mode) {   // 'sched' | 'setup' | 'acc' | 'adm' — на всіх таббарах
+  const rows = [['tbSched', 'tbSetup', 'tbProf', 'tbAdm'], ['tbSched2', 'tbSetup2', 'tbProf2', 'tbAdm2'], ['tbSched3', 'tbSetup3', 'tbProf3', 'tbAdm3'], ['tbSched4', 'tbSetup4', 'tbProf4', 'tbAdm4']];
   rows.forEach(function (r) {
-    const a = byId(r[0]), b = byId(r[1]), c = byId(r[2]);
+    const a = byId(r[0]), b = byId(r[1]), c = byId(r[2]), d = byId(r[3]);
     if (a) a.classList.toggle('on', mode === 'sched');
     if (b) b.classList.toggle('on', mode === 'setup');
     if (c) c.classList.toggle('on', mode === 'acc');
+    if (d) d.classList.toggle('on', mode === 'adm');
   });
 }
 function buildSummary() {
@@ -1781,6 +1996,306 @@ function buildSummary() {
   });
 }
 
+/* ================= 3.5.4: АДМІН-ПАНЕЛЬ (веб) =================
+   Ті самі шляхи в базі, що й в адмінці застосунків: schedule/<dk>,
+   subjects/<key>, teachers/<key>. Розклад / Zoom / вчителі / іконки.
+   Тижні-перевертні (weeks) поки що редагуються у застосунку. */
+const ADM_DK = [['mon', 'Пн'], ['tue', 'Вт'], ['wed', 'Ср'], ['thu', 'Чт'], ['fri', 'Пт']];
+const ADM_ICONS = ['bookf','bookopenf','ukr_lit','notebook','pencil','pen','clip','gradcap','school','backpack',
+  'mathf','sigmaf','calc','ruler','compassd','atomf','flaskf','microscope','dna','thermo','magnet',
+  'globef','msgf','german','germanf','english','translate','usersf','landmarkf','buildf',
+  'monitorf','cpu','code','terminal','robot','bulb','brain','zap',
+  'palettef','musicf','guitar','piano','camera','video','mic','headphones','filmf',
+  'run','dumbbell','medal','trophy','target','chess','gamepad','shirt',
+  'apple','cup','pizza','burger','cake','ecof','flower','tree','bug','fish','sun','moon','cloud','flame',
+  'smile','key','lock','shield','award','hourglass','watch','bell','calendar','star','heart','flag','pin'];
+let ADMW = { tab: 0, day: 0, draft: null };
+
+function admDbPut(path, obj, cb) {
+  const url = DB_URL + '/' + String(path).split('/').map(encodeURIComponent).join('/') + '.json';
+  fetch(url, { method: 'PUT', body: (obj === null ? 'null' : JSON.stringify(obj)) })
+    .then(function (r) { if (cb) cb(!!r.ok); })
+    .catch(function () { if (cb) cb(false); });
+}
+function admPool() {
+  const seen = {}, out = [];
+  const add = function (k) { if (k && !seen[k]) { seen[k] = 1; out.push(k); } };
+  const names = [];
+  const addAll = function (src) { if (src) for (const k in src) names.push(k); };
+  addAll(DBD.subjects); addAll(BUILTIN.subjects);
+  names.sort();
+  names.forEach(add);
+  ADM_DK.forEach(function (d) { (schedFor(d[0]) || []).forEach(function (it) { add(normSubj(it.s)); }); });
+  return out;
+}
+function admDispName(k) { return k ? k.charAt(0).toUpperCase() + k.slice(1) : ''; }
+function admIconOf(k) { const s = subjFor(k) || {}; return s.icon ? String(s.icon) : 'bookf'; }
+function admTeacherOf(k) {
+  const t = teachFor(k);
+  if (!t) return '';
+  if (Array.isArray(t)) return String(t[1] || t[2] || '');
+  if (typeof t === 'object') return String(t['1'] || t['2'] || '');   // BUILTIN: {'1': ПІБ, '2': ПІБ}
+  return String(t);
+}
+function admHasZoom(k) { const s = subjFor(k) || {}; return !!(s.link || (s.links && (s.links['1'] || s.links['2']))); }
+function admIsGrouped(k) { const kk = splitKeys(); return kk.indexOf(k) >= 0; }
+function admDraftArr() {
+  if (!ADMW.draft) {
+    const src = schedFor(ADM_DK[ADMW.day][0]) || [];
+    ADMW.draft = src.map(function (it) { return { s: String(it.s || ''), t: String(it.t || ''), e: String(it.e || '') }; });
+  }
+  return ADMW.draft;
+}
+function admRender() {
+  if (!ACC.user || !staffAcc()) return;
+  const seg = byId('admSeg');
+  if (seg) seg.querySelectorAll('.seg-b').forEach(function (b, i) { b.classList.toggle('on', i === ADMW.tab); });
+  admRenderBody();
+}
+function admRenderBody() {
+  const b = byId('admBody'); if (!b) return;
+  if (ADMW.tab === 0) b.innerHTML = admSchedHtml();
+  else if (ADMW.tab === 1) b.innerHTML = admZoomHtml();
+  else if (ADMW.tab === 2) b.innerHTML = admTeachHtml();
+  else b.innerHTML = admIconsHtml();
+  admBindBody();
+}
+function admSchedHtml() {
+  const draft = admDraftArr();
+  let h = '<div class="adm-days">';
+  ADM_DK.forEach(function (d, i) {
+    const n = (schedFor(d[0]) || []).length;
+    h += '<button class="adm-day' + (i === ADMW.day ? ' on' : '') + '" data-admday="' + i + '" type="button"><b>' + d[1] + '</b><span>' + n + ' ур.</span></button>';
+  });
+  h += '</div><div class="adm-rows">';
+  if (!draft.length) h += '<div class="adm-empty" style="padding:18px 0;text-align:center;color:var(--dim);font-size:12px">Пока жодного уроку — натисни «Додати урок»</div>';
+  draft.forEach(function (r, i) {
+    const key = normSubj(r.s);
+    const tch = admTeacherOf(key);
+    h += '<div class="adm-lesson"><div class="adm-lrow">'
+       + '<span class="adm-num">' + (i + 1) + '</span>'
+       + '<span class="adm-tile" style="background:' + tileGrad(r.s || '?') + '">' + icon(admIconOf(key), 16) + '</span>'
+       + '<div class="adm-lmain"><b>' + esc(key ? admDispName(key) : 'предмет не обрано') + '</b>'
+       + '<span>' + esc(tch || 'вчителя не вказано') + (admHasZoom(key) ? ' · <i>Zoom є</i>' : '') + '</span></div>'
+       + '<div class="adm-ltime"><b>' + esc(r.t || '--:--') + '</b><span>' + esc(r.e || '--:--') + '</span></div>'
+       + '<div class="adm-lacts">'
+       + '<button class="adm-ib" data-act="up" data-i="' + i + '"' + (i === 0 ? ' disabled' : '') + ' type="button">' + icon('chevu', 12) + '</button>'
+       + '<button class="adm-ib" data-act="dn" data-i="' + i + '"' + (i === draft.length - 1 ? ' disabled' : '') + ' type="button">' + icon('chevd', 12) + '</button>'
+       + '<button class="adm-ib set" data-act="edit" data-i="' + i + '" type="button">' + icon('gear', 12) + '</button>'
+       + '</div></div></div>';
+  });
+  h += '</div><div class="adm-actions">'
+     + '<button class="adm-btn ghost" data-act="addrow" type="button">' + icon('plus', 13) + 'Додати урок</button>'
+     + '<button class="adm-btn primary" data-act="savesched" type="button">Зберегти розклад</button></div>'
+     + '<div class="adm-note">Вибери день — побачиш поточний розклад. Карандаш праворуч — предмет, час і видалення уроку. Зміни летять у базу — весь клас отримує їх миттєво.</div>';
+  return h;
+}
+function admZoomHtml() {
+  const pool = admPool();
+  let h = '<div class="adm-note" style="margin:10px 0 2px">Zoom-посилання предметів. У групових предметах — окреме посилання для 1-ї і 2-ї групи.</div>';
+  pool.forEach(function (k) {
+    const s = subjFor(k) || {};
+    const grouped = admIsGrouped(k);
+    h += '<div class="adm-row" data-key="' + esc(k) + '"><div class="adm-rowhead">'
+       + '<span class="adm-tile" style="width:26px;height:26px;background:' + tileGrad(k) + '">' + icon(admIconOf(k), 13) + '</span>'
+       + '<b>' + esc(admDispName(k)) + '</b><span style="font-size:9px;color:' + (admHasZoom(k) ? '#34d399' : 'var(--dim)') + '">' + (admHasZoom(k) ? 'є посилання' : 'нема') + '</span></div>';
+    if (grouped) {
+      const lbl = (s.lbl && s.lbl.length === 2) ? s.lbl : ['1-ша група', '2-га група'];
+      const l1 = (s.links && s.links['1']) || '', l2 = (s.links && s.links['2']) || '';
+      h += '<input class="adm-inp" data-f="l1" type="url" placeholder="' + esc(String(lbl[0])) + ' — посилання Zoom" value="' + esc(l1) + '">'
+         + '<input class="adm-inp" data-f="l2" type="url" placeholder="' + esc(String(lbl[1])) + ' — посилання Zoom" value="' + esc(l2) + '">';
+    } else {
+      h += '<input class="adm-inp" data-f="link" type="url" placeholder="Посилання Zoom" value="' + esc(String(s.link || '')) + '">';
+    }
+    h += '<button class="adm-save" data-act="savez" type="button">Зберегти</button></div>';
+  });
+  return h;
+}
+function admTeachHtml() {
+  const pool = admPool();
+  let h = '<div class="adm-note" style="margin:10px 0 2px">Прізвища та імена вчителів. У групових предметах — окремо для кожної групи.</div>';
+  pool.forEach(function (k) {
+    const t = teachFor(k);
+    const grouped = admIsGrouped(k);
+    h += '<div class="adm-row" data-key="' + esc(k) + '"><div class="adm-rowhead">'
+       + '<span class="adm-tile" style="width:26px;height:26px;background:' + tileGrad(k) + '">' + icon(admIconOf(k), 13) + '</span>'
+       + '<b>' + esc(admDispName(k)) + '</b></div>';
+    if (grouped) {
+      let t1 = '', t2 = '';
+      if (Array.isArray(t)) { t1 = String(t[1] || ''); t2 = String(t[2] || ''); }
+      else if (t && typeof t === 'object') { t1 = String(t['1'] || ''); t2 = String(t['2'] || ''); }
+      else t1 = String(t || '');
+      h += '<input class="adm-inp" data-f="t1" type="text" placeholder="1-ша група — вчитель" value="' + esc(t1) + '">'
+         + '<input class="adm-inp" data-f="t2" type="text" placeholder="2-га група — вчитель" value="' + esc(t2) + '">';
+    } else {
+      const single = (t && typeof t === 'object') ? '' : String(t || '');
+      h += '<input class="adm-inp" data-f="t" type="text" placeholder="Вчитель" value="' + esc(single) + '">';
+    }
+    h += '<button class="adm-save" data-act="savet" type="button">Зберегти</button></div>';
+  });
+  return h;
+}
+function admIconsHtml() {
+  const pool = admPool();
+  const list = ADM_ICONS.filter(function (n) { return !!ICONS[n]; });
+  let h = '<div class="adm-note" style="margin:10px 0 2px">Іконка предмета — натисни, щоб вибрати. Зберігається одразу.</div>';
+  pool.forEach(function (k) {
+    const cur = admIconOf(k);
+    h += '<div class="adm-row" data-key="' + esc(k) + '"><div class="adm-rowhead">'
+       + '<span class="adm-tile" style="width:26px;height:26px;background:' + tileGrad(k) + '">' + icon(cur, 13) + '</span>'
+       + '<b>' + esc(admDispName(k)) + '</b><span style="font-size:9px;color:var(--dim)">' + esc(cur) + '</span></div>'
+       + '<div class="adm-igrid">';
+    list.forEach(function (n) {
+      h += '<button class="adm-ig' + (n === cur ? ' on' : '') + '" data-icon="' + n + '" type="button" title="' + n + '">' + icon(n, 14) + '</button>';
+    });
+    h += '</div></div>';
+  });
+  return h;
+}
+function admBindBody() {
+  const b = byId('admBody'); if (!b) return;
+  b.querySelectorAll('[data-admday]').forEach(function (btn) {
+    btn.onclick = function () { ADMW.day = parseInt(btn.dataset.admday, 10) || 0; ADMW.draft = null; admRenderBody(); };
+  });
+  b.querySelectorAll('[data-act]').forEach(function (btn) {
+    const act = btn.dataset.act;
+    if (act === 'up' || act === 'dn') btn.onclick = function () {
+      const i = parseInt(btn.dataset.i, 10), d = admDraftArr(), j = act === 'up' ? i - 1 : i + 1;
+      if (j < 0 || j >= d.length) return;
+      const tmp = d[i]; d[i] = d[j]; d[j] = tmp;
+      admRenderBody();
+    };
+    else if (act === 'edit') btn.onclick = function () { admLessonModal(parseInt(btn.dataset.i, 10)); };
+    else if (act === 'addrow') btn.onclick = function () {
+      const d = admDraftArr();
+      if (d.length >= 12) { toast('Більше 12 уроків на день не додати'); return; }
+      d.push({ s: '', t: '', e: '' });
+      admRenderBody();
+      admLessonModal(d.length - 1);
+    };
+    else if (act === 'savesched') btn.onclick = admSaveSched;
+    else if (act === 'savez') btn.onclick = function () { admSaveZoom(btn.closest('.adm-row')); };
+    else if (act === 'savet') btn.onclick = function () { admSaveTeach(btn.closest('.adm-row')); };
+  });
+  b.querySelectorAll('.adm-ig[data-icon]').forEach(function (btn) {
+    btn.onclick = function () {
+      const row = btn.closest('.adm-row'); if (!row) return;
+      const key = row.dataset.key, nm = btn.dataset.icon;
+      admDbPut('subjects/' + key + '/icon', nm === 'bookf' ? null : nm, function (ok) {
+        if (ok) {
+          if (!DBD.subjects) DBD.subjects = {};
+          const s = DBD.subjects[key] || (DBD.subjects[key] = {});
+          if (nm === 'bookf') delete s.icon; else s.icon = nm;
+          toast('Іконку оновлено');
+          admRenderBody();
+        } else toast('Не вдалося зберегти — перевір інтернет');
+      });
+    };
+  });
+}
+function admLessonModal(i) {
+  const d = admDraftArr();
+  const r = d[i]; if (!r) return;
+  const pool = admPool();
+  const opts = pool.map(function (k) { return '<option value="' + esc(admDispName(k)) + '"' + (normSubj(r.s) === k ? ' selected' : '') + '></option>'; }).join('');
+  const box = byId('aBox');
+  box.innerHTML = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'
+    + '<span class="adm-tile" style="background:' + tileGrad(r.s || '?') + '">' + icon(admIconOf(normSubj(r.s)), 18) + '</span>'
+    + '<b style="font-size:15px;color:var(--txt)">Урок ' + (i + 1) + '</b>'
+    + '<button class="adm-ib" id="aDel" type="button" style="margin-left:auto;width:auto;padding:0 10px;color:#fb7185">Видалити</button></div>'
+    + '<label class="adm-hint">Предмет</label>'
+    + '<input class="adm-inp" id="aSubj" list="aSubjList" type="text" placeholder="Назва предмета" value="' + esc(r.s) + '" style="margin-top:3px">'
+    + '<datalist id="aSubjList">' + opts + '</datalist>'
+    + '<div class="adm-in2"><div><label class="adm-hint">Початок</label><input class="adm-inp" id="aT1" type="time" value="' + esc(r.t) + '" style="margin-top:3px"></div>'
+    + '<div><label class="adm-hint">Кінець</label><input class="adm-inp" id="aT2" type="time" value="' + esc(r.e) + '" style="margin-top:3px"></div></div>'
+    + '<div class="adm-actions"><button class="adm-btn ghost" id="aCancel" type="button">Скасувати</button>'
+    + '<button class="adm-btn primary" id="aOk" type="button">Готово</button></div>';
+  byId('awrap').classList.remove('hidden');
+  byId('aCancel').onclick = admCloseModal;
+  byId('aBack').onclick = admCloseModal;
+  byId('aDel').onclick = function () {
+    d.splice(i, 1);
+    admCloseModal();
+    admRenderBody();
+  };
+  byId('aOk').onclick = function () {
+    const s = byId('aSubj').value.trim();
+    d[i] = { s: s, t: byId('aT1').value || '', e: byId('aT2').value || '' };
+    admCloseModal();
+    admRenderBody();
+  };
+}
+function admCloseModal() { byId('awrap').classList.add('hidden'); }
+function admSaveSched() {
+  const dk = ADM_DK[ADMW.day][0];
+  const arr = admDraftArr().filter(function (r) { return String(r.s || '').trim(); })
+    .map(function (r) { return { t: r.t || '', e: r.e || '', s: String(r.s).trim() }; });
+  admDbPut('schedule/' + dk, arr.length ? arr : null, function (ok) {
+    if (ok) {
+      if (!DBD.schedule) DBD.schedule = {};
+      if (arr.length) DBD.schedule[dk] = arr; else delete DBD.schedule[dk];
+      ADMW.draft = null;
+      toast('Розклад збережено — клас побачить зміни');
+      render(false);
+      buildTabs();
+      admRenderBody();
+    } else toast('Не вдалося зберегти — перевір інтернет');
+  });
+}
+function admSaveZoom(row) {
+  if (!row) return;
+  const key = row.dataset.key;
+  const s = Object.assign({}, subjFor(key) || {});
+  if (admIsGrouped(key)) {
+    const l1 = row.querySelector('[data-f="l1"]').value.trim();
+    const l2 = row.querySelector('[data-f="l2"]').value.trim();
+    s.link = null;
+    s.links = (l1 || l2) ? { '1': l1 || null, '2': l2 || null } : null;
+    if (!s.lbl || s.lbl.length !== 2) s.lbl = ['1-ша група', '2-га група'];
+  } else {
+    s.link = row.querySelector('[data-f="link"]').value.trim() || null;
+    s.links = null;
+  }
+  admDbPut('subjects/' + key, s, function (ok) {
+    if (ok) {
+      if (!DBD.subjects) DBD.subjects = {};
+      DBD.subjects[key] = s;
+      toast('Посилання збережено');
+      render(false);
+      admRenderBody();
+    } else toast('Не вдалося зберегти — перевір інтернет');
+  });
+}
+function admSaveTeach(row) {
+  if (!row) return;
+  const key = row.dataset.key;
+  let val;
+  if (admIsGrouped(key)) {
+    const t1 = row.querySelector('[data-f="t1"]').value.trim();
+    const t2 = row.querySelector('[data-f="t2"]').value.trim();
+    val = (t1 || t2) ? [null, t1 || null, t2 || null] : null;
+  } else {
+    val = row.querySelector('[data-f="t"]').value.trim() || null;
+  }
+  admDbPut('teachers/' + key, val, function (ok) {
+    if (ok) {
+      if (!DBD.teachers) DBD.teachers = {};
+      if (val) DBD.teachers[key] = val; else delete DBD.teachers[key];
+      toast('Вчителя збережено');
+      render(false);
+      buildSummary();
+      admRenderBody();
+    } else toast('Не вдалося зберегти — перевір інтернет');
+  });
+}
+/* сегменти адмінки */
+(function () {
+  const seg = byId('admSeg');
+  if (seg) seg.querySelectorAll('.seg-b').forEach(function (b) {
+    b.onclick = function () { ADMW.tab = parseInt(b.dataset.t, 10) || 0; ADMW.draft = null; admRender(); };
+  });
+})();
+
 /* ---------------- АКАУНТ (інтерфейс) ---------------- */
 function avaHtml(has) {
   if (has && ACC.user.pic) return '<img src="' + esc(ACC.user.pic) + '" alt="" referrerpolicy="no-referrer">';
@@ -1789,23 +2304,25 @@ function avaHtml(has) {
 }
 function refreshAccUI() {
   const has = !!ACC.user;
-  /* аватарка на кнопці «Профіль» у всіх трьох таббарах + у рядку Налаштувань */
-  ['profAva', 'profAva2', 'profAva3'].forEach(function (id) {
+  /* аватарка на кнопці «Профіль» у всіх таббарах */
+  ['profAva', 'profAva2', 'profAva3', 'profAva4'].forEach(function (id) {
     const a = byId(id); if (a) a.innerHTML = avaHtml(has);
   });
-  const ava = byId('msAva');
-  if (ava) ava.innerHTML = avaHtml(has);
-  const nm = byId('msAccName'), sb = byId('msAccSub');
-  if (nm) nm.textContent = has ? ACC.user.name : 'Акаунт Google';
-  if (sb) sb.textContent = has ? (ACC.user.email || '') : 'увійти, щоб синхронізувати';
   const acAva = byId('acAva');
   if (acAva) acAva.innerHTML = avaHtml(has);
   const an = byId('acName'); if (an) an.textContent = has ? ACC.user.name : '—';
   const am = byId('acMail'); if (am) am.textContent = has ? (ACC.user.email || '') : '';
-  const ar = byId('acRole'); if (ar) ar.textContent = 'Користувач';
+  const ROLEL = { user: 'Користувач', admin: 'Адмін', developer: 'Розробник' };
+  const ar = byId('acRole'); if (ar) ar.textContent = has ? (ROLEL[ACC.role] || 'Користувач') : '—';
   const ss = byId('acStSync'); if (ss) ss.textContent = has ? (ACC.sync ? 'увімк' : 'вимк') : '—';
   const sv = byId('acStVer'); if (sv) sv.textContent = APP_VER + 'w';
   const sc = byId('acSync'); if (sc) sc.checked = !!ACC.sync;
+  /* 3.5.4: вкладка «Адмін» у всіх таббарах — лише для ролі з бази */
+  const admOk = !!(has && staffAcc());
+  ['tbAdm', 'tbAdm2', 'tbAdm3', 'tbAdm4'].forEach(function (id) {
+    const t = byId(id);
+    if (t) { t.classList.toggle('hidden', !admOk); if (!admOk) t.classList.remove('on'); }
+  });
   byId('abVer').textContent = 'версія ' + APP_VER + ' · Web';
 }
 function resetAccountSettings() {
@@ -1934,15 +2451,21 @@ buildTabs();
 byId('tbSched').onclick = function () { showMain(true); };
 byId('tbSetup').onclick = function () { showSetup(); };
 byId('tbProf').onclick = profTap;
+byId('tbAdm').onclick = showAdmin;
 byId('tbSched2').onclick = function () { showMain(true); };
 byId('tbSetup2').onclick = function () { showSetup(); };
 byId('tbProf2').onclick = profTap;
+byId('tbAdm2').onclick = showAdmin;
 byId('tbSched3').onclick = function () { showMain(true); };
 byId('tbSetup3').onclick = function () { showSetup(); };
 byId('tbProf3').onclick = profTap;
+byId('tbAdm3').onclick = showAdmin;
+byId('tbSched4').onclick = function () { showMain(true); };
+byId('tbSetup4').onclick = function () { showSetup(); };
+byId('tbProf4').onclick = profTap;
+byId('tbAdm4').onclick = showAdmin;
 byId('bGroups').onclick = function () { openGroups(); };
-byId('bAcc').onclick = profTap;
-byId('accBack').onclick = function () { showSetup(); };
+byId('accBack') && (byId('accBack').onclick = function () { showSetup(); });
 byId('gSave').onclick = saveGroups;
 byId('gCancel').onclick = function () { closeGroups(); };
 byId('gBack').onclick = function () { if (!FIRST) closeGroups(); else toast('Спочатку обери групи — це обов’язково'); };
