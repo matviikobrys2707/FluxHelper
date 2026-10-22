@@ -986,15 +986,14 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
    Версія 3.5.3 · Web
    ============================================================ */
 
-var APP_VER = '3.5.6';
+var APP_VER = '3.5.7';
 /* 3.5.5: КАНАЛ — сайт завжди поточний, але версію показуємо з підписом «beta»,
    поки линейка 3.5.x бета (реліз буде без слова). Просив власник: «писалось
    3.5.4 beta… якщо реліз — прямо 3.5.4 без надписи beta». */
 var APP_CHANNEL = 'beta';
 function verLabel() { return APP_VER + (APP_CHANNEL === 'beta' ? ' beta' : ''); }
-var DB_URL = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app';
+var FH_BACKEND = 'https://fluxhelper-backend.onrender.com';   /* FluxHelper Backend: Web API key і URL бази тепер живуть ТІЛЬКИ на сервері */
 var GIS_CLIENT = '668834523935-k470ldmdv0r9am0720v6lgaatm6rtuf3.apps.googleusercontent.com';
-var FH_FB_KEY = 'AIzaSyCDWpF3QTMEFBN9ravDxH_woKnBpcMRDvI';
 var LOGO = 'icon-192.png';
 var DEMO = (typeof window.__FH_DEMO !== 'undefined') && window.__FH_DEMO;
 
@@ -1428,13 +1427,9 @@ function ensureGis(fn) {
    той самий механізм, що й у застосунку через fbauth.html */
 function fbAuthRegister(tok, cb) {
   if (!tok || String(tok).length < 10) { if (cb) cb(null); return; }
-  fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=' + FH_FB_KEY, {
+  fetch(FH_BACKEND + '/api/auth/google', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      postBody: 'access_token=' + encodeURIComponent(tok) + '&providerId=google.com',
-      requestUri: 'https://fluxhelper.pages.dev/',
-      returnSecureToken: true
-    })
+    body: JSON.stringify({ token: tok })
   }).then(function (r) { return r.json(); })
     .then(function (j) {
       if (j && j.localId) {
@@ -1499,14 +1494,14 @@ function ensureTok(cb) {
   if (!u) { if (cb) cb(false); return; }
   if (u.tok && u.tokT && Date.now() < u.tokT - 30000) { if (cb) cb(true); return; }
   if (!u.rtok) { if (cb) cb(false); return; }
-  fetch('https://securetoken.googleapis.com/v1/token?key=' + FH_FB_KEY, {
+  fetch(FH_BACKEND + '/api/auth/refresh', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ grant_type: 'refresh_token', refresh_token: u.rtok })
+    body: JSON.stringify({ refresh_token: u.rtok })
   }).then(function (r) { return r.json(); }).then(function (j) {
-    if (j && j.id_token) {
-      u.tok = String(j.id_token);
-      u.rtok = String(j.refresh_token || u.rtok);
-      const exp = parseInt(j.expires_in, 10) || 3600;
+    if (j && j.ok && j.idToken) {
+      u.tok = String(j.idToken);
+      u.rtok = String(j.refreshToken || u.rtok);
+      const exp = parseInt(j.expiresIn, 10) || 3600;
       u.tokT = Date.now() + exp * 1000 - 120000;
       try { localStorage.setItem('fh_user', JSON.stringify(u)); } catch (e) {}
       if (cb) cb(true);
@@ -1556,7 +1551,7 @@ function syncUp() {
   try { localStorage.setItem('fh_sync_ts', String(syncLastTs)); } catch (e) {}
   apiPut(p, function (ok) {
     if (ok) return;   /* записано в D1 — той самий рядок, що й у застосунків */
-    if (webKey()) fetch(DB_URL + '/' + webKey() + '.json', { method: 'PUT', body: JSON.stringify(p) }).catch(function () {});
+    if (webKey()) mirrorPut(webKey(), p);
   });
 }
 function syncApply(p, force) {
@@ -1643,12 +1638,35 @@ function syncPull(force, cb) {
     legacyPull(force, cb);   /* /api/sync недоступна — дзеркало RTDB */
   });
 }
+/* 3.5.7: дзеркало RTDB — ТІЛЬКИ через FluxHelper Backend (ключ і URL бази
+   більше не живуть у клієнтському коді). Токен — САМОГО користувача, тож
+   правила безпеки бази працюють так само, як і з прямими зверненнями. */
+function mirrorPut(k, obj) {
+  ensureTok(function (ok) {
+    if (!ok || !ACC.user || !ACC.user.tok) return;
+    fetch(FH_BACKEND + '/api/rtdb', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + ACC.user.tok },
+      body: JSON.stringify({ op: 'put', path: k, data: obj })
+    }).catch(function () {});
+  });
+}
+function mirrorGet(k, cb) {
+  ensureTok(function (ok) {
+    if (!ok || !ACC.user || !ACC.user.tok) { if (cb) cb(null); return; }
+    fetch(FH_BACKEND + '/api/rtdb', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + ACC.user.tok },
+      body: JSON.stringify({ op: 'get', path: k })
+    }).then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { if (cb) cb(j && j.ok ? j.data : null); })
+      .catch(function () { if (cb) cb(null); });
+  });
+}
 function legacyPull(force, cb) {
   const k = webKey();
   if (!k) { if (cb) cb('offline'); return; }
-  fetch(DB_URL + '/' + k + '.json?cb=' + Date.now(), { cache: 'no-store' })
-    .then(function (r) { return r.ok ? r.json() : null; })
-    .then(function (j) {
+  mirrorGet(k, function (j) {
       if (!ACC.user) return;
       /* новий формат — знімок 1-в-1 як у застосунку; старий ({ts,st}) теж читаємо */
       const p = (j && j.st && typeof j.st === 'object' && !j.g) ? j.st : j;
@@ -1662,8 +1680,7 @@ function legacyPull(force, cb) {
         if (!FIRST && force) {}
         if (cb) cb('master');
       }
-    })
-    .catch(function () { if (cb) cb('offline'); });
+  });
 }
 function syncWatchStop() { clearTimeout(syncWatchT); syncWatchT = 0; }
 function syncWatchTick() {
@@ -1689,9 +1706,7 @@ function syncWatchTick() {
     }
     const k = webKey();
     if (!k) { if (ACC.user) syncWatchT = setTimeout(syncWatchTick, 5000); return; }
-    fetch(DB_URL + '/' + k + '.json?cb=' + Date.now(), { cache: 'no-store' })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (m) {
+    mirrorGet(k, function (m) {
         if (!ACC.user) return;
         const p = (m && m.st && typeof m.st === 'object' && !m.g) ? m.st : m;
         if (!ACC.sync) {
@@ -1703,8 +1718,7 @@ function syncWatchTick() {
         }
         if (p && typeof p === 'object' && parseInt(p.t, 10) > syncLastTs) syncApply(p, false);
         if (ACC.user && !syncWatchT) syncWatchT = setTimeout(syncWatchTick, 5000);
-      })
-      .catch(function () { if (ACC.user && !syncWatchT) syncWatchT = setTimeout(syncWatchTick, 5000); });
+      });
   });
 }
 function syncWatchStart() {
@@ -1750,12 +1764,12 @@ function schedFor(dk) { const a = DBD.schedule ? DBD.schedule[dk] : BUILTIN.sche
 function pushDataLoad() {
   /* розклад/вчителі/предмети — з Firebase, як у застосунку (живе оновлення) */
   const cb = 'cb=' + Date.now();
-  fetch(DB_URL + '/schedule.json?' + cb, { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
-    .then(function (j) { if (j) { DBD.schedule = j; render(false); } });
-  fetch(DB_URL + '/subjects.json?' + cb, { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
-    .then(function (j) { if (j) { DBD.subjects = j; render(false); buildSummary(); } });
-  fetch(DB_URL + '/teachers.json?' + cb, { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
-    .then(function (j) { if (j) { DBD.teachers = j; render(false); buildSummary(); } });
+  fetch(FH_BACKEND + '/api/pub?path=schedule&' + cb, { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+    .then(function (j) { if (j && j.ok && j.data) { DBD.schedule = j.data; render(false); } });
+  fetch(FH_BACKEND + '/api/pub?path=subjects&' + cb, { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+    .then(function (j) { if (j && j.ok && j.data) { DBD.subjects = j.data; render(false); buildSummary(); } });
+  fetch(FH_BACKEND + '/api/pub?path=teachers&' + cb, { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+    .then(function (j) { if (j && j.ok && j.data) { DBD.teachers = j.data; render(false); buildSummary(); } });
 }
 
 /* ---------------- РОЗКЛАД ---------------- */
@@ -2163,10 +2177,15 @@ const ADM_ICONS = ['bookf','bookopenf','ukr_lit','notebook','pencil','pen','clip
 let ADMW = { tab: 0, day: 0, draft: null };
 
 function admDbPut(path, obj, cb) {
-  const url = DB_URL + '/' + String(path).split('/').map(encodeURIComponent).join('/') + '.json';
-  fetch(url, { method: 'PUT', body: (obj === null ? 'null' : JSON.stringify(obj)) })
-    .then(function (r) { if (cb) cb(!!r.ok); })
-    .catch(function () { if (cb) cb(false); });
+  /* 3.5.7: адмін-записи (schedule/subjects/teachers) — через бекенд з токеном адміна */
+  ensureTok(function (ok) {
+    if (!ok || !ACC.user || !ACC.user.tok) { if (cb) cb(false); return; }
+    fetch(FH_BACKEND + '/api/rtdb', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + ACC.user.tok },
+      body: JSON.stringify({ op: 'put', path: String(path), data: (obj === null ? null : obj) })
+    }).then(function (r) { if (cb) cb(!!r.ok); }).catch(function () { if (cb) cb(false); });
+  });
 }
 function admPool() {
   const seen = {}, out = [];
@@ -2491,7 +2510,7 @@ function resetAccountSettings() {
   if (!webKey()) { toast('Акаунт ще синхронізується — спробуй за кілька секунд'); return; }
   const s = defaultSettings();
   s.rs = 1; s.t = Date.now();
-  fetch(DB_URL + '/' + webKey() + '.json', { method: 'PUT', body: JSON.stringify(s) }).catch(function () {});
+  if (webKey()) mirrorPut(webKey(), s);
   S = null; FIRST = true;
   try { localStorage.removeItem('fh_groups2'); } catch (e) {}
   syncLastTs = 0;

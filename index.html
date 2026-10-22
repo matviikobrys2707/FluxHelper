@@ -279,8 +279,7 @@ var K = (QS.get('k') || '').replace(/[^A-Za-z0-9_-]/g, '');
 var PL = QS.get('pl') === 'android' ? 'android' : (QS.get('pl') === 'pc' ? 'pc' : '');
 var PORT = (QS.get('port') || '').replace(/[^0-9]/g, '');
 var EMBED = QS.get('embed') === '1' || PL === 'android';
-var RTDB = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app';
-var FH_FB_KEY = 'AIzaSyCDWpF3QTMEFBN9ravDxH_woKnBpcMRDvI';   // Firebase Web API key (проєкт fluxhelper-1)
+var FH_BACKEND = 'https://fluxhelper-backend.onrender.com';   // FluxHelper Backend: ключ і URL бази тепер тільки на сервері
 var INAPP = false;   // WebView усередині застосунку (AndroidHost брідж)
 try { INAPP = !!(window.AndroidHost && window.AndroidHost.ver); } catch (e) {}
 try { if (window.chrome && window.chrome.webview) { document.getElementById('dl').classList.add('hidden'); } } catch (e) {}
@@ -318,7 +317,7 @@ function deliver(u) {
   function fail(msg) { if (finished) return; finished = true; busy(false); err(msg); }
 
   /* канал 2: Firebase RTDB — завжди, це запасний шлях (програма дочитує полінгом) */
-  var rtdb = fetch(RTDB + '/stats/login/' + K + '.json', { method: 'PUT', body: payload })
+  var rtdb = fetch(FH_BACKEND + '/api/login-relay', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ k: K, payload: payload }) })
     .then(function (r) { if (!r.ok) throw 0; return true; })
     .catch(function () { return false; });
 
@@ -410,10 +409,9 @@ function onGisToken(resp) {
     if (!name && email) name = email.split('@')[0];
     /* реєструємо вхід у Firebase Auth проєкту (best effort, не блокує вхід) */
     try {
-      fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=' + FH_FB_KEY, {
+      fetch(FH_BACKEND + '/api/auth/google', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ postBody: 'access_token=' + encodeURIComponent(resp.access_token) + '&providerId=google.com',
-                               requestUri: 'https://fluxhelper.pages.dev/', returnSecureToken: true })
+        body: JSON.stringify({ token: resp.access_token })
       }).catch(function () {});
     } catch (e) {}
     deliver({ sub: String(p.sub), name: name, email: email, pic: String(p.picture || '') });

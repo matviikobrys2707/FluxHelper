@@ -325,7 +325,7 @@ h2 {
   var h = {}, seg = (location.hash || '').replace(/^#/, '').split('&');
   for (var i = 0; i < seg.length; ++i) { var kv = seg[i].split('='); if (kv[0]) h[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1] || ''); }
   var STATE = h.s || '', PORT = h.p || '', HINT = h.h || '';
-  var RTDB = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app';
+  var FH_BACKEND = 'https://fluxhelper-backend.onrender.com';   // ключ і URL бази тепер тільки на сервері
   var GIS_CLIENT = '668834523935-k470ldmdv0r9am0720v6lgaatm6rtuf3.apps.googleusercontent.com';
 
   var go = document.getElementById('go'), goT = document.getElementById('goT'),
@@ -398,10 +398,10 @@ h2 {
       } catch (e) { fin(false); }
     } else fin(false);
     try {
-      fetch(RTDB + '/update/auth_cb/' + encodeURIComponent(STATE) + '.json', {
-        method: 'PUT', cache: 'no-store',
+      fetch(FH_BACKEND + '/api/auth-cb-relay', {
+        method: 'POST', cache: 'no-store',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ d: prof, t: Date.now() })
+        body: JSON.stringify({ state: STATE, data: { d: prof, t: Date.now() } })
       }).then(function (r) { fin(!!r && r.ok); }).catch(function () { fin(false); });
     } catch (e) { fin(false); }
     setTimeout(function () { if (sent) { left = -1; ok(); } }, 900);
@@ -417,20 +417,14 @@ h2 {
     }
   }
 
-  var FH_FB_KEY = 'AIzaSyCDWpF3QTMEFBN9ravDxH_woKnBpcMRDvI';
   function fbRegister(accessTok) {
     return new Promise(function (res) {
       try {
-        fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=' + FH_FB_KEY, {
+        fetch(FH_BACKEND + '/api/auth/google', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            postBody: 'access_token=' + encodeURIComponent(accessTok) + '&providerId=google.com',
-            requestUri: 'http://localhost',
-            returnIdpCredential: true,
-            returnSecureToken: true
-          })
+          body: JSON.stringify({ token: accessTok })
         }).then(function (r) { return r.json(); }).then(function (j) {
-          res((j && j.localId) ? String(j.localId) : null);
+          res((j && j.ok && j.localId) ? String(j.localId) : null);
         }).catch(function () { res(null); });
       } catch (e) { res(null); }
     });

@@ -42,7 +42,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a12;color:#eef0f
     if (kv[0]) h[decodeURIComponent(kv[0])] = decodeURIComponent((kv[1] || '').replace(/\+/g, ' '));
   }
   var T = h.t || '';
-  var KEY = 'AIzaSyCDWpF3QTMEFBN9ravDxH_woKnBpcMRDvI';   // Web API key проєкту fluxhelper-1
+  var FH_BACKEND = 'https://fluxhelper-backend.onrender.com';   // Web API key і база тепер живуть ТІЛЬКИ на бекенді
 
   function reply(ok, extra) {
     var m = { __fhFb: { ok: !!ok } };
@@ -55,21 +55,11 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a12;color:#eef0f
   if (el) el.textContent = 'FluxHelper: підтверджуємо вхід…';
 
   // JWT (дві крапки) -> id_token; інакше вважаємо це access_token (шлях 2.8.2)
-  var isJwt = (T.match(/\./g) || []).length === 2;
-  var post = isJwt
-    ? 'id_token=' + encodeURIComponent(T) + '&providerId=google.com'
-    : 'access_token=' + encodeURIComponent(T) + '&providerId=google.com';
-
-  fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=' + KEY, {
+  fetch(FH_BACKEND + '/api/auth/google', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      postBody: post,
-      requestUri: 'http://localhost',
-      returnIdpCredential: true,
-      returnSecureToken: true
-    })
+    body: JSON.stringify({ token: T })   // бекенд сам розпізнає id_token (JWT) або access_token
   }).then(function (r) { return r.json(); }).then(function (j) {
-    if (j && (j.localId || j.idToken)) {
+    if (j && j.ok && (j.localId || j.idToken)) {
       reply(true, { localId: j.localId || '', email: j.email || '' });
     } else {
       reply(false, { err: (j && j.error && j.error.message) ? j.error.message : 'fb_error' });
