@@ -6,6 +6,10 @@
   Cache-Control: public, max-age=0, must-revalidate
 /fbauth.html
   Cache-Control: public, max-age=0, must-revalidate
+/FluxHelper.exe
+  Cache-Control: public, max-age=0, must-revalidate
+/FluxHelper.apk
+  Cache-Control: public, max-age=0, must-revalidate
 /manifest.json
   Cache-Control: public, max-age=0, must-revalidate
 /icon-192.png
