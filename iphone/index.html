@@ -295,14 +295,13 @@ body[data-theme="light"] .tbb.on{color:#7c3aed}
 /* підписи під іконками — дрібні, але читається одразу, як просив власник */
 .tbb > span:not(.tb-ava){display:block;font-size:9px;font-weight:700;letter-spacing:.2px;line-height:1;color:inherit}
 /* кнопка «Профіль» — іконкою є ТА САМА аватарка Google (або силует, поки
-   не увійшли). Активна — фіолетова світна обводка, як у застосунку */
+   не увійшли). 3.5.10: ЖОДНИХ рамок/світіння навколо аватара — просив власник
+   (було: фіолетове кільце box-shadow навколо іконки профіля). */
 .tb-ava{width:23px;height:23px;border-radius:50%;overflow:hidden;display:grid;place-items:center;
   background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;
-  box-shadow:0 0 0 1.5px rgba(139,92,246,.30),0 3px 9px rgba(99,102,241,.28);
-  transition:box-shadow .18s,transform .18s}
+  transition:transform .18s}
 .tb-ava img{width:100%;height:100%;display:block;object-fit:cover}
 .tb-ava svg{display:block}
-.tbb.on .tb-ava{box-shadow:0 0 0 2px var(--acc),0 0 16px rgba(139,92,246,.55)}
 .tbb:active .tb-ava{transform:scale(.92)}
 
 /* =================== АДМІН-ПАНЕЛЬ (3.5.4) =================== */
@@ -993,15 +992,35 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
    тротлінг 600 мс у showView), URL-hash вкладок (#розклад/#налаштування…
    — після перезавантаження лишається та сама вкладка), нижня панель:
    мінімальна ширина по центру + підписи під іконками + напівпрозорість.
-   Версія 3.5.9 · Web
+   3.5.10: ФІКС «роль адміна зникає після перезавантаження» (сесія тепер
+   відновлюється з токенами; роль — ЛИШЕ з бекенда/D1, знімок її не
+   перезатирає), версія сайту = версія бети (з versions/beta/latest.json),
+   без рамки на аватарі профіля, watchdog рендеру розкладу.
+   Версія 3.5.10 · Web
    ============================================================ */
 
-var APP_VER = '3.5.9';
+var APP_VER = '3.5.8';   /* 3.5.10: ПЕРЕЗАПИСУЄТЬСЯ з versions/beta/latest.json —
+   версія сайту ЗАВЖДИ збігається з версією бета-застосунків (Android/ПК),
+   як просив власник: «дві версії — релізнута і бета; якщо бета — збігаються всюди» */
 /* 3.5.5: КАНАЛ — сайт завжди поточний, але версію показуємо з підписом «beta»,
-   поки линейка 3.5.x бета (реліз буде без слова). Просив власник: «писалось
+   поки лінійка 3.5.x бета (реліз буде без слова). Просив власник: «писалось
    3.5.4 beta… якщо реліз — прямо 3.5.4 без надписи beta». */
 var APP_CHANNEL = 'beta';
 function verLabel() { return APP_VER + (APP_CHANNEL === 'beta' ? ' beta' : ''); }
+/* 3.5.10: підтягуємо ЖИВУ версію бети (та сама, що показують застосунки) */
+(function () {
+  try {
+    fetch('../versions/beta/latest.json?cb=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+      .then(function (j) {
+        const v = j && (j.latest || j.version);
+        if (!v || !/^\d+\.\d+\.\d+$/.test(String(v)) || String(v) === APP_VER) return;
+        APP_VER = String(v);
+        const sv = byId('acStVer'); if (sv) sv.textContent = verLabel();
+        const ab = byId('abVer'); if (ab) ab.textContent = 'версія ' + verLabel();
+      });
+  } catch (e) {}
+})();
 var FH_BACKEND = 'https://fluxhelper-backend.onrender.com';   /* FluxHelper Backend: Web API key і URL бази тепер живуть ТІЛЬКИ на сервері */
 var GIS_CLIENT = '668834523935-k470ldmdv0r9am0720v6lgaatm6rtuf3.apps.googleusercontent.com';
 var LOGO = 'icon-192.png';
@@ -1306,12 +1325,21 @@ function saveNotif() { try { localStorage.setItem('fh_notif', JSON.stringify(NOT
 function saveZoom() { try { localStorage.setItem('fh_zoom', JSON.stringify(ZOOM)); } catch (e) {} }
 function saveConfirm() { try { localStorage.setItem('fh_confirm', CONFIRM.on ? '1' : '0'); } catch (e) {} }
 
-/* ---------------- АКАУНТ (сесія) ---------------- */
+/* ---------------- АКАУНТ (сесія) ----------------
+   3.5.10: КРИТИЧНИЙ ФІКС «роль адміна зникає після перезавантаження»:
+   раніше сесія відновлювалася БЕЗ tok/rtok/tokT — після першої ж години
+   idToken протухав, оновити його було нічим, /api/sync відповідав offline
+   (меркво), і сторінка назавжди лишалася на кеші з роллю «користувач».
+   Тепер відновлюємо ВСЮ сесію цілком — серверні дані (роль з D1, знімок)
+   доїжджають при КОЖНОМУ відкритті сторінки. */
 try {
   const _u = JSON.parse(localStorage.getItem('fh_user') || 'null');
   if (_u && _u.sub && _u.name) {
     ACC.user = { sub: String(_u.sub), name: String(_u.name), email: String(_u.email || ''), pic: String(_u.pic || '') };
     if (_u.fid) ACC.user.fid = String(_u.fid);
+    if (_u.tok) ACC.user.tok = String(_u.tok);
+    if (_u.rtok) ACC.user.rtok = String(_u.rtok);
+    if (_u.tokT) ACC.user.tokT = parseInt(_u.tokT, 10) || 0;
   }
 } catch (e) {}
 try { ACC.sync = localStorage.getItem('fh_sync') !== '0'; } catch (e) {}
@@ -1498,12 +1526,16 @@ function snapFromLocal() {
   s.t = Date.now(); s.v = APP_VER; s.sync = ACC.sync ? 1 : 0;
   return s;
 }
-/* Firebase ID token живе ~1 год — оновлюємо за refresh token заздалегідь */
+/* Firebase ID token живе ~1 год — оновлюємо за refresh token заздалегідь.
+   3.5.10: якщо refresh-токена немає АБО сервер його відхилив — сесія
+   непоновлювана (SESS_DEAD): після невдалих спроб чесно показуємо вхід,
+   замість того щоб назавжди залишити сторінку на кеші з роллю «користувач». */
+let SESS_DEAD = false;
 function ensureTok(cb) {
   const u = ACC.user;
   if (!u) { if (cb) cb(false); return; }
   if (u.tok && u.tokT && Date.now() < u.tokT - 30000) { if (cb) cb(true); return; }
-  if (!u.rtok) { if (cb) cb(false); return; }
+  if (!u.rtok) { SESS_DEAD = true; if (cb) cb(false); return; }
   fetch(FH_BACKEND + '/api/auth/refresh', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ refresh_token: u.rtok })
@@ -1515,8 +1547,8 @@ function ensureTok(cb) {
       u.tokT = Date.now() + exp * 1000 - 120000;
       try { localStorage.setItem('fh_user', JSON.stringify(u)); } catch (e) {}
       if (cb) cb(true);
-    } else if (cb) cb(false);
-  }).catch(function () { if (cb) cb(false); });
+    } else { SESS_DEAD = true; if (cb) cb(false); }   // сервер відхилив refresh — сесія мертва
+  }).catch(function () { if (cb) cb(false); });          // мережа блимнула — це НЕ мертва сесія
 }
 /* 3.5.8: ЕДИНИЙ ТРАНСПОРТ СИНКУ — FluxHelper Backend /api/sync (op get/put).
    Сервер сам читає/пише ОБИДВА вузли (update/web/<uid> і
@@ -1683,10 +1715,10 @@ function syncApply(p, force) {
       refreshAccUI(); ch = true;
     }
   }
-  if (typeof p.r !== 'undefined') {
-    const nr = normRole(p.r);
-    if (nr !== ACC.role) { ACC.role = nr; refreshAccUI(); ch = true; }
-  }
+  /* 3.5.10: РОЛЬ зі знімка БІЛЬШЕ НЕ ЗАСТОСОВУЄМО. Роль віддає тільки бекенд
+     (/api/sync -> D1 users.role) і застосовується в syncPull (j.role). Раніше
+     старий знімок з r:"user" (написаний сесією без токенів) перезатирав роль
+     адміна через мить після завантаження — звідси і «зникла вкладка адмін». */
   if (p.th && THEME_LIST.indexOf(p.th) >= 0 && p.th !== THEME) { applyTheme(p.th, false); ch = true; }
   if (t > syncLastTs) syncLastTs = t;
   try { localStorage.setItem('fh_sync_ts', String(syncLastTs)); } catch (e) {}
@@ -1800,12 +1832,21 @@ function afterAuth() {
   let tries = 0;
   const go = function () {
     syncPull(true, function (dec) {
-      if (dec === 'offline' && tries < 2 && ACC.user) {
+      if (dec === 'offline' && tries < 2 && ACC.user && !SESS_DEAD) {
         tries += 1;
         setTimeout(go, 2500 * tries);   // 2.5 с, потім 5 с
         return;
       }
       settling = false;
+      /* 3.5.10: сесія непоновлювана (refresh відхилений/відсутній) — чесний
+         ре-вхід замість «тіньової» роботи на кеші без ролі і синку */
+      if (SESS_DEAD && ACC.user) {
+        try { localStorage.removeItem('fh_user'); } catch (eSD) {}
+        ACC.user = null; ACC.role = 'user';
+        bootFinish(); gateShow();
+        setAgStat('Сесія вичерпалася — увійдіть через Google ще раз.', 'err');
+        return;
+      }
       if (dec === 'ok') { reveal(); }
       else if (dec === 'master') { reveal(); AUTO_SETUP = true; openGroups(); }
       else { reveal(); }   // офлайн — працюємо на локальних даних
@@ -1975,6 +2016,11 @@ function render(anim) {
     if (i === nowIdx) cls += ' now'; else if (i === nextIdx) cls += ' next';
     const card = el('div', cls);
     if (anim !== false) card.style.animationDelay = (i * 0.05) + 's';
+    /* 3.5.10: сторож — якщо на якомусь уроці щось падає (наприклад, нова іконка
+       з адмінки, якої немає в наборі, криві дані з бази), список НЕ лишається
+       порожнім (це і була та сама «чорна смуга» замість розкладу) — малюємо
+       безпечну картку-фолбек і продовжуємо решту */
+    try {
     const tile = el('div', 'ic');
     tile.innerHTML = icon(l.icon, 24);
     tile.style.background = tileGrad(l.name);
@@ -2002,6 +2048,13 @@ function render(anim) {
     b.onclick = function (ev) { ev.stopPropagation(); joinLesson(l); };
     card.onclick = function () { joinLesson(l); };
     card.append(tile, mid, b);
+    } catch (eCard) {
+      card.className = cls;
+      card.innerHTML = '<div class="ic" style="background:' + tileGrad(l.name) + '">' + icon('bookf', 24) + '</div>' +
+        '<div class="mid"><h3><span class="ln">' + esc(l.name || 'Урок') + '</span></h3>' +
+        '<div class="meta"><span class="tc">' + esc((l.t || '') + ' – ' + (l.e || '')) + '</span></div></div>';
+      card.onclick = function () { joinLesson(l); };
+    }
     if (i === nowIdx) {
       const pr = el('i', 'prog');
       pr.style.width = Math.round(nowPct * 100) + '%';
@@ -2012,6 +2065,11 @@ function render(anim) {
   tabEls.forEach(function (t, i) { if (t.classList) t.classList.toggle('on', i === sel); });
   setChip();
   fitLessonTitles();
+  /* 3.5.10: сторож порожнього списку — розклад є, а карток нема → перезбираємо
+     один раз (наприклад, синхронний виняток у сторонньому коді зʼїв рендер) */
+  if (day.length && !list.children.length && !render._heal) {
+    render._heal = setTimeout(function () { render._heal = 0; try { render(false); } catch (eH) {} }, 400);
+  }
 }
 function fitLessonTitles() {
   const list = byId('list'); if (!list) return;

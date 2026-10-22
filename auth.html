@@ -446,7 +446,7 @@ h2 {
       var u = rr[1];
       if (!u || !u.sub) throw new Error('profile');
       deliver(
-        { sub: String(u.sub), name: String(u.name || ''), email: String(u.email || ''), picture: String(u.picture || ''), fid: fid || '', tok: String(resp.access_token || '') },
+        { sub: String(u.sub), name: String(u.name || ''), email: String(u.email || ''), picture: String(u.picture || ''), fid: fid || '' },
         finishOk,
         function () {
           busy(false, 'Спробувати ще раз');
