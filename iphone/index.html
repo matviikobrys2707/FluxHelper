@@ -981,12 +981,14 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
    Дизайн — як у застосунку, але по-сьогоднішньому (iOS): safe-area,
    системний шрифт, таббар знизу, перемикачі й сегменти iOS.
    Дані: вбудований розклад (офлайн) + Firebase RTDB (schedule/subjects/
-   teachers — як у застосунку). Синхронізація налаштувань — Firebase
-   RTDB /update/web/<Firebase UID> (прив'язка до акаунта Google).
-   Версія 3.5.3 · Web
+   teachers — як у застосунку). Синхронізація налаштувань — FluxHelper
+   Backend /api/sync (RTDB /update/web/<uid> + /update/settings_mirror/<uid>).
+   3.5.8: ПОВНОЦІННЕ завантаження акаунта (повтори за «холодного» сервера),
+   гарантована доставка змін (outbox із ретраями), роль адміна з бекенда.
+   Версія 3.5.8 · Web
    ============================================================ */
 
-var APP_VER = '3.5.7';
+var APP_VER = '3.5.8';
 /* 3.5.5: КАНАЛ — сайт завжди поточний, але версію показуємо з підписом «beta»,
    поки линейка 3.5.x бета (реліз буде без слова). Просив власник: «писалось
    3.5.4 beta… якщо реліз — прямо 3.5.4 без надписи beta». */
@@ -1459,20 +1461,20 @@ function logout() {
   try { localStorage.removeItem('fh_groups2'); } catch (e) {}
   NOTIF = { on: true, min: 5, snd: true, off: false }; saveNotif();
   syncWatchStop();
+  OUTBOX = []; outboxSave(); clearTimeout(outboxT); outboxBusy = false;   /* 3.5.8 */
   gateShow();
   toast('Ви вийшли з акаунта');
 }
 
-/* ---------------- СИНХРОНІЗАЦІЯ 3.5.4 ----------------
-   ГОЛОВНИЙ шлях — /api/sync (Pages Function на тому самому домені):
-   сайт читає/пише D1 users.settings — ТОЙ САМИЙ рядок, що й ПК і
-   Android-застосунки всіх версій (починаючи з 2.8.9). Тому «дві хвилини»
-   з ПК з'являються на айфоні навіть якщо застосунки НЕ оновлені.
-   Фолббек, якщо Function недоступна — дзеркало в RTDB
-   /update/web/<uid> (його читають застосунки 3.5.3+). */
+/* ---------------- СИНХРОНІЗАЦІЯ ----------------
+   3.5.8: ГОЛОВНИЙ шлях — FluxHelper Backend /api/sync (Render). Сервер читає/
+   пише ТОЙ САМИЙ знімок, що й ПК і Android-застосунки: D1 users.settings
+   (коли на бекенді є CF_TOKEN) + дзеркала RTDB update/web/<uid> (його читають
+   застосунки 3.5.3+) і update/settings_mirror/<uid> (формат застосунків
+   3.5.1+). Запис — через outbox із повторами, читання — з фолбеком на
+   прямі /api/rtdb-запити. Роль акаунта приходить з бекенда (ADMIN_UIDS/D1). */
 function normRole(r) { if (r === 'development') return 'developer'; return (r === 'admin' || r === 'developer') ? r : 'user'; }
 function staffAcc() { return ACC.role === 'admin' || ACC.role === 'developer'; }
-function webKey() { const k = userKey(ACC.user); return k ? ('update/web/' + encodeURIComponent(k)) : ''; }
 function snapFromLocal() {
   const s = defaultSettings();
   const g = {};
@@ -1508,40 +1510,118 @@ function ensureTok(cb) {
     } else if (cb) cb(false);
   }).catch(function () { if (cb) cb(false); });
 }
-const API_SYNC = { v: null };   // null = ще не перевіряли, true/false — результат першої спроби
+/* 3.5.8: ЕДИНИЙ ТРАНСПОРТ СИНКУ — FluxHelper Backend /api/sync (op get/put).
+   Сервер сам читає/пише ОБИДВА вузли (update/web/<uid> і
+   update/settings_mirror/<uid> у форматі застосунків), а ще повертає роль
+   акаунта. Якщо /api/sync ще не додано на бекенд (404) — прозорий fallback
+   на прямі /api/rtdb-запити до обох вузлів (як у 3.5.7). */
+const SYNC = { api: null };   // null = не перевіряли, true/false — результат першої спроби
+function fbEncUid(k) { return String(k).replace(/[^A-Za-z0-9_-]/g, '_'); }
+function rawToSnap(j) {
+  /* приводить будь-який формат вузла до знімка: прямий знімок, {st:…}
+     (старий формат веб-дзеркала) або {d:{fid,settings:"json"},t} (формат
+     settings_mirror застосунків 3.5.1+) */
+  if (!j || typeof j !== 'object') return null;
+  if (j.d && typeof j.d === 'object' && typeof j.d.settings === 'string') {
+    try { const s = JSON.parse(j.d.settings); return (s && typeof s === 'object' && (s.g || s.n || s.th || s.z)) ? s : null; } catch (e) { return null; }
+  }
+  if (j.st && typeof j.st === 'object' && !j.g) j = j.st;
+  return (j && typeof j === 'object' && (j.g || j.n || j.th || j.z)) ? j : null;
+}
+function syncGetMirror(cb) {
+  /* fallback-читання: обидва вузли, перемога — новіший за t */
+  const k = userKey(ACC.user);
+  const wk = 'update/web/' + encodeURIComponent(k);
+  const sk = 'update/settings_mirror/' + fbEncUid(k);
+  mirrorGet(wk, function (a) {
+    if (!ACC.user) return;
+    mirrorGet(sk, function (b) {
+      if (!ACC.user) return;
+      const sa = rawToSnap(a), sb = rawToSnap(b);
+      let best = null;
+      if (sa && sb) best = (((parseInt(sb.t, 10) || 0) > (parseInt(sa.t, 10) || 0)) ? sb : sa);
+      else best = sa || sb;
+      if (best) cb({ ok: true, src: 'mirror', role: best.r, sync: best.sync, settings: best });
+      else cb(null);
+    });
+  });
+}
 function apiGet(cb) {
-  /* 3.5.6: /api/sync на цьому домені більше не існує (D1 і Pages — в різних
-     акаунтах Cloudflare, біндінг неможливий) — після першої невдачі одразу
-     читаємо дзеркало RTDB, без зайвого 404-запиту */
-  if (API_SYNC.v === false) { if (cb) cb(null); return; }
   const k = userKey(ACC.user);
   if (!k) { if (cb) cb(null); return; }
   ensureTok(function (ok) {
-    if (!ok) { if (cb) cb(null); return; }
-    fetch('/api/sync?uid=' + encodeURIComponent(k) + '&tok=' + encodeURIComponent(ACC.user.tok), { cache: 'no-store' })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .catch(function () { return null; })
-      .then(function (j) {
-        if (j && j.ok) { API_SYNC.v = true; if (cb) cb(j); }
-        else { API_SYNC.v = false; if (cb) cb(null); }
-      });
+    if (!ok || !ACC.user || !ACC.user.tok) { if (cb) cb(null); return; }
+    if (SYNC.api !== false) {
+      fetch(FH_BACKEND + '/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + ACC.user.tok },
+        body: JSON.stringify({ op: 'get' })
+      }).then(function (r) { return r.ok ? r.json() : null; })
+        .catch(function () { return null; })
+        .then(function (j) {
+          if (j && j.ok) { SYNC.api = true; if (cb) cb(j); }
+          else { SYNC.api = false; syncGetMirror(cb); }   /* бекенд ще без /api/sync — читаємо дзеркала */
+        });
+    } else syncGetMirror(cb);
   });
 }
+function mirrorPutBoth(k, p, cb) {
+  /* пишемо ОБИДВА вузли: веб-дзеркало (читають застосунки 3.5.3+ і сайт)
+     + settings_mirror у форматі застосунків (D1-фолбек, зливають старі збірки) */
+  const wk = 'update/web/' + encodeURIComponent(k);
+  const sk = 'update/settings_mirror/' + fbEncUid(k);
+  const appWrap = { d: { fid: k, settings: JSON.stringify(p), v: APP_VER }, t: p.t };
+  let left = 2, okN = 0;
+  const fin = function (ok) { if (ok) okN += 1; if (--left <= 0 && cb) cb(okN > 0); };
+  mirrorPut(wk, p, fin);
+  mirrorPut(sk, appWrap, fin);
+}
 function apiPut(p, cb) {
-  if (API_SYNC.v === false) { if (cb) cb(false); return; }   /* 3.5.6: одразу дзеркало */
   const k = userKey(ACC.user);
   if (!k) { if (cb) cb(false); return; }
   ensureTok(function (ok) {
-    if (!ok) { if (cb) cb(false); return; }
-    fetch('/api/sync', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ uid: k, tok: ACC.user.tok, snapshot: p,
-        profile: { email: ACC.user.email || '', name: ACC.user.name || '', pic: ACC.user.pic || '' } })
-    }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
-      .then(function (j) {
-        if (j && j.ok) { API_SYNC.v = true; if (cb) cb(true); }
-        else { API_SYNC.v = false; if (cb) cb(false); }
-      });
+    if (!ok || !ACC.user || !ACC.user.tok) { if (cb) cb(false); return; }
+    if (SYNC.api !== false) {
+      fetch(FH_BACKEND + '/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + ACC.user.tok },
+        body: JSON.stringify({ op: 'put', snapshot: p,
+          profile: { email: ACC.user.email || '', name: ACC.user.name || '', pic: ACC.user.pic || '' } })
+      }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+        .then(function (j) {
+          if (j && j.ok) { SYNC.api = true; if (cb) cb(true); }
+          else { SYNC.api = false; mirrorPutBoth(k, p, cb); }
+        });
+    } else mirrorPutBoth(k, p, cb);
+  });
+}
+/* 3.5.8: OUTBOX — ГАРАНТОВАНА ДОСТАВКА знімка на сервер.
+   Раніше кожна зміна летіла ОДНИМ тихим fetch-ом: якщо сервер спав (Render
+   free «прокидається» 30-60 с) або токен не встиг оновитись — зміна теми,
+   груп чи сповіщень ГИНУЛА мовчки, і застосунки на ПК/телефоні нічого не
+   бачили. Тепер кожна зміна кладе знімок у чергу (localStorage), і відправник
+   тягне її з повторами, доки сервер не підтвердить запис. */
+let OUTBOX = [], outboxT = 0, outboxBusy = false;
+try { const _ob = JSON.parse(localStorage.getItem('fh_outbox') || 'null'); if (Array.isArray(_ob)) OUTBOX = _ob; } catch (e) {}
+function outboxSave() { try { localStorage.setItem('fh_outbox', JSON.stringify(OUTBOX.slice(-3))); } catch (e) {} }
+function outboxPush(p) {
+  OUTBOX = [p];   /* важливий лише найсвіжіший знімок — старі перекриваються */
+  outboxSave();
+  outboxKick(0);
+}
+function outboxKick(delay) {
+  clearTimeout(outboxT);
+  outboxT = setTimeout(outboxDrain, delay || 0);
+}
+function outboxDrain() {
+  outboxT = 0;
+  if (outboxBusy || !OUTBOX.length || !ACC.user || !ACC.sync) return;
+  const p = OUTBOX[OUTBOX.length - 1];
+  outboxBusy = true;
+  apiPut(p, function (ok) {
+    outboxBusy = false;
+    if (ok) { OUTBOX = []; outboxSave(); }
+    else outboxKick(4000);   /* сервер спить / мережа блимнула — повторимо */
   });
 }
 function syncUp() {
@@ -1549,10 +1629,7 @@ function syncUp() {
   const p = snapFromLocal();
   syncLastTs = p.t;
   try { localStorage.setItem('fh_sync_ts', String(syncLastTs)); } catch (e) {}
-  apiPut(p, function (ok) {
-    if (ok) return;   /* записано в D1 — той самий рядок, що й у застосунків */
-    if (webKey()) mirrorPut(webKey(), p);
-  });
+  outboxPush(p);
 }
 function syncApply(p, force) {
   if (!p || typeof p !== 'object' || !ACC.user) return;
@@ -1621,34 +1698,34 @@ function cloudGroupsOk(p) {
 function syncPull(force, cb) {
   if (!ACC.user) { if (cb) cb('offline'); return; }
   if (!userKey(ACC.user)) { if (cb) cb('offline'); return; }
-  /* ГОЛОВНИЙ шлях — D1 через /api/sync: і роль, і налаштування одним запитом */
+  /* 3.5.8: ОДИН універсальний читач — бекенд /api/sync (роль + синк + знімок
+     одним запитом; усередині — обидва дзеркала). Нічого зайвого. */
   apiGet(function (j) {
     if (!ACC.user) return;
-    if (j) {
-      if (j.role) { ACC.role = normRole(j.role); }
-      if (typeof j.sync !== 'undefined') { ACC.sync = !!j.sync; try { localStorage.setItem('fh_sync', ACC.sync ? '1' : '0'); } catch (e) {} }
-      refreshAccUI();
-      const p = j.settings;
-      if (p && typeof p === 'object' && (p.g || p.n || p.th || p.z)) {
-        syncApply(p, force);
-        if (cb) cb(cloudGroupsOk(p) ? 'ok' : 'master');
-      } else if (cb) cb('master');   /* перший вхід акаунта — майстер груп */
-      return;
-    }
-    legacyPull(force, cb);   /* /api/sync недоступна — дзеркало RTDB */
+    if (!j) { if (cb) cb('offline'); return; }
+    if (j.role) { ACC.role = normRole(j.role); }
+    if (typeof j.sync !== 'undefined') { ACC.sync = !!j.sync; try { localStorage.setItem('fh_sync', ACC.sync ? '1' : '0'); } catch (e) {} }
+    refreshAccUI();
+    const p = j.settings;
+    if (p && typeof p === 'object' && (p.g || p.n || p.th || p.z)) {
+      syncApply(p, force);
+      if (cb) cb(cloudGroupsOk(p) ? 'ok' : 'master');
+    } else if (cb) cb('master');   /* перший вхід акаунта — майстер груп */
   });
 }
 /* 3.5.7: дзеркало RTDB — ТІЛЬКИ через FluxHelper Backend (ключ і URL бази
    більше не живуть у клієнтському коді). Токен — САМОГО користувача, тож
-   правила безпеки бази працюють так само, як і з прямими зверненнями. */
-function mirrorPut(k, obj) {
+   правила безпеки бази працюють так само, як і з прямими зверненнями.
+   3.5.8: mirrorPut повідомляє результат (cb) — outbox ретраїть невдалі записи. */
+function mirrorPut(k, obj, cb) {
   ensureTok(function (ok) {
-    if (!ok || !ACC.user || !ACC.user.tok) return;
+    if (!ok || !ACC.user || !ACC.user.tok) { if (cb) cb(false); return; }
     fetch(FH_BACKEND + '/api/rtdb', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + ACC.user.tok },
       body: JSON.stringify({ op: 'put', path: k, data: obj })
-    }).catch(function () {});
+    }).then(function (r) { if (cb) cb(!!r.ok); })
+      .catch(function () { if (cb) cb(false); });
   });
 }
 function mirrorGet(k, cb) {
@@ -1663,62 +1740,28 @@ function mirrorGet(k, cb) {
       .catch(function () { if (cb) cb(null); });
   });
 }
-function legacyPull(force, cb) {
-  const k = webKey();
-  if (!k) { if (cb) cb('offline'); return; }
-  mirrorGet(k, function (j) {
-      if (!ACC.user) return;
-      /* новий формат — знімок 1-в-1 як у застосунку; старий ({ts,st}) теж читаємо */
-      const p = (j && j.st && typeof j.st === 'object' && !j.g) ? j.st : j;
-      if (p && typeof p === 'object' && (p.g || p.n || p.th || p.z)) {
-        syncApply(p, force);
-        if (cb) cb(cloudGroupsOk(p) ? 'ok' : 'master');
-      } else if (j === null) {
-        if (cb) cb('offline');
-      } else {
-        /* перший вхід цього акаунта: локальних груп новому акаунту НЕ лишаємо */
-        if (!FIRST && force) {}
-        if (cb) cb('master');
-      }
-  });
-}
+/* 3.5.8: legacyPull видалено — apiGet тепер сам падає на дзеркала.
+   webKey більше не потрібен: шляхи дзеркал збираються на місці. */
 function syncWatchStop() { clearTimeout(syncWatchT); syncWatchT = 0; }
 function syncWatchTick() {
   syncWatchT = 0;
   if (!ACC.user) return;
   if (!userKey(ACC.user)) { if (ACC.user) syncWatchT = setTimeout(syncWatchTick, 5000); return; }
-  /* 3.5.4: спершу D1 (/api/sync) — так на айфоні миттєво видно зміни з ПК/телефона;
-     якщо Function недоступна — дзеркало RTDB, як раніше.
-     3.5.5: опитуємо навіть коли синк вимкнено — але тільки за перемикачем
-     (як тільки синк увімкнули на іншому пристрої, тут він сам відновиться). */
+  /* 3.5.8: ОДИН запит до бекенда (усередині — обидва дзеркала). Опитуємо
+     завжди — застосовуємо лише новіше за syncLastTs; так зміна з ПК/телефона
+     з'являється тут за 5 с, а вимкнений синк сам відновиться за перемикачем. */
   apiGet(function (j) {
     if (!ACC.user) return;
     if (j) {
       if (j.role && j.role !== ACC.role) { ACC.role = normRole(j.role); refreshAccUI(); }
-      if (typeof j.sync !== 'undefined' && !ACC.sync) {
+      if (typeof j.sync !== 'undefined') {
         const svOn = !!j.sync;
-        if (svOn) { ACC.sync = true; try { localStorage.setItem('fh_sync', '1'); } catch (eS7) {} refreshAccUI(); }
+        if (svOn && !ACC.sync) { ACC.sync = true; try { localStorage.setItem('fh_sync', '1'); } catch (eS7) {} refreshAccUI(); }
       }
       const p = j.settings;
       if (p && typeof p === 'object' && (p.g || p.n || p.th || p.z) && parseInt(p.t, 10) > syncLastTs && ACC.sync) syncApply(p, false);
-      if (ACC.user && !syncWatchT) syncWatchT = setTimeout(syncWatchTick, 5000);
-      return;
     }
-    const k = webKey();
-    if (!k) { if (ACC.user) syncWatchT = setTimeout(syncWatchTick, 5000); return; }
-    mirrorGet(k, function (m) {
-        if (!ACC.user) return;
-        const p = (m && m.st && typeof m.st === 'object' && !m.g) ? m.st : m;
-        if (!ACC.sync) {
-          const svOn = p && typeof p === 'object' && typeof p.sync !== 'undefined' && !(p.sync === 0 || p.sync === false || p.sync === '0');
-          if (!svOn) { if (ACC.user && !syncWatchT) syncWatchT = setTimeout(syncWatchTick, 5000); return; }
-          ACC.sync = true;
-          try { localStorage.setItem('fh_sync', '1'); } catch (eS8) {}
-          refreshAccUI();
-        }
-        if (p && typeof p === 'object' && parseInt(p.t, 10) > syncLastTs) syncApply(p, false);
-        if (ACC.user && !syncWatchT) syncWatchT = setTimeout(syncWatchTick, 5000);
-      });
+    if (ACC.user && !syncWatchT) syncWatchT = setTimeout(syncWatchTick, 5000);
   });
 }
 function syncWatchStart() {
@@ -1727,7 +1770,13 @@ function syncWatchStart() {
 }
 document.addEventListener('visibilitychange', function () {
   if (document.visibilityState !== 'visible') return;
-  if (ACC.user) { clearTimeout(syncWatchT); syncWatchT = 0; syncWatchTick(); }
+  if (ACC.user) { clearTimeout(syncWatchT); syncWatchT = 0; syncWatchTick(); outboxKick(300); }   /* 3.5.8: + виштовхнути чергу */
+});
+/* 3.5.8: мережа повернулась (Wi-Fi/LTE) — одразу синхронізуємось в обидва боки */
+window.addEventListener('online', function () {
+  if (!ACC.user) return;
+  syncWatchTick();
+  outboxKick(200);
 });
 
 /* ---------------- РІШЕННЯ «РОЗКЛАД ЧИ МАЙСТЕР» ПІСЛЯ ВХОДУ ---------------- */
@@ -1736,12 +1785,25 @@ function afterAuth() {
   settling = true;
   bootStatus('синхронізація…');
   refreshAccUI();
-  syncPull(true, function (dec) {
-    settling = false;
-    if (dec === 'ok') { reveal(); }
-    else if (dec === 'master') { reveal(); AUTO_SETUP = true; openGroups(); }
-    else { reveal(); }   // офлайн — працюємо на локальних даних
-  });
+  /* 3.5.8: ПОВНОЦІННЕ завантаження акаунта. Раніше один невдалий pull
+     (Render free «спить» 30-60 с після простою, токен не встиг оновитись —
+     будь-що) означав: сторінка показує КЕШ і більше не намагається. Тепер —
+     до 3 спроб з паузами, поки екран завантаження не вичерпав свій ліміт. */
+  let tries = 0;
+  const go = function () {
+    syncPull(true, function (dec) {
+      if (dec === 'offline' && tries < 2 && ACC.user) {
+        tries += 1;
+        setTimeout(go, 2500 * tries);   // 2.5 с, потім 5 с
+        return;
+      }
+      settling = false;
+      if (dec === 'ok') { reveal(); }
+      else if (dec === 'master') { reveal(); AUTO_SETUP = true; openGroups(); }
+      else { reveal(); }   // офлайн — працюємо на локальних даних
+    });
+  };
+  go();
 }
 function reveal() {
   if (bootDone) return;
@@ -1755,21 +1817,34 @@ function reveal() {
   syncWatchStart();
   checkNban();
   pushDataLoad();
+  /* 3.5.8: ДРУГА ХВИЛЯ. Якщо перший pull не встиг (холодний сервер) і сторінка
+     відкрилась на кеші — через 6 с докачуємо стан акаунта (нефорсовано:
+     застосовується тільки новіше за останній власний запис). Плюс
+     виштовхуємо чергу змін, що накопичилась поки було офлайн. */
+  setTimeout(function () {
+    if (!ACC.user) return;
+    syncPull(false, null);
+    outboxKick(500);
+  }, 6000);
 }
 
 /* ---------------- ДАНІ З FIREBASE (поверх вбудованих) ---------------- */
 function teachFor(key) { return DBD.teachers ? (DBD.teachers[key] || null) : (BUILTIN.teachers[key] || null); }
 function subjFor(key) { return DBD.subjects ? (DBD.subjects[key] || null) : (BUILTIN.subjects[key] || null); }
 function schedFor(dk) { const a = DBD.schedule ? DBD.schedule[dk] : BUILTIN.schedule[dk]; return Array.isArray(a) ? a : null; }
-function pushDataLoad() {
-  /* розклад/вчителі/предмети — з Firebase, як у застосунку (живе оновлення) */
+function pushDataLoad(retry) {
+  /* розклад/вчителі/предмети — з Firebase, як у застосунку (живе оновлення)
+     3.5.8: якщо ВСІ три не прийшли (сервер спав) — одна повторна спроба,
+     раніше розклад лишався вбудованим до наступного відкриття сторінки */
   const cb = 'cb=' + Date.now();
+  let left = 3, got = 0;
+  const fin = function (ok) { if (ok) got += 1; if (--left <= 0 && !got && !retry) setTimeout(function () { pushDataLoad(true); }, 6000); };
   fetch(FH_BACKEND + '/api/pub?path=schedule&' + cb, { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
-    .then(function (j) { if (j && j.ok && j.data) { DBD.schedule = j.data; render(false); } });
+    .then(function (j) { if (j && j.ok && j.data) { DBD.schedule = j.data; render(false); } fin(!!(j && j.ok)); });
   fetch(FH_BACKEND + '/api/pub?path=subjects&' + cb, { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
-    .then(function (j) { if (j && j.ok && j.data) { DBD.subjects = j.data; render(false); buildSummary(); } });
+    .then(function (j) { if (j && j.ok && j.data) { DBD.subjects = j.data; render(false); buildSummary(); } fin(!!(j && j.ok)); });
   fetch(FH_BACKEND + '/api/pub?path=teachers&' + cb, { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
-    .then(function (j) { if (j && j.ok && j.data) { DBD.teachers = j.data; render(false); buildSummary(); } });
+    .then(function (j) { if (j && j.ok && j.data) { DBD.teachers = j.data; render(false); buildSummary(); } fin(!!(j && j.ok)); });
 }
 
 /* ---------------- РОЗКЛАД ---------------- */
@@ -2507,10 +2582,12 @@ function refreshAccUI() {
 }
 function resetAccountSettings() {
   if (!ACC.user) return;
-  if (!webKey()) { toast('Акаунт ще синхронізується — спробуй за кілька секунд'); return; }
+  if (!userKey(ACC.user)) { toast('Акаунт ще синхронізується — спробуй за кілька секунд'); return; }
   const s = defaultSettings();
   s.rs = 1; s.t = Date.now();
-  if (webKey()) mirrorPut(webKey(), s);
+  /* 3.5.8: скидання летить через outbox (з повторами) — інші пристрої
+     гарантовано побачать rs:1 і самі відкриють майстер вибору груп */
+  outboxPush(s);
   S = null; FIRST = true;
   try { localStorage.removeItem('fh_groups2'); } catch (e) {}
   syncLastTs = 0;
@@ -2736,6 +2813,9 @@ notifTick();
 (function start() {
   if (ACC.user) {
     afterAuth();
+    /* 3.5.8: якщо в попередній сесії щось не встигло відправитись (тема,
+       групи…) — виштовхуємо чергу одразу, не чекаючи першого тіка */
+    if (OUTBOX.length) outboxKick(1500);
     setTimeout(function () { if (!bootDone) reveal(); }, 7000);
   } else {
     gateShow();
