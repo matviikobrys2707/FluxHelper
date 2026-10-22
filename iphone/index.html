@@ -107,7 +107,7 @@ body[data-theme="standard"]{
   --card-bg:rgba(255,255,255,.032);
   --card-bd:rgba(255,255,255,.16);
   --soft-bg:rgba(255,255,255,.04); --soft-bd:rgba(255,255,255,.08);
-  --nav-bg:rgba(8,7,16,.72); --tab-bg:rgba(10,9,20,.55); --nav-bd:rgba(139,92,246,.18);
+  --nav-bg:rgba(8,7,16,.72); --tab-bg:rgba(24,18,46,.40); --nav-bd:rgba(139,92,246,.20);
   --tile-bg:rgba(139,92,246,.14); --tile-bd:rgba(139,92,246,.28);
   --on-acc:#fff; --btn2:rgba(139,92,246,.16);
   --now:#34d399; --next:#fbbf24;
@@ -119,7 +119,7 @@ body[data-theme="light"]{
   --card-bg:#ffffff;
   --card-bd:rgba(139,92,246,.22);
   --soft-bg:rgba(99,102,241,.06); --soft-bd:rgba(99,102,241,.14);
-  --nav-bg:rgba(255,255,255,.82); --tab-bg:rgba(255,255,255,.58); --nav-bd:rgba(139,92,246,.16);
+  --nav-bg:rgba(255,255,255,.82); --tab-bg:rgba(255,255,255,.60); --nav-bd:rgba(139,92,246,.16);
   --tile-bg:rgba(139,92,246,.10); --tile-bd:rgba(139,92,246,.24);
   --on-acc:#fff; --btn2:rgba(139,92,246,.12);
   --now:#059669; --next:#d97706;
@@ -131,32 +131,45 @@ body[data-theme="glass"]{
   --card-bg:rgba(255,255,255,.10);
   --card-bd:rgba(255,255,255,.17);
   --soft-bg:rgba(255,255,255,.09); --soft-bd:rgba(255,255,255,.15);
-  --nav-bg:rgba(19,15,44,.62); --tab-bg:rgba(19,15,44,.42); --nav-bd:rgba(255,255,255,.14);
+  --nav-bg:rgba(19,15,44,.62); --tab-bg:rgba(26,20,56,.30); --nav-bd:rgba(255,255,255,.14);
   --tile-bg:rgba(255,255,255,.12); --tile-bd:rgba(255,255,255,.22);
   --on-acc:#fff; --btn2:rgba(255,255,255,.12);
   --now:#34d399; --next:#fbbf24;
   --sheet-bg:rgba(16,12,38,.86); --modal-bg:rgba(28,22,58,.92);
 }
 
-/* =================== #boot — екран завантаження =================== */
+/* =================== #boot — екран завантаження ===================
+   3.5.11: ТОЧЬ-В-ТОЧЬ як у застосунку на телефоні (просив власник): по центру
+   логотип БЕЗ рамки з м'яким фіолетовим світінням (як на сплеші Android),
+   під ним «FluxHelper», вузька полоса прогресу 198×5 з градієнтом і свечінням,
+   ще нижче — відсотки. ЖОДНИХ підзаголовків і текстів «синхронізація» —
+   один екран завантаження, 1-в-1 як у застосунку (логотип + назва + полоса +
+   відсотки). Світла тема — ті самі кольори, що й у застосунку. */
 #boot{position:fixed;inset:0;z-index:120;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:0;
+  align-items:center;justify-content:center;gap:15px;
   background:inherit;transition:opacity .5s ease,visibility .5s}
 #boot.off{opacity:0;visibility:hidden;pointer-events:none}
-#boot .bt-logo{width:92px;height:92px;border-radius:24px;overflow:hidden;
-  box-shadow:0 14px 44px rgba(99,102,241,.45);animation:btPulse 2.4s ease-in-out infinite}
-#boot .bt-logo img{width:100%;height:100%;display:block}
-#boot .bt-name{margin-top:20px;font-size:26px;font-weight:800;letter-spacing:.2px}
-#boot .bt-sub{margin-top:5px;font-size:12px;color:var(--sub);font-weight:600}
-#boot .bt-bar{margin-top:30px;width:min(62vw,240px);height:6px;border-radius:99px;
-  background:rgba(139,92,246,.16);overflow:hidden}
-body[data-theme="light"] #boot .bt-bar{background:rgba(139,92,246,.14)}
-#boot .bt-fill{height:100%;width:0%;border-radius:99px;background:var(--grad);
-  transition:width .18s linear}
-#boot .bt-pct{margin-top:10px;font-size:11.5px;font-weight:700;color:var(--acc);
+/* поки PNG лого не декодовано — вміст сховано; щойно іконка готова —
+   лого/назва/полоса/відсотки з'являються ОДНОЧАСНО (як у застосунку) */
+#boot.pre .bt-logo,#boot.pre .bt-name,#boot.pre .bt-bar,#boot.pre .bt-pct{opacity:0}
+#boot .bt-logo,#boot .bt-name,#boot .bt-bar,#boot .bt-pct{transition:opacity .15s ease}
+#boot .bt-logo{width:92px;height:92px;flex:none}
+#boot .bt-logo img{display:block;width:100%;height:100%;
+  filter:drop-shadow(0 12px 36px rgba(99,102,241,.5))}
+#boot .bt-name{font-size:20px;font-weight:800;color:#fff;letter-spacing:.4px}
+#boot .bt-bar{width:198px;height:5px;border-radius:99px;
+  background:rgba(255,255,255,.09);overflow:hidden;margin-top:4px}
+#boot .bt-fill{display:block;height:100%;width:0%;border-radius:99px;
+  background:linear-gradient(90deg,#8b5cf6,#6366f1);
+  box-shadow:0 0 12px rgba(129,140,248,.85);transition:width .18s linear}
+#boot .bt-pct{font-size:10.5px;color:#8b8fa3;font-weight:800;letter-spacing:1.5px;
   font-variant-numeric:tabular-nums}
-#boot .bt-st{margin-top:6px;font-size:11px;color:var(--dim);min-height:15px;text-align:center;padding:0 30px}
-@keyframes btPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+body[data-theme="light"] #boot .bt-name{color:#0f172a}
+body[data-theme="light"] #boot .bt-bar{background:rgba(139,92,246,.2)}
+body[data-theme="light"] #boot .bt-pct{color:#475569}
+/* головний екран з'являється плавно, як у застосунку після сплеша */
+body.ready #app{animation:apin .55s cubic-bezier(.16,1,.3,1) both}
+@keyframes apin{from{opacity:0;transform:translateY(12px) scale(.995)}to{opacity:1;transform:none}}
 
 /* =================== ГЕЙТ ВХОДУ =================== */
 #agate{position:fixed;inset:0;z-index:110;display:flex;flex-direction:column;align-items:center;
@@ -235,6 +248,7 @@ body[data-theme="light"] #boot .bt-bar{background:rgba(139,92,246,.14)}
 
 /* =================== СПИСОК УРОКІВ =================== */
 #list{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  transform:translateZ(0);-webkit-backface-visibility:hidden;backface-visibility:hidden;
   padding:8px 16px calc(116px + var(--sab));overscroll-behavior:contain}
 .card{position:relative;display:grid;grid-template-columns:46px minmax(0,1fr) auto;gap:12px;align-items:center;
   padding:13px 14px;border-radius:var(--r-md);background:var(--card);border:1px solid var(--card-bd);
@@ -281,16 +295,35 @@ body[data-theme="light"] #boot .bt-bar{background:rgba(139,92,246,.14)}
    підписи ПІД іконками («Розклад/Адмін/Налаштування/Профіль»), красива
    рамочка і НАПІВПРОЗОРИЙ фон (щоб видно контент крізь панель) — просив
    власник. Ширина — max-content, не розтягується на весь екран. */
-#tabbar,#tabbar2,#tabbar3,#tabbar4{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(9px + var(--sab));z-index:40;display:flex;
+/* 3.5.11: ФІКС «ЧОРНА ПАНЕЛЬ У РОЗКЛАДІ» (просив власник: «в любой вкладке
+   она прозрачная, а во вкладке Расписание она некрасивая»). Причина: на iOS
+   блюр (backdrop-filter) над прокручуваним #list здобуває чорний кадр, а над
+   «порожнім» низом розкладу взагалі нічого світлого немає. Зроблено:
+   1) фон панелі світліший І з фіолетовим підсвічуванням (скло виглядає склом
+      навіть над порожнім місцем) у ВСІХ темах; 2) translateZ(0) на панелі і
+      на скролерах — блюр більше не чорніє над прокруткою; 3) рамка/тіні
+      тонші, блюр сильніший. Тепер панель однаково прозора в усіх вкладках. */
+#tabbar,#tabbar2,#tabbar3,#tabbar4{position:absolute;left:50%;transform:translateX(-50%) translateZ(0);bottom:calc(9px + var(--sab));z-index:40;display:flex;
   gap:3px;padding:6px 7px;border-radius:24px;width:max-content;max-width:calc(100vw - 16px);
-  background:var(--tab-bg);backdrop-filter:blur(20px) saturate(1.7);-webkit-backdrop-filter:blur(20px) saturate(1.7);
-  border:1px solid var(--nav-bd);box-shadow:0 12px 34px rgba(0,0,0,.45)}
+  background:var(--tab-bg);backdrop-filter:blur(22px) saturate(1.6);-webkit-backdrop-filter:blur(22px) saturate(1.6);
+  isolation:isolate;-webkit-backface-visibility:hidden;backface-visibility:hidden;
+  border:1px solid var(--nav-bd);box-shadow:0 10px 30px rgba(0,0,0,.34)}
+body[data-theme="light"] #tabbar,body[data-theme="light"] #tabbar2,body[data-theme="light"] #tabbar3,body[data-theme="light"] #tabbar4{
+  border-color:rgba(15,23,42,.08);box-shadow:0 12px 30px rgba(15,23,42,.14)}
 .tbb{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:60px;
   padding:7px 11px 5px;color:var(--dim);border-radius:19px;transition:color .18s,background .18s,transform .1s}
 .tbb:active{transform:scale(.93)}
 .tbb.on{color:var(--acc);background:color-mix(in srgb,var(--acc) 13%,transparent);
   box-shadow:inset 0 0 0 1px rgba(139,92,246,.28)}
 body[data-theme="light"] .tbb.on{color:#7c3aed}
+/* 3.5.11: АКТИВНА ВКЛАДКА — іконка «НАЛИВАЄТЬСЯ» кольором (просив власник:
+   «была внутри пустая, а стала заполненная», як у Telegram). У кожної кнопки
+   два SVG: .ic-o — контурна (неактивна), .ic-f — заповнена (активна).
+   Колір заповнення — акцент теми: фіолетовий у темній, #7c3aed у світлій,
+   акцент скла — працює в усіх темах. */
+.tbb .ic-f{display:none}
+.tbb.on .ic-f{display:block}
+.tbb.on .ic-o{display:none}
 .tbb svg{display:block}
 /* підписи під іконками — дрібні, але читається одразу, як просив власник */
 .tbb > span:not(.tb-ava){display:block;font-size:9px;font-weight:700;letter-spacing:.2px;line-height:1;color:inherit}
@@ -362,6 +395,7 @@ body[data-theme="light"] .tbb.on{color:#7c3aed}
    власник: «скопировать и закинуть дизайн із сурсів». Розміри, радіуси,
    кольори й анімації = сурси 3.5.5. */
 .scrollview{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  transform:translateZ(0);-webkit-backface-visibility:hidden;backface-visibility:hidden;
   padding:12px 14px calc(124px + var(--sab));overscroll-behavior:contain}
 .ms-lbl{display:flex;align-items:center;justify-content:space-between;font-size:10.5px;font-weight:800;
   letter-spacing:1.6px;text-transform:uppercase;color:#8b8fa3;margin:16px 6px 8px}
@@ -627,13 +661,11 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
 </script>
 
 <!-- ЕКРАН ЗАВАНТАЖЕННЯ -->
-<div id="boot">
+<div id="boot" class="pre">
   <div class="bt-logo"><img src="icon-192.png" alt=""></div>
   <div class="bt-name">FluxHelper</div>
-  <div class="bt-sub">розклад 8-Б класу · iPhone</div>
   <div class="bt-bar"><div class="bt-fill" id="btFill"></div></div>
   <div class="bt-pct" id="btPct">0%</div>
-  <div class="bt-st" id="btSt"></div>
 </div>
 
 <!-- ГЕЙТ ВХОДУ -->
@@ -675,15 +707,18 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
     <main id="list"></main>
     <div id="tabbar">
       <button class="tbb on" id="tbSched" type="button">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14.5l2.5 2.5 5-5"/></svg>
+        <svg class="ic-o" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14.5l2.5 2.5 5-5"/></svg>
+        <svg class="ic-f" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M3.4 7.8A3.1 3.1 0 0 1 6.5 4.7h.4V3.5a1.1 1.1 0 0 1 2.2 0v1.2h5.8V3.5a1.1 1.1 0 0 1 2.2 0v1.2h.4a3.1 3.1 0 0 1 3.1 3.1v9.1a3.1 3.1 0 0 1-3.1 3.1H6.5a3.1 3.1 0 0 1-3.1-3.1V7.8zm5.4 7.3 1.7 1.7 4-4-1.05-1.05-2.95 2.95-.65-.65-1.05 1.05z"/></svg>
         <span>Розклад</span>
       </button>
       <button class="tbb hidden" id="tbAdm" type="button">
-        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.9 19.4 5.7v5.5c0 4.6-3.1 8-7.4 9.9-4.3-1.9-7.4-5.3-7.4-9.9V5.7L12 2.9z"/><path d="M9 12.2l2.1 2.1 4-4.6"/></svg>
+        <svg class="ic-o" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.9 19.4 5.7v5.5c0 4.6-3.1 8-7.4 9.9-4.3-1.9-7.4-5.3-7.4-9.9V5.7L12 2.9z"/><path d="M9 12.2l2.1 2.1 4-4.6"/></svg>
+        <svg class="ic-f" width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2.9 19.4 5.7v5.5c0 4.6-3.1 8-7.4 9.9-4.3-1.9-7.4-5.3-7.4-9.9V5.7L12 2.9zm-2.8 9.5 1.9 1.9 3.9-4.5-.9-.8-3 3.5-1.1-1.1z"/></svg>
         <span>Адмін</span>
       </button>
       <button class="tbb" id="tbSetup" type="button">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <svg class="ic-o" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <svg class="ic-f" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2z"/></svg>
         <span>Налаштування</span>
       </button>
       <button class="tbb" id="tbProf" type="button">
@@ -789,15 +824,18 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
     </div>
     <div id="tabbar2">
       <button class="tbb" id="tbSched2" type="button">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14.5l2.5 2.5 5-5"/></svg>
+        <svg class="ic-o" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14.5l2.5 2.5 5-5"/></svg>
+        <svg class="ic-f" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M3.4 7.8A3.1 3.1 0 0 1 6.5 4.7h.4V3.5a1.1 1.1 0 0 1 2.2 0v1.2h5.8V3.5a1.1 1.1 0 0 1 2.2 0v1.2h.4a3.1 3.1 0 0 1 3.1 3.1v9.1a3.1 3.1 0 0 1-3.1 3.1H6.5a3.1 3.1 0 0 1-3.1-3.1V7.8zm5.4 7.3 1.7 1.7 4-4-1.05-1.05-2.95 2.95-.65-.65-1.05 1.05z"/></svg>
         <span>Розклад</span>
       </button>
       <button class="tbb hidden" id="tbAdm2" type="button">
-        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.9 19.4 5.7v5.5c0 4.6-3.1 8-7.4 9.9-4.3-1.9-7.4-5.3-7.4-9.9V5.7L12 2.9z"/><path d="M9 12.2l2.1 2.1 4-4.6"/></svg>
+        <svg class="ic-o" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.9 19.4 5.7v5.5c0 4.6-3.1 8-7.4 9.9-4.3-1.9-7.4-5.3-7.4-9.9V5.7L12 2.9z"/><path d="M9 12.2l2.1 2.1 4-4.6"/></svg>
+        <svg class="ic-f" width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2.9 19.4 5.7v5.5c0 4.6-3.1 8-7.4 9.9-4.3-1.9-7.4-5.3-7.4-9.9V5.7L12 2.9zm-2.8 9.5 1.9 1.9 3.9-4.5-.9-.8-3 3.5-1.1-1.1z"/></svg>
         <span>Адмін</span>
       </button>
       <button class="tbb" id="tbSetup2" type="button">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <svg class="ic-o" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <svg class="ic-f" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2z"/></svg>
         <span>Налаштування</span>
       </button>
       <button class="tbb" id="tbProf2" type="button">
@@ -859,15 +897,18 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
     </div>
     <div id="tabbar3">
       <button class="tbb" id="tbSched3" type="button">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14.5l2.5 2.5 5-5"/></svg>
+        <svg class="ic-o" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14.5l2.5 2.5 5-5"/></svg>
+        <svg class="ic-f" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M3.4 7.8A3.1 3.1 0 0 1 6.5 4.7h.4V3.5a1.1 1.1 0 0 1 2.2 0v1.2h5.8V3.5a1.1 1.1 0 0 1 2.2 0v1.2h.4a3.1 3.1 0 0 1 3.1 3.1v9.1a3.1 3.1 0 0 1-3.1 3.1H6.5a3.1 3.1 0 0 1-3.1-3.1V7.8zm5.4 7.3 1.7 1.7 4-4-1.05-1.05-2.95 2.95-.65-.65-1.05 1.05z"/></svg>
         <span>Розклад</span>
       </button>
       <button class="tbb hidden" id="tbAdm3" type="button">
-        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.9 19.4 5.7v5.5c0 4.6-3.1 8-7.4 9.9-4.3-1.9-7.4-5.3-7.4-9.9V5.7L12 2.9z"/><path d="M9 12.2l2.1 2.1 4-4.6"/></svg>
+        <svg class="ic-o" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.9 19.4 5.7v5.5c0 4.6-3.1 8-7.4 9.9-4.3-1.9-7.4-5.3-7.4-9.9V5.7L12 2.9z"/><path d="M9 12.2l2.1 2.1 4-4.6"/></svg>
+        <svg class="ic-f" width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2.9 19.4 5.7v5.5c0 4.6-3.1 8-7.4 9.9-4.3-1.9-7.4-5.3-7.4-9.9V5.7L12 2.9zm-2.8 9.5 1.9 1.9 3.9-4.5-.9-.8-3 3.5-1.1-1.1z"/></svg>
         <span>Адмін</span>
       </button>
       <button class="tbb" id="tbSetup3" type="button">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <svg class="ic-o" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <svg class="ic-f" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2z"/></svg>
         <span>Налаштування</span>
       </button>
       <button class="tbb" id="tbProf3" type="button">
@@ -906,15 +947,18 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
     </div>
     <div id="tabbar4">
       <button class="tbb" id="tbSched4" type="button">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14.5l2.5 2.5 5-5"/></svg>
+        <svg class="ic-o" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14.5l2.5 2.5 5-5"/></svg>
+        <svg class="ic-f" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M3.4 7.8A3.1 3.1 0 0 1 6.5 4.7h.4V3.5a1.1 1.1 0 0 1 2.2 0v1.2h5.8V3.5a1.1 1.1 0 0 1 2.2 0v1.2h.4a3.1 3.1 0 0 1 3.1 3.1v9.1a3.1 3.1 0 0 1-3.1 3.1H6.5a3.1 3.1 0 0 1-3.1-3.1V7.8zm5.4 7.3 1.7 1.7 4-4-1.05-1.05-2.95 2.95-.65-.65-1.05 1.05z"/></svg>
         <span>Розклад</span>
       </button>
       <button class="tbb on hidden" id="tbAdm4" type="button">
-        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.9 19.4 5.7v5.5c0 4.6-3.1 8-7.4 9.9-4.3-1.9-7.4-5.3-7.4-9.9V5.7L12 2.9z"/><path d="M9 12.2l2.1 2.1 4-4.6"/></svg>
+        <svg class="ic-o" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.9 19.4 5.7v5.5c0 4.6-3.1 8-7.4 9.9-4.3-1.9-7.4-5.3-7.4-9.9V5.7L12 2.9z"/><path d="M9 12.2l2.1 2.1 4-4.6"/></svg>
+        <svg class="ic-f" width="21" height="21" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2.9 19.4 5.7v5.5c0 4.6-3.1 8-7.4 9.9-4.3-1.9-7.4-5.3-7.4-9.9V5.7L12 2.9zm-2.8 9.5 1.9 1.9 3.9-4.5-.9-.8-3 3.5-1.1-1.1z"/></svg>
         <span>Адмін</span>
       </button>
       <button class="tbb" id="tbSetup4" type="button">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <svg class="ic-o" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <svg class="ic-f" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2z"/></svg>
         <span>Налаштування</span>
       </button>
       <button class="tbb" id="tbProf4" type="button">
@@ -996,7 +1040,13 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
    відновлюється з токенами; роль — ЛИШЕ з бекенда/D1, знімок її не
    перезатирає), версія сайту = версія бети (з versions/beta/latest.json),
    без рамки на аватарі профіля, watchdog рендеру розкладу.
-   Версія 3.5.10 · Web
+   3.5.11: ВІЗУАЛ (просив власник): екран завантаження ТОЧЬ-В-ТОЧЬ як у
+   застосунку на телефоні (лого + FluxHelper + полоса + відсотки, без текстів
+   «синхронізація», спільна поява після декодування лого, apin-вхід);
+   таббар — фікс «чорної панелі в Розкладі» (скло світле й фіолетове у всіх
+   темах, translateZ-фікси блюру над скролом); активна іконка вкладки
+   ЗАПОВНЮЄТЬСЯ кольором (контур → заповнена, як у Telegram) в усіх темах.
+   Версія 3.5.11 · Web
    ============================================================ */
 
 var APP_VER = '3.5.8';   /* 3.5.10: ПЕРЕЗАПИСУЄТЬСЯ з versions/beta/latest.json —
@@ -1378,7 +1428,10 @@ function bootFinish() {
   bootP = 100; paintBoot();
   setTimeout(function () { byId('boot').classList.add('off'); }, 260);
 }
-function bootStatus(t) { const s = byId('btSt'); if (s) s.textContent = t || ''; }
+/* 3.5.11: на екрані завантаження БІЛЬШЕ немає статусних текстів
+   («синхронізація…» тощо) — 1-в-1 як у застосунку: тільки логотип, назва,
+   полоса і відсотки. Функція лишена для сумісності, вона нічого не малює. */
+function bootStatus() {}
 
 /* ---------------- ГЕЙТ ВХОДУ ---------------- */
 let agOutT = 0;
@@ -1823,7 +1876,6 @@ window.addEventListener('online', function () {
 let AUTO_SETUP = false, settling = false;
 function afterAuth() {
   settling = true;
-  bootStatus('синхронізація…');
   refreshAccUI();
   /* 3.5.8: ПОВНОЦІННЕ завантаження акаунта. Раніше один невдалий pull
      (Render free «спить» 30-60 с після простою, токен не встиг оновитись —
@@ -1858,6 +1910,7 @@ function reveal() {
   if (bootDone) return;
   bootDone = true;
   bootFinish();
+  document.body.classList.add('ready');   /* плавний apin-вхід, як у застосунку */
   byId('app').classList.remove('hidden');
   if (!bootTab()) showMain(FIRST);
   if (FIRST) { AUTO_SETUP = true; openGroups(); }
@@ -2906,6 +2959,17 @@ notifTick();
    Живая сессия (fh_user) -> подтягиваем данные и открываем приложение.
    Нет сессии -> экран входа. Страховка: если сеть молчит дольше 7 с —
    открываем приложение на локальных данных всё равно. */
+/* 3.5.11: поки лого не декодовано — boot клас .pre (вміст схований);
+   щойно PNG готовий (або за 400 мс страховки) — показуємо все ОДНОЧАСНО,
+   як у застосунку, без «лого з'являється пізніше за назву» */
+(function bootLogoReady() {
+  const show = function () { const b = byId('boot'); if (b) b.classList.remove('pre'); };
+  const im = new Image();
+  im.onload = show; im.onerror = show;
+  im.src = 'icon-192.png';
+  if (im.complete) show();
+  setTimeout(show, 400);
+})();
 (function start() {
   if (ACC.user) {
     afterAuth();
