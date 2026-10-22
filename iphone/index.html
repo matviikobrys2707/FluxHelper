@@ -107,7 +107,7 @@ body[data-theme="standard"]{
   --card-bg:rgba(255,255,255,.032);
   --card-bd:rgba(255,255,255,.16);
   --soft-bg:rgba(255,255,255,.04); --soft-bd:rgba(255,255,255,.08);
-  --nav-bg:rgba(8,7,16,.72); --tab-bg:rgba(10,9,20,.78); --nav-bd:rgba(139,92,246,.18);
+  --nav-bg:rgba(8,7,16,.72); --tab-bg:rgba(10,9,20,.55); --nav-bd:rgba(139,92,246,.18);
   --tile-bg:rgba(139,92,246,.14); --tile-bd:rgba(139,92,246,.28);
   --on-acc:#fff; --btn2:rgba(139,92,246,.16);
   --now:#34d399; --next:#fbbf24;
@@ -119,7 +119,7 @@ body[data-theme="light"]{
   --card-bg:#ffffff;
   --card-bd:rgba(139,92,246,.22);
   --soft-bg:rgba(99,102,241,.06); --soft-bd:rgba(99,102,241,.14);
-  --nav-bg:rgba(255,255,255,.82); --tab-bg:rgba(255,255,255,.86); --nav-bd:rgba(139,92,246,.16);
+  --nav-bg:rgba(255,255,255,.82); --tab-bg:rgba(255,255,255,.58); --nav-bd:rgba(139,92,246,.16);
   --tile-bg:rgba(139,92,246,.10); --tile-bd:rgba(139,92,246,.24);
   --on-acc:#fff; --btn2:rgba(139,92,246,.12);
   --now:#059669; --next:#d97706;
@@ -131,7 +131,7 @@ body[data-theme="glass"]{
   --card-bg:rgba(255,255,255,.10);
   --card-bd:rgba(255,255,255,.17);
   --soft-bg:rgba(255,255,255,.09); --soft-bd:rgba(255,255,255,.15);
-  --nav-bg:rgba(19,15,44,.62); --tab-bg:rgba(19,15,44,.66); --nav-bd:rgba(255,255,255,.14);
+  --nav-bg:rgba(19,15,44,.62); --tab-bg:rgba(19,15,44,.42); --nav-bd:rgba(255,255,255,.14);
   --tile-bg:rgba(255,255,255,.12); --tile-bd:rgba(255,255,255,.22);
   --on-acc:#fff; --btn2:rgba(255,255,255,.12);
   --now:#34d399; --next:#fbbf24;
@@ -235,7 +235,7 @@ body[data-theme="light"] #boot .bt-bar{background:rgba(139,92,246,.14)}
 
 /* =================== СПИСОК УРОКІВ =================== */
 #list{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
-  padding:8px 16px calc(96px + var(--sab));overscroll-behavior:contain}
+  padding:8px 16px calc(116px + var(--sab));overscroll-behavior:contain}
 .card{position:relative;display:grid;grid-template-columns:46px minmax(0,1fr) auto;gap:12px;align-items:center;
   padding:13px 14px;border-radius:var(--r-md);background:var(--card);border:1px solid var(--card-bd);
   margin-bottom:10px;box-shadow:0 6px 22px rgba(0,0,0,.14);
@@ -277,19 +277,23 @@ body[data-theme="light"] #boot .bt-bar{background:rgba(139,92,246,.14)}
    Плаваюча ОКРУГЛЕНА панель з іконками (підписів немає), активна
    вкладка — фіолетова пілюля. Порядок: Розклад / Адмін (лише роль) /
    Налаштування / Профіль (аватарка акаунта). */
-#tabbar,#tabbar2,#tabbar3,#tabbar4{position:absolute;left:10px;right:10px;bottom:calc(9px + var(--sab));z-index:40;display:flex;
-  gap:4px;padding:7px;border-radius:26px;
-  background:var(--tab-bg);backdrop-filter:blur(22px) saturate(1.7);-webkit-backdrop-filter:blur(22px) saturate(1.7);
+/* 3.5.9: ПАНЕЛЬ — мінімальна ширина (флоатер по центру, розмір по контенту),
+   підписи ПІД іконками («Розклад/Адмін/Налаштування/Профіль»), красива
+   рамочка і НАПІВПРОЗОРИЙ фон (щоб видно контент крізь панель) — просив
+   власник. Ширина — max-content, не розтягується на весь екран. */
+#tabbar,#tabbar2,#tabbar3,#tabbar4{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(9px + var(--sab));z-index:40;display:flex;
+  gap:3px;padding:6px 7px;border-radius:24px;width:max-content;max-width:calc(100vw - 16px);
+  background:var(--tab-bg);backdrop-filter:blur(20px) saturate(1.7);-webkit-backdrop-filter:blur(20px) saturate(1.7);
   border:1px solid var(--nav-bd);box-shadow:0 12px 34px rgba(0,0,0,.45)}
-.tbb{flex:1;display:flex;align-items:center;justify-content:center;min-width:0;padding:9px 0;
-  color:var(--dim);border-radius:19px;transition:color .18s,background .18s,transform .1s}
+.tbb{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:60px;
+  padding:7px 11px 5px;color:var(--dim);border-radius:19px;transition:color .18s,background .18s,transform .1s}
 .tbb:active{transform:scale(.93)}
 .tbb.on{color:var(--acc);background:color-mix(in srgb,var(--acc) 13%,transparent);
   box-shadow:inset 0 0 0 1px rgba(139,92,246,.28)}
 body[data-theme="light"] .tbb.on{color:#7c3aed}
 .tbb svg{display:block}
-/* іконки без підписів — як у Telegram (текст ховаємо, аватар лишається) */
-.tbb > span:not(.tb-ava){display:none}
+/* підписи під іконками — дрібні, але читається одразу, як просив власник */
+.tbb > span:not(.tb-ava){display:block;font-size:9px;font-weight:700;letter-spacing:.2px;line-height:1;color:inherit}
 /* кнопка «Профіль» — іконкою є ТА САМА аватарка Google (або силует, поки
    не увійшли). Активна — фіолетова світна обводка, як у застосунку */
 .tb-ava{width:23px;height:23px;border-radius:50%;overflow:hidden;display:grid;place-items:center;
@@ -985,10 +989,14 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
    Backend /api/sync (RTDB /update/web/<uid> + /update/settings_mirror/<uid>).
    3.5.8: ПОВНОЦІННЕ завантаження акаунта (повтори за «холодного» сервера),
    гарантована доставка змін (outbox із ретраями), роль адміна з бекенда.
-   Версія 3.5.8 · Web
+   3.5.9: FIX бага «вкладка не відкривається при швидкому тиканні» (був
+   тротлінг 600 мс у showView), URL-hash вкладок (#розклад/#налаштування…
+   — після перезавантаження лишається та сама вкладка), нижня панель:
+   мінімальна ширина по центру + підписи під іконками + напівпрозорість.
+   Версія 3.5.9 · Web
    ============================================================ */
 
-var APP_VER = '3.5.8';
+var APP_VER = '3.5.9';
 /* 3.5.5: КАНАЛ — сайт завжди поточний, але версію показуємо з підписом «beta»,
    поки линейка 3.5.x бета (реліз буде без слова). Просив власник: «писалось
    3.5.4 beta… якщо реліз — прямо 3.5.4 без надписи beta». */
@@ -1810,7 +1818,7 @@ function reveal() {
   bootDone = true;
   bootFinish();
   byId('app').classList.remove('hidden');
-  showMain(FIRST);
+  if (!bootTab()) showMain(FIRST);
   if (FIRST) { AUTO_SETUP = true; openGroups(); }
   refreshAccUI(); refreshNotifUI(); refreshZoomUI(); refreshThemeUI();
   render(false);
@@ -2151,20 +2159,50 @@ function openL(u) {
 }
 
 /* ---------------- В'ЮГИ + ТАББАР ---------------- */
-let lastSwapT = 0;
+/* 3.5.9: FIX «вкладка не відкривається, якщо швидко тикати» — прибрано
+   тротлінг 600 мс (він мовчки ІГНОРУВАВ друге натискання: тикнеш
+   Розклад -> Налаштування -> Профіль швидко — і Профіль не відкривався).
+   showView ідемпотентний і миттєвий, дребезг йому не страшний.
+   + URL-HASH: в адресі завжди поточна вкладка (#розклад/#налаштування/
+   #профіль/#адмін) — після перезавантаження сторінки відкривається ТА САМА
+   вкладка, а не розклад (просив власник). */
+const VIEW_HASH = { vMain: 'розклад', vSetup: 'налаштування', vAcc: 'профіль', vAdmin: 'адмін' };
+const HASH_VIEW = { 'розклад': 'vMain', 'налаштування': 'vSetup', 'профіль': 'vAcc', 'адмін': 'vAdmin' };
 function showView(id) {
-  /* анти-дребезг: швидкий подвійний тап (або примарний другий клік після
-     зміни в'ю) не має «стрибати» назад — друге перемикання в межах 600 мс
-     ігнорується. Реальна навігація (подивитись і натиснути «Назад»)
-     завжди довша за 600 мс. */
-  const t = Date.now();
-  if (t - lastSwapT < 600) return;
-  lastSwapT = t;
   ['vMain', 'vSetup', 'vAcc', 'vAdmin'].forEach(function (v) {
     const e = byId(v);
     if (!e) return;
     if (v === id) e.classList.remove('hidden'); else e.classList.add('hidden');
   });
+  try {
+    const h = '#' + (VIEW_HASH[id] || 'розклад');
+    if (location.hash !== h) history.replaceState(null, '', h);
+  } catch (e) {}
+}
+/* 3.5.9: навігація за адресою (назад/вперед + перезавантаження тримають
+   вкладку). Профіль — лише з акаунтом, Адмін — лише з роллю staff. */
+function hashTarget() {
+  let h = '';
+  try { h = decodeURIComponent((location.hash || '').replace(/^#/, '')).toLowerCase().trim(); } catch (e) { h = (location.hash || '').replace(/^#/, ''); }
+  return HASH_VIEW[h] || null;
+}
+window.addEventListener('hashchange', function () {
+  if (byId('app').classList.contains('hidden')) return;   /* ще екран входу */
+  const v = hashTarget();
+  if (!v) return;
+  if (v === 'vAdmin') { if (ACC.user && staffAcc()) showAdmin(); return; }
+  if (v === 'vAcc') { if (ACC.user) showAcc(); return; }
+  if (v === 'vSetup') { showSetup(); return; }
+  showMain(true);
+});
+function bootTab() {
+  const v = hashTarget();
+  if (!v) return false;
+  if (v === 'vSetup') { showSetup(); return true; }
+  if (v === 'vAcc' && ACC.user) { showAcc(); return true; }
+  if (v === 'vAdmin' && ACC.user && staffAcc()) { showAdmin(); return true; }
+  if (v === 'vMain') { showMain(true); return true; }
+  return false;
 }
 function showMain(force) {
   if (FIRST && !force) { AUTO_SETUP = true; showView('vMain'); openGroups(); return; }
