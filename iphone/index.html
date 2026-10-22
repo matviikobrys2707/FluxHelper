@@ -56,6 +56,10 @@ html,body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
 input,textarea{-webkit-user-select:text;user-select:text}
 button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .hidden{display:none!important}
+/* скролбари ховаємо ВІЗУАЛЬНО — як у нативному застосунку (список гортається,
+   але ніяких смужок прокрутки на екрані немає) */
+*{scrollbar-width:none!important;-ms-overflow-style:none!important}
+*::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
 
 :root{
   --acc:#8b5cf6; --acc2:#6366f1; --acc3:#a855f7;
@@ -271,12 +275,25 @@ body[data-theme="light"] #boot .bt-bar{background:rgba(139,92,246,.14)}
   padding:6px 10px calc(6px + var(--sab));
   background:var(--tab-bg);backdrop-filter:blur(18px) saturate(1.7);-webkit-backdrop-filter:blur(18px) saturate(1.7);
   border-top:1px solid var(--nav-bd)}
-#tabbar3{display:none}
+#tabbar3{position:absolute;left:0;right:0;bottom:0;z-index:40;display:flex;
+  padding:6px 10px calc(6px + var(--sab));
+  background:var(--tab-bg);backdrop-filter:blur(18px) saturate(1.7);-webkit-backdrop-filter:blur(18px) saturate(1.7);
+  border-top:1px solid var(--nav-bd)}
 .tbb{flex:1;display:flex;flex-direction:column;align-items:center;gap:2.5px;padding:5px 0 3px;
   color:var(--dim);font-size:9.8px;font-weight:700;border-radius:12px;transition:color .2s}
 .tbb.on{color:var(--acc)}
 body[data-theme="light"] .tbb.on{color:#7c3aed}
 .tbb svg{display:block}
+/* кнопка «Профіль» — іконкою є ТА САМА аватарка Google (або силует, поки
+   не увійшли). Активна — фіолетова світна обводка, як у застосунку */
+.tb-ava{width:23px;height:23px;border-radius:50%;overflow:hidden;display:grid;place-items:center;
+  background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;
+  box-shadow:0 0 0 1.5px rgba(139,92,246,.30),0 3px 9px rgba(99,102,241,.28);
+  transition:box-shadow .18s,transform .18s}
+.tb-ava img{width:100%;height:100%;display:block;object-fit:cover}
+.tb-ava svg{display:block}
+.tbb.on .tb-ava{box-shadow:0 0 0 2px var(--acc),0 0 16px rgba(139,92,246,.55)}
+.tbb:active .tb-ava{transform:scale(.92)}
 </style>
 <style>
 /* =================== НАЛАШТУВАННЯ (iOS grouped list) =================== */
@@ -372,16 +389,16 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;heigh
 .ac-note{margin-top:14px;font-size:10.5px;color:var(--dim);line-height:1.55;text-align:center;padding:0 10px}
 </style>
 <style>
-/* =================== МАЙСТЕР ГРУП (шіт iOS) =================== */
-#gwrap{position:fixed;inset:0;z-index:80;display:flex;align-items:flex-end;justify-content:center}
-#gwrap .g-back{position:absolute;inset:0;background:rgba(2,2,6,.6);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
-.g-sheet{position:relative;width:100%;max-width:470px;max-height:88dvh;display:flex;flex-direction:column;
-  background:var(--sheet-bg);border:1px solid var(--card-bd);border-bottom:0;
-  border-radius:24px 24px 0 0;box-shadow:0 -18px 60px rgba(0,0,0,.5);
-  animation:sheetUp .38s cubic-bezier(.2,.8,.25,1) both;
-  padding-bottom:calc(12px + var(--sab))}
-@keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
-.g-grab{width:38px;height:5px;border-radius:99px;background:var(--soft-bd);margin:9px auto 2px}
+/* =================== МАЙСТЕР ГРУП (вікно ПО ЦЕНТРУ — як у застосунку) =================== */
+#gwrap{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:20px}
+#gwrap .g-back{position:absolute;inset:0;background:rgba(3,3,7,.66);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.g-sheet{position:relative;width:100%;max-width:470px;max-height:86dvh;display:flex;flex-direction:column;
+  background:var(--sheet-bg);border:1px solid var(--card-bd);border-bottom:1px solid rgba(255,255,255,.1);
+  border-radius:22px;box-shadow:0 24px 70px rgba(0,0,0,.55);
+  animation:mup .26s cubic-bezier(.2,.9,.3,1.15) both;
+  padding-bottom:calc(14px + var(--sab))}
+@keyframes mup{from{opacity:0;transform:translateY(16px) scale(.94)}to{opacity:1;transform:none}}
+.g-grab{display:none}
 .g-head{display:flex;align-items:center;gap:10px;padding:8px 18px 10px;border-bottom:1px solid var(--soft-bd)}
 .g-head b{font-size:16.5px;font-weight:800;color:var(--txt)}
 .g-prog{margin-left:auto;font-size:11.5px;font-weight:800;color:var(--acc)}
@@ -517,6 +534,10 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         <span>Налаштування</span>
       </button>
+      <button class="tbb" id="tbProf" type="button">
+        <span class="tb-ava" id="profAva"></span>
+        <span>Профіль</span>
+      </button>
     </div>
   </div>
 
@@ -627,9 +648,13 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14.5l2.5 2.5 5-5"/></svg>
         <span>Розклад</span>
       </button>
-      <button class="tbb on" id="tbSetup2" type="button">
+      <button class="tbb" id="tbSetup2" type="button">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         <span>Налаштування</span>
+      </button>
+      <button class="tbb" id="tbProf2" type="button">
+        <span class="tb-ava" id="profAva2"></span>
+        <span>Профіль</span>
       </button>
     </div>
   </div>
@@ -686,7 +711,20 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
       </div>
       <div class="ac-note">Синхронізуються: групи предметів, сповіщення, режим Zoom і тема. Розклад — спільний для всього класу.</div>
     </div>
-    <div id="tabbar3"></div>
+    <div id="tabbar3">
+      <button class="tbb" id="tbSched3" type="button">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14.5l2.5 2.5 5-5"/></svg>
+        <span>Розклад</span>
+      </button>
+      <button class="tbb" id="tbSetup3" type="button">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Налаштування</span>
+      </button>
+      <button class="tbb on" id="tbProf3" type="button">
+        <span class="tb-ava" id="profAva3"></span>
+        <span>Профіль</span>
+      </button>
+    </div>
   </div>
 
 </div><!-- /#app -->
@@ -744,10 +782,10 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
    Дані: вбудований розклад (офлайн) + Firebase RTDB (schedule/subjects/
    teachers — як у застосунку). Синхронізація налаштувань — Firebase
    RTDB /update/web/<Firebase UID> (прив'язка до акаунта Google).
-   Версія 3.5.0 · Web
+   Версія 3.5.3 · Web
    ============================================================ */
 
-var APP_VER = '3.5.0';
+var APP_VER = '3.5.3';
 var DB_URL = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app';
 var GIS_CLIENT = '668834523935-k470ldmdv0r9am0720v6lgaatm6rtuf3.apps.googleusercontent.com';
 var FH_FB_KEY = 'AIzaSyCDWpF3QTMEFBN9ravDxH_woKnBpcMRDvI';
@@ -1022,7 +1060,9 @@ function validS(x) {
 }
 function oldKeyMap(s) { const o = {}; for (const ok in OLDKEY) o[ok] = (s && s[OLDKEY[ok]] === 2) ? 2 : 1; return o; }
 function defaultSettings() {
-  return { g: {}, n: { on: true, min: 5, snd: true }, z: 'app', th: 'standard', cf: 0, t: Date.now(), v: APP_VER + 'w', sync: 1 };
+  /* ТОЙ САМИЙ знімок, що пишуть ПК і телефон у D1 users.settings:
+     { g, n:{on,min,snd,off}, z, th, cf, bt, t, v, sync } — сумісність 1-в-1 */
+  return { g: {}, n: { on: true, min: 5, snd: true, off: false }, z: 'app', th: 'standard', cf: 0, bt: 0, t: Date.now(), v: APP_VER, sync: 1 };
 }
 
 /* ---------------- ЛОКАЛЬНІ НАЛАШТУВАННЯ ---------------- */
@@ -1068,8 +1108,12 @@ function applyTheme(t, save) {
   document.body.setAttribute('data-theme', THEME);
   var m = document.querySelector('meta[name="theme-color"]');
   if (m) m.setAttribute('content', THEME === 'light' ? '#f6f7fd' : (THEME === 'glass' ? '#141033' : '#050508'));
-  if (save !== false) { try { localStorage.setItem('fh_theme', THEME); } catch (e) {} }
-  if (ACC.user) syncUp();
+  /* як у застосунку: fh_theme зберігається ЗАВЖДИ (без спалаху старої теми
+     при старті), а syncUp — ЛИШЕ коли тему змінив користувець. Раніше тихе
+     застосування теми з хмари (save=false) тригерило syncUp — і при старті
+     сторінка ПЕРЕЗАПИСУВАЛА дзеркало до першого pull, затираючи зміни з ПК. */
+  try { localStorage.setItem('fh_theme', THEME); } catch (e) {}
+  if (save !== false && ACC.user) syncUp();
 }
 
 /* ---------------- ЕКРАН ЗАВАНТАЖЕННЯ ---------------- */
@@ -1207,25 +1251,27 @@ function logout() {
 }
 
 /* ---------------- СИНХРОНІЗАЦІЯ (Firebase RTDB, ключ = Firebase UID) ----------------
-   Знімок налаштувань живе в /update/web/<uid>: { ts, st: {g, n, z, th, cf, t, v} }.
-   Формат g/n/z/th — ТОЙ САМИЙ, що пишуть ПК і телефон у свої базу, тож якщо
-   колись синк об'єднається — сумісність не зламається. */
+   Знімок налаштувань живе в /update/web/<uid> — і це ТОЙ САМИЙ JSON, що ПК і
+   телефон пишуть у D1 users.settings: { g, n:{on,min,snd,off}, z, th, cf, bt,
+   t, v, sync }. Застосунки 3.5.3+ дзеркалять свій знімок із D1 сюди й читають
+   звідси — тож налаштування з ПК/телефона з'являються на айфоні і навпаки. */
 function webKey() { const k = userKey(ACC.user); return k ? ('update/web/' + encodeURIComponent(k)) : ''; }
 function snapFromLocal() {
   const s = defaultSettings();
-  s.g = oldKeyMap(S);
-  s.n = { on: NOTIF.on, min: NOTIF.min, snd: NOTIF.snd };
-  s.z = ZOOM.mode; s.th = THEME; s.cf = CONFIRM.on ? 1 : 0;
-  s.t = Date.now();
+  const g = {};
+  if (S) for (const ok in OLDKEY) { const v = S[OLDKEY[ok]]; if (v === 1 || v === 2) g[ok] = v; }
+  s.g = g;
+  s.n = { on: !!NOTIF.on, min: NOTIF.min, snd: !!NOTIF.snd, off: !!NOTIF.off };
+  s.z = ZOOM.mode; s.th = THEME; s.cf = CONFIRM.on ? 1 : 0; s.bt = 0;
+  s.t = Date.now(); s.v = APP_VER; s.sync = ACC.sync ? 1 : 0;
   return s;
 }
 function syncUp() {
   if (!ACC.user || !ACC.sync || !webKey()) return;
-  const now = Date.now();
-  const payload = { ts: now, st: snapFromLocal() };
-  syncLastTs = now;
+  const p = snapFromLocal();
+  syncLastTs = p.t;
   try { localStorage.setItem('fh_sync_ts', String(syncLastTs)); } catch (e) {}
-  fetch(DB_URL + '/' + webKey() + '.json', { method: 'PUT', body: JSON.stringify(payload) }).catch(function () {});
+  fetch(DB_URL + '/' + webKey() + '.json', { method: 'PUT', body: JSON.stringify(p) }).catch(function () {});
 }
 function syncApply(p, force) {
   if (!p || typeof p !== 'object' || !ACC.user) return;
@@ -1246,8 +1292,8 @@ function syncApply(p, force) {
     }
   }
   if (p.n && typeof p.n === 'object') {
-    const on = !!p.n.on, mn = (p.n.min >= 1 && p.n.min <= 15) ? p.n.min : 5, sd = (p.n.snd !== false);
-    if (on !== NOTIF.on || mn !== NOTIF.min || sd !== !!NOTIF.snd) { NOTIF = { on: on, min: mn, snd: sd, off: !!NOTIF.off }; saveNotif(); refreshNotifUI(); ch = true; }
+    const on = !!p.n.on, mn = (p.n.min >= 1 && p.n.min <= 15) ? p.n.min : 5, sd = (p.n.snd !== false), of = !!p.n.off;
+    if (on !== NOTIF.on || mn !== NOTIF.min || sd !== !!NOTIF.snd || of !== !!NOTIF.off) { NOTIF = { on: on, min: mn, snd: sd, off: of }; saveNotif(); refreshNotifUI(); ch = true; }
   }
   if ((p.z === 'app' || p.z === 'web') && p.z !== ZOOM.mode) { ZOOM.mode = p.z; saveZoom(); refreshZoomUI(); ch = true; }
   if (typeof p.cf !== 'undefined') {
@@ -1274,13 +1320,15 @@ function syncPull(force, cb) {
   if (!ACC.user) { if (cb) cb('offline'); return; }
   const k = webKey();
   if (!k) { if (cb) cb('offline'); return; }
-  fetch(DB_URL + '/' + k + '.json', { cache: 'no-store' })
+  fetch(DB_URL + '/' + k + '.json?cb=' + Date.now(), { cache: 'no-store' })
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (j) {
       if (!ACC.user) return;
-      if (j && j.st) {
-        syncApply(j.st, force);
-        if (cb) cb(cloudGroupsOk(j.st) ? 'ok' : 'master');
+      /* новий формат — знімок 1-в-1 як у застосунку; старий ({ts,st}) теж читаємо */
+      const p = (j && j.st && typeof j.st === 'object' && !j.g) ? j.st : j;
+      if (p && typeof p === 'object' && (p.g || p.n || p.th || p.z)) {
+        syncApply(p, force);
+        if (cb) cb(cloudGroupsOk(p) ? 'ok' : 'master');
       } else if (j === null) {
         if (cb) cb('offline');
       } else {
@@ -1297,11 +1345,12 @@ function syncWatchTick() {
   if (!ACC.user || !ACC.sync) return;
   const k = webKey();
   if (!k) { if (ACC.user && ACC.sync) syncWatchT = setTimeout(syncWatchTick, 5000); return; }
-  fetch(DB_URL + '/' + k + '.json', { cache: 'no-store' })
+  fetch(DB_URL + '/' + k + '.json?cb=' + Date.now(), { cache: 'no-store' })
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (j) {
       if (!ACC.user || !ACC.sync) return;
-      if (j && j.st && parseInt(j.st.t, 10) > syncLastTs) syncApply(j.st, false);
+      const p = (j && j.st && typeof j.st === 'object' && !j.g) ? j.st : j;
+      if (p && typeof p === 'object' && parseInt(p.t, 10) > syncLastTs) syncApply(p, false);
       if (ACC.user && ACC.sync && !syncWatchT) syncWatchT = setTimeout(syncWatchTick, 5000);
     })
     .catch(function () { if (ACC.user && ACC.sync && !syncWatchT) syncWatchT = setTimeout(syncWatchTick, 5000); });
@@ -1679,20 +1728,33 @@ function showView(id) {
 function showMain(force) {
   if (FIRST && !force) { AUTO_SETUP = true; showView('vMain'); openGroups(); return; }
   showView('vMain');
-  markTab(true);
+  markTab('sched');
   setChip();
   render(false);
 }
 function showSetup() {
   showView('vSetup');
-  markTab(false);
+  markTab('setup');
   buildSummary();
 }
-function markTab(sched) {
-  byId('tbSched').classList.toggle('on', sched);
-  byId('tbSetup').classList.toggle('on', !sched);
-  byId('tbSched2').classList.toggle('on', sched);
-  byId('tbSetup2').classList.toggle('on', !sched);
+function showAcc() {
+  showView('vAcc');
+  markTab('acc');
+  refreshAccUI();
+}
+/* тап по «Профіль»: без акаунта — екран входу; з акаунтом — сторінка профілю */
+function profTap() {
+  if (!ACC.user) { gateShow(); return; }
+  showAcc();
+}
+function markTab(mode) {   // 'sched' | 'setup' | 'acc' — однаково на всіх трьох таббарах
+  const rows = [['tbSched', 'tbSetup', 'tbProf'], ['tbSched2', 'tbSetup2', 'tbProf2'], ['tbSched3', 'tbSetup3', 'tbProf3']];
+  rows.forEach(function (r) {
+    const a = byId(r[0]), b = byId(r[1]), c = byId(r[2]);
+    if (a) a.classList.toggle('on', mode === 'sched');
+    if (b) b.classList.toggle('on', mode === 'setup');
+    if (c) c.classList.toggle('on', mode === 'acc');
+  });
 }
 function buildSummary() {
   const box = byId('sumRows');
@@ -1720,20 +1782,24 @@ function buildSummary() {
 }
 
 /* ---------------- АКАУНТ (інтерфейс) ---------------- */
+function avaHtml(has) {
+  if (has && ACC.user.pic) return '<img src="' + esc(ACC.user.pic) + '" alt="" referrerpolicy="no-referrer">';
+  if (has) return esc((ACC.user.name || '?').charAt(0).toUpperCase());
+  return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+}
 function refreshAccUI() {
   const has = !!ACC.user;
-  const ava = byId('msAva'), nm = byId('msAccName'), sb = byId('msAccSub');
-  if (ava) {
-    if (has && ACC.user.pic) ava.innerHTML = '<img src="' + esc(ACC.user.pic) + '" alt="" style="width:100%;height:100%;display:block;object-fit:cover">';
-    else ava.textContent = has ? (ACC.user.name || '?').charAt(0).toUpperCase() : '?';
-  }
+  /* аватарка на кнопці «Профіль» у всіх трьох таббарах + у рядку Налаштувань */
+  ['profAva', 'profAva2', 'profAva3'].forEach(function (id) {
+    const a = byId(id); if (a) a.innerHTML = avaHtml(has);
+  });
+  const ava = byId('msAva');
+  if (ava) ava.innerHTML = avaHtml(has);
+  const nm = byId('msAccName'), sb = byId('msAccSub');
   if (nm) nm.textContent = has ? ACC.user.name : 'Акаунт Google';
   if (sb) sb.textContent = has ? (ACC.user.email || '') : 'увійти, щоб синхронізувати';
   const acAva = byId('acAva');
-  if (acAva) {
-    if (has && ACC.user.pic) acAva.innerHTML = '<img src="' + esc(ACC.user.pic) + '" alt="" style="width:100%;height:100%;display:block;object-fit:cover">';
-    else acAva.textContent = has ? (ACC.user.name || '?').charAt(0).toUpperCase() : '?';
-  }
+  if (acAva) acAva.innerHTML = avaHtml(has);
   const an = byId('acName'); if (an) an.textContent = has ? ACC.user.name : '—';
   const am = byId('acMail'); if (am) am.textContent = has ? (ACC.user.email || '') : '';
   const ar = byId('acRole'); if (ar) ar.textContent = 'Користувач';
@@ -1747,7 +1813,7 @@ function resetAccountSettings() {
   if (!webKey()) { toast('Акаунт ще синхронізується — спробуй за кілька секунд'); return; }
   const s = defaultSettings();
   s.rs = 1; s.t = Date.now();
-  fetch(DB_URL + '/' + webKey() + '.json', { method: 'PUT', body: JSON.stringify({ ts: Date.now(), st: s }) }).catch(function () {});
+  fetch(DB_URL + '/' + webKey() + '.json', { method: 'PUT', body: JSON.stringify(s) }).catch(function () {});
   S = null; FIRST = true;
   try { localStorage.removeItem('fh_groups2'); } catch (e) {}
   syncLastTs = 0;
@@ -1867,13 +1933,15 @@ buildTabs();
 /* навігація */
 byId('tbSched').onclick = function () { showMain(true); };
 byId('tbSetup').onclick = function () { showSetup(); };
+byId('tbProf').onclick = profTap;
 byId('tbSched2').onclick = function () { showMain(true); };
 byId('tbSetup2').onclick = function () { showSetup(); };
+byId('tbProf2').onclick = profTap;
+byId('tbSched3').onclick = function () { showMain(true); };
+byId('tbSetup3').onclick = function () { showSetup(); };
+byId('tbProf3').onclick = profTap;
 byId('bGroups').onclick = function () { openGroups(); };
-byId('bAcc').onclick = function () {
-  if (!ACC.user) { gateShow(); return; }
-  refreshAccUI(); showView('vAcc');
-};
+byId('bAcc').onclick = profTap;
 byId('accBack').onclick = function () { showSetup(); };
 byId('gSave').onclick = saveGroups;
 byId('gCancel').onclick = function () { closeGroups(); };

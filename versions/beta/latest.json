@@ -1,13 +1,13 @@
 {
-  "latest": "3.5.2",
+  "latest": "3.5.3",
   "notes": [
-    "/ Сповіщення при розгортанні — тільки охайний опис, без дублів іконки й назви",
+    "+ Синхронізація з веб-версією для iPhone — налаштування тепер однакові всюди",
     "✦ Дрібні виправлення"
   ],
-  "apk_md5": "d77ff22937545926a718790a98db7f0c",
+  "apk_md5": "12d7d2fa93d72c1ccdcfafd56c721ba9",
   "apk_size": 2516878,
-  "exe_md5": "9b61feb328c6b5a217834f45377ccf3e",
-  "exe_sha256": "8509a3cc87cdf90fb1eabe2f787b8c8c03c7ad9198f0a9b18fdc60ee06b07539",
-  "exe_size": 1939456,
+  "exe_md5": "86a30994e7cb5fdbba578de7abcce1f6",
+  "exe_sha256": "412e0f38cded267871ff21bffac8bf26d05255bbc132840b62b3dedef45a404f",
+  "exe_size": 1942528,
   "updated_at": "2026-10-22"
 }
