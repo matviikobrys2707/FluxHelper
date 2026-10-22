@@ -1063,7 +1063,7 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
       </div>
       <div class="acc-stats">
         <div class="acc-stat"><b id="acStSync">—</b><span>синхронізація</span></div>
-        <div class="acc-stat"><b>iPhone</b><span>пристрій</span></div>
+        <div class="acc-stat"><b id="acStDev">iPhone</b><span>пристрій</span></div>
         <div class="acc-stat"><b id="acStVer">—</b><span>версія</span></div>
       </div>
       <div class="ms-lbl"><span>Акаунт і синхронізація</span></div>
@@ -3144,6 +3144,14 @@ function refreshAccUI() {
     }
   }
   const sv = byId('acStVer'); if (sv) sv.textContent = verLabel();
+  /* 3.5.12: пристрій — чесно (iPhone / iPad / ПК) замість хардкоду iPhone */
+  const dv = byId('acStDev');
+  if (dv) {
+    const ua2 = navigator.userAgent || '';
+    dv.textContent = /iPhone|iPod/.test(ua2) ? 'iPhone'
+      : (/iPad/.test(ua2) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) ? 'iPad'
+      : (/Android/.test(ua2) ? 'Android' : 'ПК');
+  }
   const sc = byId('acSync'); if (sc) sc.checked = !!ACC.sync;
   /* 3.5.4: вкладка «Адмін» у всіх таббарах — лише для ролі з бази */
   const admOk = !!(has && staffAcc());
