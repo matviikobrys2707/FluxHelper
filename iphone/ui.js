@@ -262,7 +262,7 @@ function validS(x) {
 // вічно вважав себе старішим. Тепер версію підставляє build.sh з манифеста
 // (2.4.1 -> versionName), а ПІСЛЯ завантаження Java-міст AndroidHost.ver()
 // віддає СПРАВЖНЮ версію встановленого пакета (PackageManager) — найнадійніше.
-let APP_VER = '3.5.17';              // X.Y.Z — підставляється при збірці з манифеста
+let APP_VER = '3.5.18';              // X.Y.Z — підставляється при збірці з манифеста
 try {
   if (window.AndroidHost && AndroidHost.ver) {
     const jv = AndroidHost.ver();
@@ -1121,6 +1121,25 @@ function setChip() {
 function todayIdx() { const d = todayDow(); return (d >= 1 && d <= 5) ? d - 1 : 0; }
 
 function setTbSec(t) { const e = byId('tbSec'); if (e) e.textContent = t; }
+/* 3.5.18: ПЕРЕДЗАВАНТАЖЕННЯ ВКЛАДОК (просив власник: «когда захóдишь у
+   вкладку перший раз — воно лагає; зроби, щоб усі вкладки завантажувались
+   при заході в програму»). На старті ОДНОРАЗОВО прогріваємо важкі екрани
+   (Налаштування/Профіль/Адмінка), поки вони приховані: перше відкриття
+   вкладки малює вже готовий DOM — жодних «підлагоджувань». Іконки уроків —
+   інлайн-SVG, тож після прогріву рендеру вони з'являються миттєво. */
+let TABS_WARM = false;
+function warmTabs() {
+  if (TABS_WARM) return;
+  TABS_WARM = true;
+  setTimeout(function () {
+    try { if (typeof buildSummary === 'function') buildSummary(); } catch (eW1) {}
+    try { if (typeof refreshNotifUI === 'function') refreshNotifUI(); } catch (eW2) {}
+    try { if (typeof refreshZoomUI === 'function') refreshZoomUI(); } catch (eW3) {}
+    try { if (typeof refreshAccUI === 'function') refreshAccUI(); } catch (eW4) {}
+    try { if (typeof admRender === 'function' && typeof staff === 'function' && staff()) admRender(); } catch (eW5) {}
+    try { if (typeof refreshThemeUI === 'function') refreshThemeUI(); } catch (eW6) {}
+  }, 80);
+}
 function showMain(force) {
   /* 2.9.2: force=true — показати РОЗКЛАД навіть якщо групи ще не обрані:
      майстер груп відкривається МОДАЛКОЮ ПОВЕРХ розкладу (а не перекидає
@@ -1137,6 +1156,7 @@ function showMain(force) {
   markNav('sched');
   setTbSec('розклад');
   checkNban();
+  warmTabs();   /* 3.5.18: прогрів вкладок одразу після показу головної */
 }
 function showSetup() {
   setupOpen = true;
@@ -1834,7 +1854,7 @@ function showUpd(v, notes, testMode, pref) {
 // коли версія на сервері точно більша. Тепер така ситуація неможлива.
 function updCheck(latest, pref) {
   latest = normVer(latest);   // 3.4.19: «3.5» теж працює (див. normVer)
-  /* 3.5.17: САЙТ — сторінка завжди найсвіжіша, оновлення = перезавантаження */
+  /* 3.5.18: САЙТ — сторінка завжди найсвіжіша, оновлення = перезавантаження */
   if (window.FH_WEB) { revealNow(); return; }
   if (!latest || verCmp(latest, APP_VER) <= 0) { revealNow(); return; }
   if (UPD.avail || UPD.pending === latest) return;
@@ -2121,6 +2141,10 @@ function startUpdate() {
 }
 // --- немає інтернету: жодного інтерфейсу, тільки екран помилки ---
 function showNetErr(msg) {
+  /* 3.5.18: САЙТ — екран «Немає інтернету» не показуємо (просив власник:
+     «убери ошибку, она не нужна — только для телефона и компьютера»).
+     Дані тягнуться тихо (webProbe), застосунки показують свою помилку. */
+  if (window.FH_WEB) return;
   const ne = byId('neterr');
   if (!ne) return;
   document.body.classList.add('net-lock');   // титульна панель поверх (ПК)
@@ -2137,7 +2161,25 @@ function hideNetErr() {
   document.body.classList.remove('net-lock');
 }
 let netBusy = false;
+/* 3.5.18: САЙТ — без екрана помилки: невдалий запуск бази = тихий
+   повтор кожні 3 с, доки розклад не приїде. */
+function webProbe() {
+  fetch(DB_URL + '/.json', { cache: 'no-store' })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .catch(function () { return null; })
+    .then(function (j) {
+      if (j && typeof j === 'object') {
+        lastFetchTs = Date.now();
+        applyDb(j);
+        hideNetErr();
+        updFromDb(j.update);
+        return;
+      }
+      setTimeout(webProbe, 3000);
+    });
+}
 function netProbe(retry) {
+  if (window.FH_WEB) { webProbe(); return; }
   if (netBusy) return;
   netBusy = true;
   if (retry) {

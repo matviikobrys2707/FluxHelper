@@ -1,43 +1,53 @@
 /* ============================================================
-   FluxHelper — ВЕБ-МІСТ (webhost.js) v2
+   FluxHelper — ВЕБ-МІСТ (webhost.js) v3
    ============================================================
    Сторінки сайту (/iphone/ — телефонний UI з APK, /mac/ — десктопний
    UI з Windows-програми) виконують ТОЙ САМИЙ код інтерфейсу, що й
    застосунки. Застосунки спілкуються з системою через нативний міст
-   window.AndroidHost; на сайті його імітує цей файл:
+   window.AndroidHost; на сайті його імітує цей файл.
 
-     ver / open / copy / login / logout
-     fbPut / fbDel   -> FluxHelper Backend /api/rtdb (токен користувача)
-     cfq             -> SQL-запити D1 мапляться на /api/sync + /api/rtdb
-     notif-*         -> Web Notification API (поки сторінка відкрита)
-     upd             -> сторінка сайту завжди найсвіжіша (перезавантаження)
+   3.5.18 — СИНХРОНІЗАЦІЯ ПОВЕРНЕНА ДО РОБОЧОЇ СХЕМИ САЙТУ 3.5.12
+   (просив власник: «вернись к версии, в которой всё работало — посмотри,
+   как там сделана логика синхронизации, и сделай точь-в-точь»):
 
-   3.5.17 — ФІКС СИНХРОНІЗАЦІЇ (просив власник: «кожен раз просить ввести
-   групи, дані не синхронізуються, пропала адмін-панель»):
-   • РЯДОК D1 = « success з порожнім результатом» ТІЛЬКИ коли бекенд
-     чесно відповів, що рядка нема. Будь-який ЗБІЙ (мережа/401/таймаут
-     холодного старту Render) = ВІДМОВА (null) — застосунок має семантику
-     «офлайн»: лишає локальний стан і ЧЕКАЄ, ане вважає акаунт новим
-     (майстер груп на кожному перезавантаженні — це і був цей баг);
-   • /api/sync впав -> автоматичний фолбек на дзеркала RTDB
-     (update/web/<uid> + update/settings_mirror/<uid>) через /api/rtdb —
-     роль, синк і знімок читаються навіть без /api/sync;
-   • токен сесії шукається в 3 місцях: fh_web_session (пише auth.html) ->
-     fh_user.rtok -> fh_rtok_backup (бекап на час перелогіна, щоб новий
-     вхід не знищував стару сесію до підтвердження);
-   • auth_cb тепер несе tok/rtok/tokT — міст добирає їх після входу.
-
-   Сесія: localStorage. Так акаунт, групи, тема й налаштування їдуть між
-   сайтом, Android та Windows без перелогіну.
+   • ВХІД — як на старому сайті: Google Identity Services ПРЯМО НА
+     СТОРІНЦІ (жодних попапів auth.html): initTokenClient -> access_token
+     -> userinfo -> FluxHelper Backend /api/auth/google -> Firebase
+     localId + idToken + refreshToken. Профіль пишеться в RTDB
+     update/auth_cb/<state> (канал входу застосунків) — далі працює
+     ВЛАСНИЙ вхід програми (authPollDb -> authAccept -> usersUpsert).
+   • ТРАНСПОРТ — як на старому сайті: /api/sync (op get/put) з Bearer
+     idToken користувача; фолбек — дзеркала RTDB update/web/<uid> +
+     update/settings_mirror/<uid> через /api/rtdb; роль — з бекенда (D1).
+   • OUTBOX — гарантована доставка знімка (як 3.5.8 на старому сайті):
+     невдалий запис кладеться в чергу localStorage і повторюється кожні
+     4 с, поки сервер не підтвердить; виштовхується при поверненні
+     мережі/фокусу.
+   • СЕМАНТИКА «РЯДОК/ОФЛАЙН»: чесна відповідь сервера «рядка нема» =
+     успіх з порожнім результатом (перший вхід -> майстер груп); ЛЮБИЙ
+     збій (мережа/401/холодний Render) = відмова -> застосунок лишає
+     локальний стан і ретраїть сам.
+   • Сайт-деталі: кнопки «Запуск Zoom» (Додаток/Браузер) прибираються —
+     на сайті вони не мають сенсу; екран «Немає інтернету» вимкнено
+     (він потрібен лише застосункам), дані тягнуться тихо.
    ============================================================ */
 (function () {
 'use strict';
-var VER = '3.5.17';
+var VER = '3.5.18';
 var BACKEND = 'https://fluxhelper-backend.onrender.com';
 var ORIGIN = 'https://fluxhelper.pages.dev';
 var DB_URL = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app';
+var GIS_CLIENT = '668834523935-k470ldmdv0r9am0720v6lgaatm6rtuf3.apps.googleusercontent.com';
 
 window.FH_WEB = true;
+
+/* Екран «Немає доступу до інтернету» — ЛИШЕ для застосунків (просив
+   власник: «на сайте убери ошибку, она не нужна»). Підстраховка CSS. */
+try {
+  var st = document.createElement('style');
+  st.textContent = '#neterr{display:none!important}';
+  (document.head || document.documentElement).appendChild(st);
+} catch (eS) {}
 
 /* ───────────────────────── сесія ───────────────────────── */
 var tokState = null;
@@ -163,8 +173,8 @@ function cfReply(id, ok, rows) {
 }
 function snapOk(p) { return !!(p && typeof p === 'object' && (p.g || p.n || p.th || p.z)); }
 
-/* РЯДОК з /api/sync op:get. 3.5.17: якщо бекенд недоступний/401 —
-   ФОЛБЕК на дзеркала RTDB (роль+синк+знімок живуть і там). Якщо і дзеркала
+/* РЯДОК з /api/sync op:get. Якщо бекенд недоступний/401 — ФОЛБЕК на
+   дзеркала RTDB (роль+синк+знімок живуть і там). Якщо і дзеркала
    недоступні — cb(null) = «офлайн» (застосунок лишає локальний стан). */
 function apiGetRow(cb) {
   var finish = function (row) { cb(row); };
@@ -197,7 +207,7 @@ function apiGetRow(cb) {
       body: JSON.stringify({ op: 'get' })
     }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
       .then(function (j) {
-        if (!j || !j.ok) { viaMirror(); return; }   /* 3.5.17: НЕ «порожній рядок», а фолбек */
+        if (!j || !j.ok) { viaMirror(); return; }   /* збій -> фолбек, НЕ «порожній рядок» */
         var set = (j.settings && typeof j.settings === 'object') ? j.settings : null;
         var setStr = set ? JSON.stringify(set) : '';
         finish({
@@ -228,12 +238,54 @@ function apiPutSnap(snap, profile, cb) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tokState.tok },
       body: JSON.stringify({ op: 'put', snapshot: snap, profile: profile || null })
-    }).then(function (r) { done(!!r.ok); }).catch(function () { done(false); });
+    }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+      .then(function (j) { done(!!(j && j.ok)); }).catch(function () { done(false); });
   });
 }
 
-/* мапінг відомих SQL-запитів інтерфейсу на бекенд.
-   3.5.17: збої = cfReply(id,false) — «офлайн», а не «акаунт новий». */
+/* ───────────────── OUTBOX: гарантована доставка (3.5.8) ─────────────────
+   Як на старому сайті: невдалий запис знімка не гине зміну — черга в
+   localStorage, повтор кожні 4 с, виштовхування при поверненні мережі. */
+var outboxT = 0, outboxBusy = false;
+function outboxStash(snap, profile) {
+  try { localStorage.setItem('fh_outbox', JSON.stringify({ snap: snap, profile: profile || null, ts: Date.now() })); } catch (e) {}
+  outboxKick(300);
+}
+function outboxClear() { try { localStorage.removeItem('fh_outbox'); } catch (e) {} }
+function outboxKick(delay) {
+  clearTimeout(outboxT);
+  outboxT = setTimeout(outboxDrain, delay || 0);
+}
+function outboxDrain() {
+  outboxT = 0;
+  if (outboxBusy || !myFid()) return;
+  var job = jget('fh_outbox');
+  if (!job || !job.snap) return;
+  outboxBusy = true;
+  apiPutSnap(job.snap, job.profile || null, function (ok) {
+    outboxBusy = false;
+    if (ok) { outboxClear(); return; }
+    outboxKick(4000);   /* сервер спить / мережа блимнула — повторимо */
+  });
+}
+/* запис налаштувань з outbox-страховкою (усі маршрути UPDATE/INSERT settings) */
+function putWithOutbox(snap, profile, cb) {
+  apiPutSnap(snap, profile, function (ok) {
+    if (ok) { outboxClear(); if (cb) cb(true); return; }
+    outboxStash(snap, profile);
+    if (cb) cb(false);
+  });
+}
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState === 'visible' && myFid()) outboxKick(300);
+});
+window.addEventListener('online', function () { if (myFid()) outboxKick(200); });
+
+/* ───────────────── мапінг відомих SQL-запитів інтерфейсу ─────────────────
+   3.5.18 ВИПРАВЛЕНО: «SELECT user_id FROM users WHERE user_id=?» більше не
+   бреше «рядок є» — чесна перевірка через apiGetRow (раніше INSERT міг
+   тихо провалитись, а наступний SELECT казав «рядок є» -> акаунт «зник»
+   з бази і програма викидала на вхід). */
 function cfRoute(id, payload) {
   var sql = '', params = [];
   try { sql = String(payload.sql || ''); params = payload.params || []; } catch (e) { cfReply(id, false, null); return; }
@@ -253,7 +305,15 @@ function cfRoute(id, payload) {
   }
   if (/^SELECT settings FROM users/i.test(sql)) { apiGetRow(function (r) { cfReply(id, r !== null, r ? [{ settings: r.settings }] : []); }); return; }
   if (/^SELECT sts FROM users/i.test(sql)) { apiGetRow(function (r) { cfReply(id, r !== null, r ? [{ sts: r.sts }] : []); }); return; }
-  if (/^SELECT user_id FROM users WHERE user_id=/i.test(sql)) { cfReply(id, true, [{ user_id: String(p0(0) || '') }]); return; }
+  if (/^SELECT user_id FROM users WHERE user_id=/i.test(sql)) {
+    /* 3.5.18: ЧЕСНА перевірка існування рядка (перевірка INSERT у usersUpsert) */
+    apiGetRow(function (r) {
+      if (r === null) { cfReply(id, false, null); return; }   /* офлайн -> ретрай застосунку */
+      var has = false;
+      try { has = !!(r.settings && snapOk(JSON.parse(r.settings))); } catch (e) {}
+      cfReply(id, true, has ? [{ user_id: String(p0(0) || '') }] : []);
+    }); return;
+  }
   if (/^SELECT user_id FROM users WHERE email=/i.test(sql)) {
     var fid = myFid();
     cfReply(id, true, fid ? [{ user_id: fid }] : []); return;
@@ -262,17 +322,17 @@ function cfRoute(id, payload) {
   if (/^UPDATE users SET settings=/i.test(sql)) {
     var snap = asSnap(p0(0));
     if (!snap) { cfReply(id, false, null); return; }
-    apiPutSnap(snap, null, function (ok) { cfReply(id, ok, []); }); return;
+    putWithOutbox(snap, null, function (ok) { cfReply(id, ok, []); }); return;
   }
   if (/^UPDATE users SET sync=/i.test(sql)) {
     var want = (p0(0) === 1 || p0(0) === '1' || p0(0) === true) ? 1 : 0;
     apiGetRow(function (r) {
       if (r === null) { cfReply(id, false, null); return; }   /* офлайн — не затираємо нічого */
-      var snap = null;
-      try { snap = JSON.parse(r.settings || 'null'); } catch (e) {}
-      if (!snapOk(snap)) snap = { g: {}, n: { on: true, min: 5, snd: true, off: false }, th: 'standard', z: 'app', t: Date.now(), v: VER, sync: want };
-      snap.sync = want; snap.t = Date.now();
-      apiPutSnap(snap, null, function (ok) { cfReply(id, ok, []); });
+      var s0 = null;
+      try { s0 = JSON.parse(r.settings || 'null'); } catch (e) {}
+      if (!snapOk(s0)) s0 = { g: {}, n: { on: true, min: 5, snd: true, off: false }, th: 'standard', z: 'app', t: Date.now(), v: VER, sync: want };
+      s0.sync = want; s0.t = Date.now();
+      putWithOutbox(s0, null, function (ok) { cfReply(id, ok, []); });
     }); return;
   }
 
@@ -286,19 +346,136 @@ function cfRoute(id, payload) {
       if (exists) { cfReply(id, true, []); return; }            /* рядок уже є — ON CONFLICT НЕ чіпає settings */
       if (!ds) { cfReply(id, true, []); return; }
       ds.t = Date.now(); ds.v = VER; ds.sync = 1;
-      apiPutSnap(ds, up, function (ok) { cfReply(id, ok, []); });
+      putWithOutbox(ds, up, function (ok) { cfReply(id, ok, []); });
     }); return;
   }
   if (/^INSERT INTO users \(user_id, settings, sver, sts, email, name, pic, ts\)/i.test(sql)) {
     var s2 = asSnap(p0(1));
     if (!s2) { cfReply(id, false, null); return; }
-    apiPutSnap(s2, { email: String(p0(4) || ''), name: String(p0(5) || ''), pic: String(p0(6) || '') },
+    putWithOutbox(s2, { email: String(p0(4) || ''), name: String(p0(5) || ''), pic: String(p0(6) || '') },
       function (ok) { cfReply(id, ok, []); });
     return;
   }
 
   cfReply(id, true, []);   // невідомий запит — успішно й порожньо
 }
+
+/* ─────────── ВХІД: Google Identity Services ПРЯМО НА СТОРІНЦІ ───────────
+   Точнісінько як на сайті 3.5.12 (він працював): initTokenClient ->
+   access_token -> userinfo -> /api/auth/google (бекенд обмінює на Firebase
+   idToken/refreshToken) -> профіль у RTDB update/auth_cb/<state> — канал
+   входу ЗАСТОСУНКІВ, далі все робить власний код програми. */
+function ensureGis(fn) {
+  if (window.google && window.google.accounts && window.google.accounts.oauth2) { fn(); return; }
+  var tries = 0;
+  (function wait() {
+    if (window.google && window.google.accounts && window.google.accounts.oauth2) { fn(); return; }
+    if (++tries > 60) { agErr('Не вдалося завантажити Google-вхід. Перевір інтернет і спробуй ще раз.'); return; }
+    setTimeout(wait, 150);
+  })();
+}
+function agStat(msg, cls) {
+  try { if (typeof setAgStat === 'function') setAgStat(msg, cls); return; } catch (e) {}
+  try { if (cls === 'err' && typeof agFail === 'function') agFail(msg); } catch (e2) {}
+}
+function agErr(msg) {
+  agStat(msg, 'err');
+  try { var gb = document.getElementById('agGo'); if (gb) gb.disabled = false; } catch (e) {}
+}
+function webLogin(st) {
+  try {
+    /* бекап старої сесії — новий вхід НЕ знищить rtok до підтвердження */
+    try {
+      var u0 = jget('fh_user');
+      if (u0 && u0.rtok && !(sessGet() && sessGet().rtok)) sessSave({ tok: String(u0.tok || ''), rtok: String(u0.rtok), tokT: parseInt(u0.tokT, 10) || 0, sub: String(u0.sub || ''), email: String(u0.email || '') });
+    } catch (eB) {}
+    st = String(st || '');
+    if (!st) { agErr('Не вдалося почати вхід. Спробуй ще раз.'); return; }
+    agStat('<span class="spin"></span>Відкриваю вибір акаунта…');
+    ensureGis(function () {
+      try {
+        var tc = google.accounts.oauth2.initTokenClient({
+          client_id: GIS_CLIENT,
+          scope: 'openid email profile',
+          prompt: 'select_account',
+          callback: function (resp) {
+            if (!resp || !resp.access_token) { agErr('Google не повернув доступ. Натисни кнопку ще раз.'); return; }
+            agStat('<span class="spin"></span>Перевіряємо акаунт…');
+            var at = String(resp.access_token);
+            fetch('https://openidconnect.googleapis.com/v1/userinfo', { headers: { 'Authorization': 'Bearer ' + at } })
+              .then(function (r) { return r.json(); })
+              .then(function (p) {
+                if (!p || !p.sub) { agErr('Не вдалося прочитати профіль Google. Спробуй ще раз.'); return; }
+                var name = String(p.name || ''), email = String(p.email || '');
+                if (!name && email) name = email.split('@')[0];
+                /* 3.5.12: бекенд обмінює Google-токен на Firebase (localId +
+                   idToken + refreshToken) — той самий виклик, що на старому сайті */
+                fetch(BACKEND + '/api/auth/google', {
+                  method: 'POST', headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ token: at })
+                }).then(function (r) { return r.json(); }).catch(function () { return null; })
+                  .then(function (j) {
+                    if (!j || !j.localId) { agErr('Сервер входу не відповів. Спробуй ще раз за хвилину.'); return; }
+                    var exp = parseInt(j.expiresIn, 10) || 3600;
+                    tokState = {
+                      tok: String(j.idToken || ''),
+                      rtok: String(j.refreshToken || ''),
+                      tokT: Date.now() + exp * 1000 - 120000,
+                      sub: String(p.sub), email: email
+                    };
+                    sessSave(tokState);
+                    /* профіль у канал входу застосунків: програма сама його
+                       забере (authPollDb -> authAccept) і зареєструє в базі */
+                    var node = {
+                      d: {
+                        sub: String(p.sub), name: name, email: email,
+                        picture: String(p.picture || ''), fid: String(j.localId),
+                        tok: at   /* legacy-шлях ПК (2.8.7): добудова fid */
+                      },
+                      rtok: tokState.rtok, tokT: tokState.tokT, t: Date.now()
+                    };
+                    fetch(DB_URL + '/update/auth_cb/' + encodeURIComponent(st) + '.json', {
+                      method: 'PUT', body: JSON.stringify(node)
+                    }).catch(function () {});
+                    agStat('<span class="spin"></span>Заходимо…');
+                  });
+              })
+              .catch(function () { agErr('Немає зв’язку з Google. Перевір інтернет і спробуй ще раз.'); });
+          },
+          error_callback: function (e) {
+            var t = (e && e.type) || '';
+            if (t === 'popup_closed' || t === 'popup_closed_by_user' || t === 'dismissed') agErr('Вхід скасовано. Натисни кнопку ще раз.');
+            else if (t === 'popup_failed_to_open' || t === 'popup_blocked') agErr('Браузер заблокував вікно Google. Дозволь сплив-вікна й спробуй ще раз.');
+            else if (t === 'access_denied') agErr('Доступ не надано. Натисни кнопку ще раз і дозволь доступ.');
+            else agErr('Не вдалося увійти. Спробуй ще раз.');
+          }
+        });
+        tc.requestAccessToken();
+      } catch (eI) { agErr('Не вдалося відкрити вхід. Спробуй ще раз.'); }
+    });
+  } catch (e) { agErr('Не вдалося почати вхід. Спробуй ще раз.'); }
+}
+
+/* ─────────── сайт-деталі: прибрати «Запуск Zoom» (не для сайту) ─────────── */
+function stripZoom() {
+  try {
+    var z = document.getElementById('zApp');
+    if (!z) return;
+    var sec = z.closest('.ms-sec');            /* /iphone/: ціла секція «Запуск Zoom» */
+    if (sec) { sec.remove(); return; }
+    var seg = z.closest('.seg-z');             /* /mac/: прибрати сегмент + заголовок картки */
+    if (seg) {
+      var card = seg.closest('.sw-card');
+      if (card) {
+        var hd = card.querySelector('.sw-c-head');
+        if (hd && /Zoom/i.test(String(hd.textContent || ''))) hd.remove();
+      }
+      seg.remove();
+    }
+  } catch (e) {}
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', stripZoom);
+else stripZoom();
 
 /* ───────────────────── сповіщення (поки сторінка відкрита) ───────────────────── */
 var notifTimers = {};
@@ -315,29 +492,6 @@ function webNotify(title, text, url) {
     }
   } catch (e) {}
   return false;
-}
-
-/* ───────────────────── вхід: auth_cb несе й токени ───────────────────── */
-var authPollT = 0;
-function pollAuthCb(st, t0) {
-  if (!st) return;
-  clearTimeout(authPollT);
-  authPollT = setTimeout(function () {
-    if (sessGet() && sessGet().rtok) return;   /* токени вже є (localStorage-канал) */
-    fetch(DB_URL + '/update/auth_cb/' + encodeURIComponent(st) + '.json', { cache: 'no-store' })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .catch(function () { return null; })
-      .then(function (j) {
-        var d = (j && j.d) ? j.d : null;
-        if (d && d.tok && d.rtok) {
-          sessSave({ tok: String(d.tok), rtok: String(d.rtok), tokT: parseInt(d.tokT, 10) || (Date.now() + 3500000), sub: String(d.sub || ''), email: String(d.email || '') });
-          tokState = null; bootTok();
-          try { fetch(DB_URL + '/update/auth_cb/' + encodeURIComponent(st) + '.json', { method: 'DELETE' }); } catch (e2) {}
-          return;
-        }
-        if (Date.now() - t0 < 240000) pollAuthCb(st, t0);
-      });
-  }, 1600);
 }
 
 /* ───────────────────── сам міст ───────────────────── */
@@ -368,25 +522,12 @@ window.AndroidHost = {
       ta.remove(); return ok;
     } catch (e2) { return false; }
   },
-  login: function (st) {
-    try {
-      /* 3.5.17: бекап старої сесії — новий вхід НЕ знищить rtok до підтвердження */
-      try {
-        var u0 = jget('fh_user');
-        if (u0 && u0.rtok && !sessGet()) sessSave({ tok: String(u0.tok || ''), rtok: String(u0.rtok), tokT: parseInt(u0.tokT, 10) || 0, sub: String(u0.sub || ''), email: String(u0.email || '') });
-      } catch (eB) {}
-      st = String(st || '');
-      if (st) pollAuthCb(st, Date.now());
-      var w = window.open(ORIGIN + '/auth.html#s=' + encodeURIComponent(st), 'fhauth',
-                          'width=440,height=660,menubar=no,toolbar=no,location=yes,status=no');
-      if (w) { try { w.focus(); } catch (e2) {} return; }
-    } catch (e) {}
-    try { location.href = ORIGIN + '/auth.html#s=' + encodeURIComponent(String(st || '')); } catch (e3) {}
-  },
+  login: function (st) { webLogin(st); },
   logout: function () {
     try { localStorage.removeItem('fh_user'); } catch (e) {}
     try { localStorage.removeItem('fh_web_session'); } catch (e2) {}
     try { localStorage.removeItem('fh_rtok_backup'); } catch (e5) {}
+    try { localStorage.removeItem('fh_outbox'); } catch (e6) {}
     tokState = null;
     setTimeout(function () { try { location.reload(); } catch (e3) {} }, 350);
   },

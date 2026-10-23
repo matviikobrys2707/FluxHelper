@@ -1613,7 +1613,12 @@ body.mob .card,body.android .card{background:rgba(255,255,255,.05);border-color:
    напівпрозорість = чорна фарба. РІШЕННЯ (1-в-1 із сайтом 3.5.12): блюра
    БІЛЬШЕ НЕМАЄ — фон це ФІКСОВАНЕ градієнтне скло з фіолетовим підсвічуванням,
    яке однаково виглядає в УСІХ вкладках і ніколи не чорніє. */
-#bnav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(4px + var(--fh-sab, env(safe-area-inset-bottom, 0px)));z-index:60;display:none;
+/* 3.5.18: ПАНЕЛЬ У САМЫЙ НИЗ (просил владелец: «перемести её вниз,
+   расстояние от самого низа — буквально пару пикселей»). Раньше панель
+   поднимала safe-area (--fh-sab) — на жестовой навигации она висела
+   в воздухе на десятки пикселей. Теперь — ровно 2px от нижнего края,
+   поверх всего (контент ездит под стеклом). */
+#bnav{position:fixed;left:50%;transform:translateX(-50%);bottom:2px;z-index:60;display:none;
   flex-direction:row;align-items:stretch;gap:3px;padding:6px 7px;border-radius:24px;width:max-content;max-width:calc(100vw - 16px);
   /* 3.5.13: темна тема — панель ПОТЕМНІША (просив власник: «немножечко
      потемнее, реально как будто тёмная тема»); колишній фіолетовий колір
@@ -1678,7 +1683,11 @@ body.android #burger,body.android #drawer,body.android #dback{display:none!impor
    фон (темна тема = чорний). Тепер резерв 24px: уроки ПОВНІСТЮ проїжджають
    ПІД панеллю, крізь скло завжди видно картки, а не фон. Сам чорний фон
    системної смуги знято нативно (edge-to-edge + прозорі смуги 3.5.16). */
-body.android main#list{padding-bottom:calc(24px + var(--fh-sab, env(safe-area-inset-bottom, 0px)))}
+/* 3.5.18: РЕЗЕРВ РОЗКЛАДУ (просил владелец: «в раскладе не могу
+   проскроллить в самый низ — панель налазит на последний урок»).
+   24px было мало: панель ~72px. Тепер 96px — як у Налаштувань/Аккаунта/
+   Адмінки (власник: «там нормально»): останній урок повністю над панеллю. */
+body.android main#list{padding-bottom:calc(96px + var(--fh-sab, env(safe-area-inset-bottom, 0px)))}
 /* ДАЛІ — тепер у помаранчевій РАМЦІ (як на веб-версії для айфона) */
 .next-chip{padding:3px 9px;border-radius:8px;background:rgba(251,191,36,.13);
   border:1.5px solid rgba(251,191,36,.55);box-shadow:0 0 10px rgba(251,191,36,.12)}

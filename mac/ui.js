@@ -236,7 +236,7 @@ function validS(x) {
 })();
 
 // ---------------- версія + перший запуск ----------------
-const APP_VER = '3.5.17';                  // версія X.Y.Z — з version.h (див. main.cpp)
+const APP_VER = '3.5.18';                  // версія X.Y.Z — з version.h (див. main.cpp)
 /* 3.5.5: КАНАЛ ЗБІРКИ — 'beta' або 'release'. Бета-збірки підписують версію
    словом «beta» скрізь у інтерфейсі (профіль, «Про програму», вікно оновлення),
    релізні показують чистий номер. Перед релізом змінюємо тут і перезбираємо. */
@@ -1073,6 +1073,24 @@ function setSeg(view) {
   if (b) b.classList.toggle('on', view === 'setup');
   const c2 = byId('segAdmin'); if (c2) c2.classList.toggle('on', view === 'adm');   // 3.3.0
 }
+/* 3.5.18: ПЕРЕДЗАВАНТАЖЕННЯ ВКЛАДОК (просив власник: «когда заходишь у
+   вкладку перший раз — воно лагає; зроби, щоб усі вкладки завантажувались
+   при заході в програму» — і на комп'ютері так само). Одноразовий прогрів
+   важких екранів поки вони приховані: перше відкриття вкладки малює вже
+   готовий DOM. Іконки уроків — інлайн-SVG, після прогріву з'являються миттєво. */
+let TABS_WARM = false;
+function warmTabs() {
+  if (TABS_WARM) return;
+  TABS_WARM = true;
+  setTimeout(function () {
+    try { if (typeof buildSummary === 'function') buildSummary(); } catch (eW1) {}
+    try { if (typeof refreshNotifUI === 'function') refreshNotifUI(); } catch (eW2) {}
+    try { if (typeof refreshZoomUI === 'function') refreshZoomUI(); } catch (eW3) {}
+    try { if (typeof refreshAccUI === 'function') refreshAccUI(); } catch (eW4) {}
+    try { if (typeof admRender === 'function' && typeof staff === 'function' && staff()) admRender(); } catch (eW5) {}
+    try { if (typeof refreshThemeUI === 'function') refreshThemeUI(); } catch (eW6) {}
+  }, 80);
+}
 function showMain(force) {
   /* 2.9.2: force=true — показати РОЗКЛАД навіть якщо групи ще не обрані:
      майстер груп відкривається МОДАЛКОЮ ПОВЕРХ розкладу. Користувач бачить
@@ -1091,6 +1109,7 @@ function showMain(force) {
   setTbSec('розклад');
   host('fh:view|main');   // 2.7.6: нативна панель малює активний сегмент
   checkNban();
+  warmTabs();   /* 3.5.18: прогрів вкладок одразу після показу головної */
 }
 function showSetup() {
   setupOpen = true;
@@ -2562,7 +2581,7 @@ function showUpd(v, notes, testMode, pref, md5) {
 // ПОРІВНЯННЯ СТРОГО «новіше»: latest <= поточної -> модалки немає (захист від відкату версії
 // на сервері і від ситуації «скачав не той файл» — старіша версія не вважається оновленням).
 function updCheck(latest, pref, md5) {
-  /* 3.5.17: САЙТ — оновлення = перезавантаження */
+  /* 3.5.18: САЙТ — оновлення = перезавантаження */
   if (window.FH_WEB) { revealNow(); return; }
   if (!/^\d+\.\d+\.\d+$/.test(latest || '') || verCmp(latest, APP_VER) <= 0) { revealNow(); return; }
   if (UPD.avail || UPD.pending === latest) return;
@@ -2867,6 +2886,10 @@ function startUpdate() {
 }
 // --- немає інтернету: жодного інтерфейсу, тільки екран помилки ---
 function showNetErr(msg) {
+  /* 3.5.18: САЙТ — екран «Немає інтернету» не показуємо (просив власник:
+     «убери ошибку, она не нужна — только для телефона и компьютера»).
+     Дані тягнуться тихо (webProbe), застосунки показують свою помилку. */
+  if (window.FH_WEB) return;
   const ne = byId('neterr');
   if (!ne) return;
   document.body.classList.add('net-lock');   // титульна панель поверх (ПК)
@@ -2883,7 +2906,25 @@ function hideNetErr() {
   document.body.classList.remove('net-lock');
 }
 let netBusy = false;
+/* 3.5.18: САЙТ — без екрана помилки: невдалий запуск бази = тихий
+   повтор кожні 3 с, доки розклад не приїде. */
+function webProbe() {
+  fetch(DB_URL + '/.json', { cache: 'no-store' })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .catch(function () { return null; })
+    .then(function (j) {
+      if (j && typeof j === 'object') {
+        lastFetchTs = Date.now();
+        applyDb(j);
+        hideNetErr();
+        updFromDb(j.update);
+        return;
+      }
+      setTimeout(webProbe, 3000);
+    });
+}
 function netProbe(retry) {
+  if (window.FH_WEB) { webProbe(); return; }
   if (netBusy) return;
   netBusy = true;
   if (retry) {

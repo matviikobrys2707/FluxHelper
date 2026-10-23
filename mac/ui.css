@@ -1433,3 +1433,55 @@ body[data-theme="light"] .wk-row.vac{background:#f8fafc;border:1.5px solid rgba(
    прозора в УСІХ темах (правила в кінці файлу — сильніші за теми) ===== */
 body.upd-lock #tbar,body.net-lock #tbar{z-index:400!important;background:transparent!important;
   border-bottom:0!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+
+/* ================================================================
+   3.5.18: СВІТЛА ТЕМА — УСІ СПЛИВАЮЧІ ПОВІДОМЛЕННЯ (просив власник:
+   «изменила дизайн для стандартной темы и Liquid Glass, а для светлой
+   ты нифига не изменила»). Єдиний стиль із новими тостами 3.5.17:
+   біла картка, фіолетовий градієнтний обідок (padding-box/border-box),
+   слейт-текст, м'які фіолетові тіні. Стосується: модалки (копіювання,
+   групи, «Що нового», підтвердження), вікно оновлення, банери.
+   ================================================================ */
+body[data-theme="light"] .mback{background:rgba(28,33,74,.32)}
+body[data-theme="light"] .modal{background:linear-gradient(135deg,rgba(255,255,255,.99),rgba(250,248,255,.98)) padding-box,
+  linear-gradient(135deg,rgba(124,58,237,.42),rgba(99,102,241,.28),rgba(167,139,250,.38)) border-box;
+  border:1px solid transparent;
+  box-shadow:0 30px 90px rgba(28,33,74,.28),0 8px 30px rgba(124,58,237,.12),inset 0 1px 0 rgba(255,255,255,.9)}
+body[data-theme="light"] .m-head b{color:#0f172a}
+body[data-theme="light"] .m-head span{color:#64748b}
+body[data-theme="light"] .m-x{border-color:rgba(20,24,46,.12);background:rgba(20,24,46,.05);color:#475569}
+body[data-theme="light"] .m-x:hover{background:rgba(124,58,237,.12);border-color:rgba(124,58,237,.4);color:#5b21b6}
+body[data-theme="light"] .m-item{border-color:rgba(20,24,46,.10);background:rgba(250,248,255,.92);color:#1e293b}
+body[data-theme="light"] .m-item:hover{background:linear-gradient(135deg,rgba(139,92,246,.14),rgba(99,102,241,.10));
+  border-color:rgba(124,58,237,.45);transform:translateY(-1px)}
+body[data-theme="light"] .m-item .m-lbl{color:#0f172a}
+body[data-theme="light"] .m-item .m-t{color:#64748b}
+body[data-theme="light"] .m-item small{color:#6d28d9}
+body[data-theme="light"] .wn-ver{color:#6d28d9;background:rgba(139,92,246,.12);border-color:rgba(124,58,237,.35)}
+body[data-theme="light"] .wn-row{border-color:rgba(20,24,46,.10);background:rgba(250,248,255,.92)}
+body[data-theme="light"] .wn-row>i{color:#1e293b}
+body[data-theme="light"] .c-info{background:rgba(139,92,246,.10);border-color:rgba(124,58,237,.30)}
+body[data-theme="light"] .c-info .ci-t b{color:#0f172a}
+body[data-theme="light"] .c-info .ci-t span{color:#64748b}
+/* вікно оновлення (#upd) і екран «немає мережі» (#neterr): картка вже світла
+   (714), Добираємо текст і кнопки — інакше біле-на-білому */
+body[data-theme="light"] #neterr h2,body[data-theme="light"] #upd h2{color:#0f172a}
+body[data-theme="light"] #upd h2 b{background:linear-gradient(90deg,#7c3aed,#6366f1);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+body[data-theme="light"] .us-chip{color:#6d28d9;background:rgba(139,92,246,.12);border-color:rgba(124,58,237,.35)}
+body[data-theme="light"] .us-sub{color:#64748b}
+body[data-theme="light"] .us-prog{background:rgba(20,24,46,.10)}
+body[data-theme="light"] .us-row{color:#64748b}
+body[data-theme="light"] .us-btn.alt{background:rgba(20,24,46,.05);border:1px solid rgba(20,24,46,.14);color:#1e293b;box-shadow:none}
+body[data-theme="light"] .us-btn.alt:hover{background:rgba(124,58,237,.10)}
+body[data-theme="light"] .us-btn.ghost{background:transparent;border:1.5px solid rgba(20,24,46,.16);color:#475569;box-shadow:none}
+body[data-theme="light"] .us-btn.ghost:hover{border-color:rgba(124,58,237,.5);color:#5b21b6}
+/* банери сповіщень на головній */
+body[data-theme="light"] .ban{background:linear-gradient(135deg,rgba(139,92,246,.12),rgba(99,102,241,.07));
+  border:1px solid rgba(124,58,237,.35);box-shadow:0 10px 30px rgba(124,58,237,.12)}
+body[data-theme="light"] .bn-t b{color:#0f172a}
+body[data-theme="light"] .bn-t span{color:#475569}
+body[data-theme="light"] .bn-x{border-color:rgba(20,24,46,.12);background:rgba(20,24,46,.05);color:#475569}
+body[data-theme="light"] .bn-x:hover{background:rgba(124,58,237,.12);color:#5b21b6}
+body[data-theme="light"] .g-rows::-webkit-scrollbar-thumb,
+body[data-theme="light"] .wn-list::-webkit-scrollbar-thumb{background:rgba(124,58,237,.35)}

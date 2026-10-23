@@ -14,8 +14,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>FluxHelper</title>
 <link rel="stylesheet" href="ui.css">
-<!-- 3.5.17: ВЕБ-МІСТ v2 — фікс синхронізації (offline-семантика, фолбек
-     дзеркал, збереження токенів) + диспетчер екранів -->
+<!-- 3.5.18: Google Identity Services — вхід як на сайті 3.5.12, прямо на сторінці -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<!-- 3.5.18: ВЕБ-МІСТ v3 — синхронізація = схема сайту 3.5.12 (GIS на сторінці,
+     /api/sync + дзеркала, outbox); без екрана помилки; без «Запуск Zoom» -->
 <script src="webhost.js"></script>
 <script>
 try {
