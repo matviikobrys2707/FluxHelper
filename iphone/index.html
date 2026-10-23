@@ -99,9 +99,11 @@ body[data-theme="light"]{color:#0f172a;
     linear-gradient(168deg,#fdfdfe 0%,#f6f7fd 42%,#eceffb 100%);}
 body[data-theme="glass"]{color:#f2f3fa;
   background:
-    radial-gradient(640px 480px at 8% -8%, rgba(168,85,247,.5), transparent 62%),
-    radial-gradient(700px 520px at 94% 6%, rgba(56,189,248,.32), transparent 58%),
-    radial-gradient(760px 560px at 50% 116%, rgba(236,72,153,.3), transparent 62%),
+    radial-gradient(680px 500px at 8% -8%, rgba(168,85,247,.52), transparent 62%),
+    radial-gradient(760px 560px at 96% 4%, rgba(56,189,248,.34), transparent 58%),
+    radial-gradient(820px 600px at 50% 118%, rgba(236,72,153,.32), transparent 62%),
+    radial-gradient(900px 520px at 78% 72%, rgba(99,102,241,.20), transparent 65%),
+    radial-gradient(520px 360px at 16% 60%, rgba(124,58,237,.16), transparent 68%),
     linear-gradient(160deg,#0e0a26 0%,#141033 45%,#1a0f2e 100%);}
 
 /* змінні теми */
@@ -344,7 +346,10 @@ body[data-theme="light"] .tb-ver{color:#475569}
 .card .ic{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;color:#fff;flex:none;
   box-shadow:0 6px 16px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.25)}
 .card h3{display:flex;align-items:center;min-width:0;font-size:clamp(13.5px,3.8vw,15.5px);font-weight:700;line-height:1.25;color:var(--txt)}
-.card h3 .ln{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* 3.5.13: назва уроку БІЛЬШЕ НЕ скорочується (просив власник: «не
+   скарачивалось») — довга назва чесно переноситься на другий рядок,
+   чіп ЗАРАЗ/ДАЛІ лишається поруч, нічого не наїжджає */
+.card h3 .ln{flex:0 1 auto;min-width:0;overflow-wrap:break-word;white-space:normal}
 /* 3.5.12: мета — ВСЕ В ОДНОМУ РЯДКУ (просив власник після iPhone 16:
    «название урока, время, имя учителя — всё съехало… чтобы максимально
    помещалось в одной строке»). Час — не стискається, вчитель — стискається
@@ -406,6 +411,10 @@ body[data-theme="light"] .tb-ver{color:#475569}
 @media (max-width:439px){
   /* 3.5.12: картки мають clamp-розміри 1-в-1 як у застосунку — тут лише відступи */
   #list{padding:8px 12px calc(10px + var(--sab))}
+  /* 3.5.13: кнопка «Приєднатися» і назва трохи менші на вузьких екранах —
+     довгі назви вміщуються в один рядок, а якщо ні — чесно переносяться */
+  .b-join{padding:7px 9px;font-size:11px;gap:4px;border-radius:11px}
+  .card h3{font-size:clamp(13px,3.6vw,14.5px)}
   .nav{padding-left:10px;padding-right:10px}
   .lg-head{padding:10px 12px 2px}
   #tabs{padding:10px 10px 6px}
@@ -431,25 +440,37 @@ body[data-theme="light"] .tb-ver{color:#475569}
    підсвіт + градієнт скла 60%/72%, blur(18px) saturate(165%), рамка .32,
    глибокі тіні.Glass-тема застосунку не перевизначає панель — темні
    значення спільні для standard і glass, тому окремого блока немає. */
+/* 3.5.13: ПАНЕЛЬ ПО ТЕМАХ (просив власник): темна — ПОТЕМНІША (реально
+   темна тема), світла — світла, Liquid Glass — той самий «прикольний»
+   фіолетовий колір, що був у темної панелі. Альфи піднято ДО СОТИХ:
+   на iPhone Safari backdrop-filter іноді не малюється над композитним
+   скролом — і крізь панель було ВИДНО ТЕКСТ. Тепер навіть без блюру
+   крізь скло видно лише відтінки карток, як у застосунку. */
 #tabbar{position:fixed;left:0;right:0;bottom:calc(9px + var(--sab));z-index:40;
   display:flex;flex-direction:row;align-items:stretch;gap:3px;padding:6px 7px;border-radius:24px;width:max-content;
   max-width:calc(100vw - 16px);margin:0 auto;
-  background:radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.20),transparent 58%),linear-gradient(180deg,rgba(44,35,84,.60),rgba(20,15,42,.72));
+  background:radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.14),transparent 58%),linear-gradient(180deg,rgba(24,20,46,.87),rgba(11,9,24,.93));
   -webkit-backdrop-filter:blur(18px) saturate(165%);
   backdrop-filter:blur(18px) saturate(165%);
-  border:1px solid rgba(139,92,246,.32);
-  box-shadow:0 12px 34px rgba(0,0,0,.5),0 2px 10px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.10)}
+  border:1px solid rgba(139,92,246,.26);
+  box-shadow:0 12px 34px rgba(0,0,0,.5),0 2px 10px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.07)}
 body[data-theme="light"] #tabbar{
-  background:radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.14),transparent 58%),linear-gradient(180deg,rgba(255,255,255,.78),rgba(244,243,252,.86));
+  background:radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.12),transparent 58%),linear-gradient(180deg,rgba(255,255,255,.91),rgba(245,244,252,.95));
   -webkit-backdrop-filter:blur(18px) saturate(150%);
   backdrop-filter:blur(18px) saturate(150%);
   border-color:rgba(124,58,237,.22);
-  box-shadow:0 12px 30px rgba(15,23,42,.14),inset 0 1px 0 rgba(255,255,255,.85)}
+  box-shadow:0 12px 30px rgba(15,23,42,.14),inset 0 1px 0 rgba(255,255,255,.9)}
+body[data-theme="glass"] #tabbar{
+  background:radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.24),transparent 58%),linear-gradient(180deg,rgba(52,42,100,.66),rgba(26,19,56,.78));
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  backdrop-filter:blur(20px) saturate(180%);
+  border-color:rgba(139,92,246,.36);
+  box-shadow:0 12px 34px rgba(0,0,0,.5),0 2px 10px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.14)}
 .tbb{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:58px;
   padding:7px 10px 5px;color:#9aa0b4;border-radius:19px;transition:color .18s,background .18s,transform .1s}
 .tbb:active{transform:scale(.92)}
-.tbb.on{color:#c9b8ff;background:rgba(139,92,246,.17);
-  box-shadow:inset 0 0 0 1px rgba(139,92,246,.30);animation:tabPop .3s cubic-bezier(.34,1.56,.64,1)}
+.tbb.on{color:#c9b8ff;background:rgba(139,92,246,.19);
+  box-shadow:inset 0 0 0 1px rgba(139,92,246,.32);animation:tabPop .3s cubic-bezier(.34,1.56,.64,1)}
 .tbb.on svg{animation:icPop .38s cubic-bezier(.34,1.56,.64,1)}
 body[data-theme="light"] .tbb{color:#64748b}
 body[data-theme="light"] .tbb.on{color:#6d28d9;background:rgba(139,92,246,.11);box-shadow:inset 0 0 0 1px rgba(139,92,246,.22)}
@@ -525,6 +546,8 @@ body[data-theme="light"] .tbb.on{color:#6d28d9;background:rgba(139,92,246,.11);b
   padding:12px 14px calc(80px + var(--sab));overscroll-behavior:contain}
 .ms-lbl{display:flex;align-items:center;justify-content:space-between;font-size:10.5px;font-weight:800;
   letter-spacing:1.6px;text-transform:uppercase;color:#8b8fa3;margin:16px 6px 8px}
+/* 3.5.13: підзаголовок секції — видно ЛИШЕ в десктопі (як у Windows exe) */
+.ms-lbl .ms-sub{display:none}
 .ms-lbl span{font-size:inherit;font-weight:inherit;letter-spacing:inherit;color:inherit}
 .ms-lbl .ms-hint{margin-left:auto;font-size:10.5px;color:var(--acc);font-weight:700;letter-spacing:0;text-transform:none}
 .ms-card{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);border-radius:20px;overflow:hidden}
@@ -690,10 +713,17 @@ body[data-theme="light"] .ac-mail{color:#64748b}
 body[data-theme="light"] .ac-note{color:#64748b}
 body[data-theme="light"] .ac-role.r-user{color:#64748b;background:rgba(100,116,139,.1);border-color:rgba(100,116,139,.3)}
 /* ---------- liquid glass (ті самі значення, що в застосунку) ---------- */
-body[data-theme="glass"] .ms-card{background:rgba(24,20,52,.72);border-color:rgba(255,255,255,.14)}
-body[data-theme="glass"] .acc-stat{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.16)}
-body[data-theme="glass"] .theme-tile{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.16)}
-body[data-theme="glass"] .seg-z{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.14)}
+/* 3.5.13: Liquid Glass — справжнє скло (iOS 26): внутрішній відблиск
+   зверху (specular), світліші рамки, напівпрозорі поверхні */
+body[data-theme="glass"] .ms-card{background:linear-gradient(170deg,rgba(255,255,255,.10),rgba(255,255,255,.045) 55%,rgba(255,255,255,.07));
+  border-color:rgba(255,255,255,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 10px 30px rgba(0,0,0,.24)}
+body[data-theme="glass"] .acc-stat{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
+body[data-theme="glass"] .theme-tile{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.10)}
+body[data-theme="glass"] .seg-z,body[data-theme="glass"] .seg{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.17);box-shadow:inset 0 1px 0 rgba(255,255,255,.10)}
+body[data-theme="glass"] .nslider{background:linear-gradient(170deg,rgba(255,255,255,.09),rgba(255,255,255,.045));border-color:rgba(255,255,255,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.10)}
+body[data-theme="glass"] .card{background:linear-gradient(165deg,rgba(255,255,255,.13),rgba(255,255,255,.05));
+  border-color:rgba(255,255,255,.21);box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 8px 26px rgba(0,0,0,.26)}
+body[data-theme="glass"] .ms-hero{background:linear-gradient(170deg,rgba(255,255,255,.09),rgba(255,255,255,.04));border-color:rgba(255,255,255,.16)}
 </style>
 <style>
 /* =================== МАЙСТЕР ГРУП (вікно ПО ЦЕНТРУ — як у застосунку) =================== */
@@ -944,6 +974,8 @@ body[data-theme="light"] .dw-foot b,body[data-theme="light"] .dw-foot span{color
   /* картки уроків — ширші, з акуратним хвостом */
   .card{padding:14px 16px;border-radius:var(--r-lg);row-gap:4px}
   .card .ic{width:48px;height:48px;transition:transform .25s ease}
+  /* 3.5.13: час+вчитель — ПІД НАЗВОЮ (колонка назви), як у Windows exe */
+  .card .meta{grid-column:2;padding-left:0}
   /* --- hover-стани (миша) --- */
   .card:hover{transform:translateY(-1px);border-color:rgba(139,92,246,.42);
     box-shadow:0 10px 30px rgba(0,0,0,.2),0 0 24px rgba(99,102,241,.08)}
@@ -962,6 +994,46 @@ body[data-theme="light"] .dw-foot b,body[data-theme="light"] .dw-foot span{color
   .c-box{max-width:380px}
   /* таббар знизу в десктопі не потрібен — навігація в шухляді, як в exe */
   #tabbar{display:none!important}
+
+  /* ============ 3.5.13: НАЛАШТУВАННЯ 1-в-1 ЯК У WINDOWS EXE ============
+     Просив власник (скріншоти застосунку): «дизайн настроек точь-в-точь
+     как на компьютере… мои группы, чтобы можно было настраивать, не
+     открывая кнопку». ДВІ колонки: зліва Сповіщення (+слайдер), справа
+     Запуск Zoom + Захід на урок; Мої групи і Тема — на всю ширину.
+     Групи перемикаються ПРОСТО НА СТОРІНЦІ (сегменти 1-ша/2-га група),
+     велика кнопка-майстер у десктопі схована. */
+  #vSetup .scrollview{max-width:1120px}
+  .dsk-two{display:grid;grid-template-columns:1fr 1fr;gap:0 18px;align-items:start}
+  .dsk-col{min-width:0}
+  #vSetup #bGroups{display:none}
+  .ms-lbl{display:block}
+  .ms-lbl .ms-sub{display:block;font-style:normal;font-size:11.5px;font-weight:600;color:#8b8fa3;
+    letter-spacing:0;text-transform:none;margin-top:2px}
+  .ms-lbl > span:first-child{font-size:15.5px;letter-spacing:.2px}
+  body[data-theme="light"] .ms-lbl .ms-sub{color:#64748b}
+  /* рядок групи — як .sw-row у Windows exe */
+  .drow{display:flex;align-items:center;gap:13px;padding:10px 12px;border-radius:14px;margin-bottom:8px;
+    background:rgba(255,255,255,.028);border:1px solid rgba(255,255,255,.055);transition:all .16s ease}
+  .drow:hover{background:rgba(139,92,246,.07);border-color:rgba(139,92,246,.28)}
+  .drow .ms-tile{width:36px;height:36px;border-radius:11px}
+  .drow .ms-body b{font-size:14px}
+  .drow .ms-body span{font-size:11px}
+  .dseg{margin-left:auto;display:inline-flex;flex:none;gap:3px;padding:3px;border-radius:11px;
+    background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1)}
+  .dseg button{border:0;background:transparent;color:#9aa0b4;font-family:inherit;font-size:11.5px;font-weight:800;
+    padding:6px 14px;border-radius:8px;cursor:pointer;transition:all .15s ease;white-space:nowrap}
+  .dseg button:hover{color:#e0e2f0}
+  .dseg button.on{background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff;box-shadow:0 4px 14px rgba(99,102,241,.4)}
+  body[data-theme="light"] .drow{background:#f8fafc;border:1px solid rgba(139,92,246,.16)}
+  body[data-theme="light"] .drow:hover{background:#f5f3ff;border-color:rgba(124,58,237,.35)}
+  body[data-theme="light"] .dseg{background:rgba(20,24,46,.05);border-color:rgba(20,24,46,.1)}
+  body[data-theme="light"] .dseg button{color:#6a7089}
+  body[data-theme="light"] .dseg button:hover{color:#0f172a}
+  /* масштаб під великі MacBook/монітори: контент росте разом з екраном */
+  .dsk-two{max-width:1120px;margin:0 auto;width:100%}
+}
+@media (min-width:1600px){
+  .view{max-width:1320px}
 }
 </style>
 </head>
@@ -1039,7 +1111,7 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
     </div>
     <div class="scrollview">
 
-      <div class="ms-lbl"><span>Мої групи</span></div>
+      <div class="ms-lbl"><span>Мої групи</span><i class="ms-sub">вчитель і посилання підставляються скрізь одразу</i></div>
       <div class="ms-card" style="padding:10px">
         <div id="sumRows"></div>
         <button class="b-groups-m" id="bGroups" type="button">
@@ -1048,7 +1120,7 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
         </button>
       </div>
 
-      <div class="ms-lbl"><span>Запуск Zoom</span></div>
+      <div class="ms-lbl"><span>Запуск Zoom</span><i class="ms-sub">як відкривати посилання уроків</i></div>
       <div class="ms-card" style="padding:11px 13px">
         <div class="seg-z" role="tablist">
           <button class="seg-z-b" id="zApp" type="button">
@@ -1062,7 +1134,7 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
         </div>
       </div>
 
-      <div class="ms-lbl"><span>Захід на урок</span></div>
+      <div class="ms-lbl"><span>Захід на урок</span><i class="ms-sub">підтвердження перед входом у клас</i></div>
       <div class="ms-card">
         <div class="ms-row">
           <span class="ms-tile sm" style="background:linear-gradient(135deg,#6366f1,#4f46e5)">
@@ -1073,7 +1145,7 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
         </div>
       </div>
 
-      <div class="ms-lbl"><span>Сповіщення</span></div>
+      <div class="ms-lbl"><span>Сповіщення</span><i class="ms-sub">нагадаємо до дзвінка</i></div>
       <div class="ms-card">
         <div class="ms-row">
           <span class="ms-tile sm" style="background:linear-gradient(135deg,#8b5cf6,#6366f1)">
@@ -1102,7 +1174,7 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
         <div class="ns-scale"><span>1 хв</span><span>5</span><span>10</span><span>15 хв</span></div>
       </div>
 
-      <div class="ms-lbl"><span>Тема оформлення</span></div>
+      <div class="ms-lbl"><span>Тема оформлення</span><i class="ms-sub">як виглядає застосунок</i></div>
       <div class="ms-card">
         <div class="theme-rows" id="themeRows">
           <button class="theme-tile" data-t="standard" type="button"><span class="tp std"></span><b>Темна</b><span>стандартна</span></button>
@@ -1396,10 +1468,21 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
      вибору групи), 1-в-1 як у застосунку;
    • девайс-гейт: ?demo діє ТІЛЬКИ з параметром у адресі — звичайне
      посилання завжди перекидує (демо більше не «залипає» на сесію).
-   Версія 3.5.12 · Web
+   3.5.13: ПАНЕЛЬ ПО ТЕМАХ + СПРАВЖНІЙ LIQUID GLASS + ДЕСКТОП-НАЛАШТУВАННЯ
+     1-в-1 ЯК У EXE (просив власник):
+   • нижня панель: темна тема — ПОТЕМНІША, світла — світла, Liquid Glass —
+     «прикольний» фіолетовий колір скла; альфи підняті — на iPhone, де
+     backdrop-filter не малюється, текст БІЛЬШЕ не просвічує крізь панель;
+   • Liquid Glass (iOS 26): багатші фіолетові блоби фону, скляні картки
+     з внутрішнім відблиском (specular), помітніші рамки;
+   • назва уроку в картці більше НЕ скорочується — переноситься;
+   • десктоп: налаштування двома колонками як у Windows exe, «Мої групи»
+     перемикаються прямо на сторінці (без майстра), кнопка схована;
+   • версія 3.5.13 — єдина на сайті, Android і Windows.
+   Версія 3.5.13 · Web
    ============================================================ */
 
-var APP_VER = '3.5.12';   /* 3.5.10: ПЕРЕЗАПИСУЄТЬСЯ з versions/beta/latest.json —
+var APP_VER = '3.5.13';   /* 3.5.10: ПЕРЕЗАПИСУЄТЬСЯ з versions/beta/latest.json —
    версія сайту ЗАВЖДИ збігається з версією бета-застосунків (Android/ПК),
    як просив власник: «дві версії — релізнута і бета; якщо бета — збігаються всюди» */
 /* 3.5.5: КАНАЛ — сайт завжди поточний, але версію показуємо з підписом «beta»,
@@ -2305,6 +2388,7 @@ function reveal() {
   if (FIRST) { AUTO_SETUP = true; openGroups(); }
   refreshAccUI(); refreshNotifUI(); refreshZoomUI(); refreshThemeUI();
   render(false);
+  try { deskRelayout(); } catch (e) {}
   syncWatchStart();
   checkNban();
   /* 3.5.12: pushDataLoad БІЛЬШЕ не тут — він стартує ще на сплеші (див. INIT).
@@ -2821,6 +2905,12 @@ function hashTarget() {
   try { h = decodeURIComponent((location.hash || '').replace(/^#/, '')).toLowerCase().trim(); } catch (e) { h = (location.hash || '').replace(/^#/, ''); }
   return HASH_VIEW[h] || null;
 }
+try {
+  window.matchMedia('(min-width:930px)').addEventListener('change', function () {
+    if (!byId('vSetup') || byId('vSetup').classList.contains('hidden')) return;
+    deskRelayout(); buildSummary();
+  });
+} catch (e) {}
 window.addEventListener('hashchange', function () {
   if (byId('app').classList.contains('hidden')) return;   /* ще екран входу */
   const v = hashTarget();
@@ -2850,6 +2940,7 @@ function showSetup() {
   showView('vSetup');
   markTab('setup');
   buildSummary();
+  deskRelayout();
 }
 function showAcc() {
   showView('vAcc');
@@ -2887,12 +2978,86 @@ function markTab(mode) {   // 'sched' | 'setup' | 'acc' | 'adm' — таббар
   if (gZ) gZ.classList.toggle('on', mode === 'setup');
   if (gA) gA.classList.toggle('on', mode === 'adm');
 }
+function isDesk() { try { return window.matchMedia('(min-width:930px)').matches; } catch (e) { return false; } }
+/* 3.5.13: НАЛАШТУВАННЯ ДЕСКТОПУ 1-в-1 ЯК У WINDOWS EXE. Групи змінюються
+   прямо на сторінці (просив власник: «настраивать мои группы, не открывая
+   кнопку») — сегмент «1-ша група / 2-га група» біля кожного предмета,
+   збереження миттєве (localStorage + syncUp), розклад одразу перераховується */
+function setGroup(k, v) {
+  if (!S) S = {};
+  S[k] = v;
+  try { localStorage.setItem('fh_groups2', JSON.stringify(S)); } catch (e) {}
+  FIRST = false;
+  render(false);
+  buildSummary();
+  syncUp();
+  toast('Групу збережено — ' + dispName(k));
+}
+function buildDeskGroups(box) {
+  box.innerHTML = '';
+  const keys = splitKeys();
+  if (!keys.length) { box.appendChild(el('div', 'sum-hint', 'Парні предмети не знайдено.')); return; }
+  keys.forEach(function (k) {
+    const inf = splitInfo(k);
+    const g = (S && (S[k] === 1 || S[k] === 2)) ? S[k] : 0;
+    const row = el('div', 'drow');
+    const ic = el('span', 'ms-tile sm');
+    ic.innerHTML = icon(inf.sub.icon || 'book', 15);
+    ic.style.background = tileGrad(k);
+    const body = el('span', 'ms-body');
+    const nm = el('b'); nm.textContent = dispName(k);
+    const sp = el('span'); sp.textContent = g ? (inf.lbls[g - 1] + ' · ' + String(inf.tch[String(g)] || '')) : 'групу не обрано — обери внизу справа';
+    body.append(nm, sp);
+    const seg = el('span', 'dseg');
+    [0, 1].forEach(function (gi) {
+      const v = gi + 1;
+      const bE = el('button'); bE.type = 'button'; bE.textContent = inf.lbls[gi];
+      if (g === v) bE.classList.add('on');
+      bE.onclick = function () { setGroup(k, v); };
+      seg.appendChild(bE);
+    });
+    row.append(ic, body, seg);
+    box.appendChild(row);
+  });
+}
+/* дві колонки в налаштуваннях (Сповіщення | Запуск Zoom + Захід) —
+   лише в десктопі; на мобільному розкладку розгортаємо назад */
+function deskRelayout() {
+  const sv = document.querySelector('#vSetup .scrollview');
+  if (!sv) return;
+  const two = byId('dskTwo');
+  if (!isDesk()) {
+    if (two) {
+      while (two.firstChild) sv.insertBefore(two.firstChild, two);
+      two.remove();
+    }
+    return;
+  }
+  if (two) return;
+  const kids = Array.prototype.slice.call(sv.children);
+  const iZoom = kids.findIndex(function (n) { return n.classList && n.classList.contains('ms-lbl') && /zoom/i.test(n.textContent); });
+  const iTheme = kids.findIndex(function (n) { return n.classList && n.classList.contains('ms-lbl') && /тема/i.test(n.textContent); });
+  if (iZoom < 0 || iTheme < 0 || iTheme <= iZoom) return;
+  const mid = kids.slice(iZoom, iTheme);
+  if (mid.length < 4) return;
+  const wrap = document.createElement('div'); wrap.id = 'dskTwo'; wrap.className = 'dsk-two';
+  const colL = document.createElement('div'); colL.className = 'dsk-col'; colL.id = 'dskColL';
+  const colR = document.createElement('div'); colR.className = 'dsk-col'; colR.id = 'dskColR';
+  const L = mid.slice(-3);              /* Сповіщення: lbl + картка + слайдер */
+  const R = mid.slice(0, mid.length - 3); /* Запуск Zoom + Захід на урок */
+  R.forEach(function (n) { colR.appendChild(n); });
+  L.forEach(function (n) { colL.appendChild(n); });
+  wrap.append(colL, colR);
+  sv.insertBefore(wrap, kids[iTheme]);
+}
 function buildSummary() {
   /* 3.5.5: перенесено 1-в-1 із застосунку — довідкові рядки «предмет ->
      твоя група і вчитель» + фіолетовий бейдж «N гр.», відкриває групи
-     лише велика кнопка «Оберіть групи» під ними */
+     лише велика кнопка «Оберіть групи» під ними.
+     3.5.13: у ДЕСКТОПІ замість довідки — інлайн-сегменти груп (як у exe). */
   const box = byId('sumRows');
   if (!box) return;
+  if (isDesk()) return buildDeskGroups(box);
   box.innerHTML = '';
   const keys = splitKeys();
   const done = keys.filter(function (k) { return S && (S[k] === 1 || S[k] === 2); }).length;
