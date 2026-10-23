@@ -262,7 +262,7 @@ function validS(x) {
 // вічно вважав себе старішим. Тепер версію підставляє build.sh з манифеста
 // (2.4.1 -> versionName), а ПІСЛЯ завантаження Java-міст AndroidHost.ver()
 // віддає СПРАВЖНЮ версію встановленого пакета (PackageManager) — найнадійніше.
-let APP_VER = '3.5.16';              // X.Y.Z — підставляється при збірці з манифеста
+let APP_VER = '3.5.17';              // X.Y.Z — підставляється при збірці з манифеста
 try {
   if (window.AndroidHost && AndroidHost.ver) {
     const jv = AndroidHost.ver();
@@ -1834,8 +1834,7 @@ function showUpd(v, notes, testMode, pref) {
 // коли версія на сервері точно більша. Тепер така ситуація неможлива.
 function updCheck(latest, pref) {
   latest = normVer(latest);   // 3.4.19: «3.5» теж працює (див. normVer)
-  /* 3.5.16: САЙТ — сторінка завжди найсвіжіша, оновлення = перезавантаження;
-     модалку оновлення (для APK/ПК) у браузері не показуємо */
+  /* 3.5.17: САЙТ — сторінка завжди найсвіжіша, оновлення = перезавантаження */
   if (window.FH_WEB) { revealNow(); return; }
   if (!latest || verCmp(latest, APP_VER) <= 0) { revealNow(); return; }
   if (UPD.avail || UPD.pending === latest) return;

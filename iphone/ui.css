@@ -41,8 +41,11 @@ button{font-family:inherit}
 /* 3.5.15: СМУГУ-РОЗДІЛЮВАЧ ПРИБРАНО (просив власник: «вверху, где логотип,
    есть полоска типа разделение… чтобы фон был одинаковый») — шапка ПРОЗОРА
    і зливається з фоном сторінки у всіх темах. */
-#tbar{height:calc(48px + var(--fh-sat, env(safe-area-inset-top, 0px)));flex:none;display:flex;align-items:center;justify-content:space-between;
-  padding-top:var(--fh-sat, env(safe-area-inset-top, 0px));padding-left:14px;user-select:none;-webkit-user-select:none;
+/* 3.5.17: ШАПКА КОМПАКТНА (просив власник: «от самой верхушки и до
+   логотипа очень много места»). Безпечна зона ОБМЕЖЕНА 38px (min()),
+   рядок контенту 44px замість 48px — лого щільніше до верха. */
+#tbar{height:calc(44px + min(var(--fh-sat, env(safe-area-inset-top, 0px)), 38px));flex:none;display:flex;align-items:center;justify-content:space-between;
+  padding-top:min(var(--fh-sat, env(safe-area-inset-top, 0px)), 38px);padding-left:14px;user-select:none;-webkit-user-select:none;
   app-region:drag;-webkit-app-region:drag;
   border-bottom:0;background:transparent;position:relative;z-index:5}
 .tb-l{display:flex;align-items:center;gap:10px}
@@ -475,16 +478,39 @@ body.mob .ban{padding:10px;border-radius:14px;gap:9px}
    Liquid Glass — прозоре скло з blur). Раніше зелений на чорному був
    зашитий в УСІХ темах. */
 :root{--toast-bg:rgba(24,21,42,.88);--toast-bd:rgba(139,92,246,.55);--toast-tx:#ede9fe;--toast-sh:rgba(0,0,0,.5)}
-body[data-theme="light"]{--toast-bg:rgba(255,255,255,.98);--toast-bd:rgba(124,58,237,.45);--toast-tx:#5b21b6;--toast-sh:rgba(28,33,74,.22)}
+body[data-theme="light"]{--toast-bg:rgba(255,255,255,.97);--toast-bd:rgba(124,58,237,.45);--toast-tx:#5b21b6;--toast-sh:rgba(28,33,74,.20)}
+/* 3.5.17: світлий тост — біла пілюля, фіолетовий градієнтний обідок */
+body[data-theme="light"] #toast{color:#5b21b6;border-color:transparent;
+  background:linear-gradient(135deg,rgba(255,255,255,.98),rgba(250,248,255,.96)) padding-box,
+             linear-gradient(135deg,rgba(124,58,237,.55),rgba(99,102,241,.35),rgba(167,139,250,.45)) border-box;
+  box-shadow:0 16px 40px rgba(28,33,74,.20),0 4px 18px rgba(124,58,237,.16),inset 0 1px 0 rgba(255,255,255,.9)}
+body[data-theme="light"] #toast svg{color:#7c3aed}
 body[data-theme="glass"]{--toast-bg:rgba(30,26,58,.5);--toast-bd:rgba(167,139,250,.45);--toast-tx:#ede9fe;--toast-sh:rgba(0,0,0,.45)}
 /* 3.5.15: ТОСТИ ВГОРІ (просив власник: «чтобы они появлялись над панелью.
    Или… вверху… типа сверху вниз всплывают. Ну как-то красиво») — скляна
    пілюля вилітає ЗВЕРХУ, з-під шапки; нижню панель більше не чіпляє. */
-#toast{position:fixed;left:50%;top:calc(12px + var(--fh-sat, env(safe-area-inset-top, 0px)));bottom:auto;transform:translateX(-50%) translateY(-18px);z-index:90;
-  background:var(--toast-bg);border:1px solid var(--toast-bd);color:var(--toast-tx);font-size:12.5px;font-weight:700;
-  padding:11px 20px;border-radius:999px;box-shadow:0 14px 38px var(--toast-sh),inset 0 1px 0 rgba(255,255,255,.10);opacity:0;pointer-events:none;
-  transition:opacity .22s ease,transform .26s cubic-bezier(.34,1.56,.64,1),background .3s ease,border-color .3s ease,color .3s ease;max-width:82vw;text-align:center;
-  display:inline-flex;align-items:center;gap:8px}
+/* 3.5.17: ТОСТИ ПОВНІСТЮ ПЕРЕРОБЛЕНО (просив власник: «сделай какую-то
+   красивую анимацию появления»). Скляна пілюля з фіолетовим градієнтним
+   обідком, іконка в акценті, пружина з перельотом (overshoot), блиск
+   пробігає пілюлею після появи. На телефоні — вилітає з-під шапки,
+   на ПК/Mac — пірнає знизу (див. exe css). */
+#toast{position:fixed;left:50%;top:calc(10px + var(--fh-sat, env(safe-area-inset-top, 0px)));bottom:auto;
+  transform:translateX(-50%) translateY(-26px) scale(.9);z-index:95;
+  display:inline-flex;align-items:center;gap:9px;max-width:82vw;text-align:center;overflow:hidden;position:fixed;
+  padding:11px 20px 11px 16px;border-radius:999px;font-size:12.5px;font-weight:700;letter-spacing:.2px;color:var(--toast-tx,#f2f3fa);
+  border:1px solid transparent;
+  background:linear-gradient(135deg,var(--toast-bg,rgba(32,26,66,.92)),var(--toast-bg,rgba(32,26,66,.92))) padding-box,
+             linear-gradient(135deg,rgba(167,139,250,.65),rgba(56,189,248,.30),rgba(236,72,153,.28)) border-box;
+  -webkit-backdrop-filter:blur(18px) saturate(165%);backdrop-filter:blur(18px) saturate(165%);
+  box-shadow:0 18px 44px var(--toast-sh,rgba(0,0,0,.5)),0 4px 22px rgba(124,58,237,.30),inset 0 1px 0 rgba(255,255,255,.14);
+  opacity:0;pointer-events:none;
+  transition:transform .5s cubic-bezier(.18,1.5,.4,1),opacity .3s ease,background .3s ease,color .3s ease,box-shadow .3s ease}
+#toast svg{color:#c4b5fd;flex:none;opacity:.95}
+#toast::after{content:'';position:absolute;top:-8px;left:-70%;width:44%;height:calc(100% + 16px);
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.17),transparent);transform:skewX(-18deg)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+#toast.show::after{animation:fhToastShine .85s ease .1s 1}
+@keyframes fhToastShine{to{left:135%}}
 body[data-theme="glass"] #toast{backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
 /* 3.5.15: у стандартній темній тост теж зі скляним блюром */
 :root:not([data-theme="light"]) #toast{-webkit-backdrop-filter:blur(16px) saturate(160%);backdrop-filter:blur(16px) saturate(160%)}
@@ -587,7 +613,7 @@ html.android #tbar,body.android #tbar{app-region:no-drag;-webkit-app-region:no-d
 /* ---------- мобільна розкладка (телефон/планшет) ---------- */
 body.mob #app{zoom:1!important}
 body.mob .view{padding:12px 13px 12px}
-body.mob #tbar{height:calc(50px + var(--fh-sat, env(safe-area-inset-top, 0px)));padding-top:var(--fh-sat, env(safe-area-inset-top, 0px));padding-left:12px}
+body.mob #tbar{height:calc(44px + min(var(--fh-sat, env(safe-area-inset-top, 0px)), 38px));padding-top:min(var(--fh-sat, env(safe-area-inset-top, 0px)), 38px);padding-left:12px}
 body.mob .tb-name{font-size:14px}
 /* кнопки днів — на ВСЮ ширину екрана, рівно 5 колонок */
 body.mob nav{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding-bottom:2px}
@@ -620,6 +646,10 @@ body.mob .modal{border-radius:20px;padding:14px}
 /* 2.2.1: тост тепер по центру — старе «знизу з safe-area» не застосовується */
 body.mob .nslider{margin-left:0}
 body.mob .su-perm{margin-left:0}
+/* 3.5.17: РЕЗЕРВ ПІД ПАНЕЛЬ У ВСІХ ВКЛАДКАХ (просив власник: «в админке,
+   настройках, аккаунте — скролл в самый низ, чтобы панель не налазила на
+   текст»). Панель ~72px + відступ 4px + повітря 20px. */
+html body.android #vSetup{padding-bottom:calc(96px + var(--fh-sab, env(safe-area-inset-bottom, 0px)))}
 body.mob #vSetup{padding:12px 13px 20px}
 body.mob .g-rows{max-height:52vh}
 body.mob .g-foot{flex-wrap:wrap}
@@ -1098,6 +1128,7 @@ body[data-theme="light"] .ms-hero-t span,
 body[data-theme="light"] .m-x,body[data-theme="light"] .bn-x {color:#4b5069}
 /* ===== 2.8.3: ПРОФІЛЬ (телефон) — повністю перероблений дизайн ===== */
 #vAcc{display:block;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:10px 16px 30px}
+html body.android #vAcc{padding-bottom:calc(96px + var(--fh-sab, env(safe-area-inset-bottom, 0px)))}
 body.mob #vAcc{padding:8px 13px 26px}
 .back-btn{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:12px;
   border:1px solid rgba(148,163,184,.2);background:rgba(148,163,184,.07);color:#c9cddb;cursor:pointer;margin:2px 0 10px;
@@ -1212,6 +1243,8 @@ body.gate-on #agate{display:flex}
 /* ================= 3.0.0 → 3.3.0: АДМІН-ПАНЕЛЬ (порт з 3.2.0) ================= */
 /* ================= 3.0.0 — АДМІН-ПАНЕЛЬ ================= */
 #vAdmin{display:block;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:10px 13px 30px}
+/* 3.5.17: адмінка тож скролиться до кінця над панеллю */
+html body.android #vAdmin{padding-bottom:calc(96px + var(--fh-sab, env(safe-area-inset-bottom, 0px)))}
 #vAdmin{padding:14px 14px 40px}
 /* 3.3.2: базові класи заголовка картки (в ПК-версії вони живуть у стилях
    «Налаштувань», у мобільному css їх не було — адмінка тепер теж їх малює) */
@@ -1580,7 +1613,7 @@ body.mob .card,body.android .card{background:rgba(255,255,255,.05);border-color:
    напівпрозорість = чорна фарба. РІШЕННЯ (1-в-1 із сайтом 3.5.12): блюра
    БІЛЬШЕ НЕМАЄ — фон це ФІКСОВАНЕ градієнтне скло з фіолетовим підсвічуванням,
    яке однаково виглядає в УСІХ вкладках і ніколи не чорніє. */
-#bnav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(9px + var(--fh-sab, env(safe-area-inset-bottom, 0px)));z-index:60;display:none;
+#bnav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(4px + var(--fh-sab, env(safe-area-inset-bottom, 0px)));z-index:60;display:none;
   flex-direction:row;align-items:stretch;gap:3px;padding:6px 7px;border-radius:24px;width:max-content;max-width:calc(100vw - 16px);
   /* 3.5.13: темна тема — панель ПОТЕМНІША (просив власник: «немножечко
      потемнее, реально как будто тёмная тема»); колишній фіолетовий колір

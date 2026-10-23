@@ -463,6 +463,15 @@ h2 {
       if (!u || !u.sub) throw new Error('profile');
       var prof = { sub: String(u.sub), name: String(u.name || ''), email: String(u.email || ''), picture: String(u.picture || ''), fid: fid || '' };
       saveWebSession(fr, prof);
+      /* 3.5.17: токени сесії їдуть І в auth_cb — webhost.js добирає їх звідти
+         (другий канал, якщо localStorage сторінки застосунку недоступний).
+         Застосунки зайві поля просто ігнорують (беруть sub/name/email/pic/fid). */
+      if (fr && fr.resp && fr.resp.idToken) {
+        var exp17 = parseInt(fr.resp.expiresIn, 10) || 3600;
+        prof.tok = String(fr.resp.idToken);
+        prof.rtok = String(fr.resp.refreshToken || '');
+        prof.tokT = Date.now() + exp17 * 1000 - 120000;
+      }
       deliver(
         prof,
         finishOk,

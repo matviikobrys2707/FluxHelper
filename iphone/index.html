@@ -14,12 +14,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>FluxHelper</title>
 <link rel="stylesheet" href="ui.css">
-<!-- 3.5.16: ВЕБ-МІСТ — сайт виконує той самий код, що й APK; мосту
-     немає тільки тут, тому він підключається ПЕРШИМ (ранній захист
-     нижче перевіряє window.AndroidHost) -->
+<!-- 3.5.17: ВЕБ-МІСТ v2 — фікс синхронізації (offline-семантика, фолбек
+     дзеркал, збереження токенів) + диспетчер екранів -->
 <script src="webhost.js"></script>
 <script>
-/* 3.5.16: диспетчер екранів — широкий екран = десктопний UI (/mac/) */
 try {
   if (window.innerWidth >= 960 && window.innerHeight >= 560 && !/fhm=1/.test(location.search)) {
     location.replace('/mac/' + location.hash);
