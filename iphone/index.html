@@ -327,11 +327,15 @@ body[data-theme="light"] .tb-ver{color:#475569}
 .tab.td .tdot{display:block}
 
 /* =================== СПИСОК УРОКІВ =================== */
-#list{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
-  transform:translateZ(0);-webkit-backface-visibility:hidden;backface-visibility:hidden;
-  /* 3.5.12: падіння резерву 74px -> 10px — останні уроки заходять ПІД скло,
-     за панеллю видно картки, а не порожній фон (як просив власник) */
-  padding:8px 16px calc(10px + var(--sab));overscroll-behavior:contain}
+#list{flex:1;min-height:0;overflow-y:auto;
+  /* 3.5.14: прибрано translateZ(0)/backface-visibility/-webkit-overflow-
+     scrolling:touch — композитні шари ЛАМАЮТЬ backdrop-filter у Safari:
+     панель була «просто прозорою», текст просвічував (як на Android —
+     з блюром). Тепер панель РЕАЛЬНО розмиває фон під собою. */
+  /* 3.5.14: резерв 84px + safe-area — розклад скролиться ДО КІНЦЯ, останній
+     урок стоїть ПОВНІСТЮ над панеллю (просив власник: «чтобы нижняя панель
+     не перекрывала последний урок») */
+  padding:8px 16px calc(84px + var(--sab));overscroll-behavior:contain}
 .card{position:relative;display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:11px;align-items:center;
   padding:12px 12px;border-radius:16px;background:var(--card);border:1px solid var(--card-bd);
   margin-bottom:10px;box-shadow:0 6px 22px rgba(0,0,0,.14);
@@ -359,28 +363,18 @@ body[data-theme="light"] .tb-ver{color:#475569}
    имя учителя»). Мета більше НЕ ріже вміст «на корені»: рядки переносяться,
    вчитель займає весь залишок другого рядка і скорочується трикрапкою лише
    якщо 이름 взагалі не вміщується. */
-.card h3 .now-chip,.card h3 .next-chip{margin-left:7px}
-/* сітка картки: рядок 1 — іконка | назва+чіп | кнопка; рядок 2 — час +
-   вчитель НА ВСЮ ШИРИНУ картки (просив власник: «чтобы максимально было
-   видно имя учителя»). .mid -> display:contents, щоб h3/.meta стали
-   прямими grid-елементами без зміни розмітки. */
-/* 3.5.12: row-gap 11px — 1-в-1 як у застосунку (body.mob .card gap:11px);
-   інакше рядок «час + вчитель» наїжджає на нижній край іконки */
-.card{row-gap:11px}
-.card .mid{display:contents}
-/* 3.5.12: іконка — ЯВНО колонка 1 (як у застосунку), інакше при meta на
-   всю ширину авто-розкладка створює 4-ту колонку й іконка їде вправо */
-.card .ic{grid-column:1;grid-row:1/3}
-.card h3{grid-column:2;grid-row:1}
-.card .b-join{grid-column:3;grid-row:1}
-.card .meta{grid-column:1/4;grid-row:2;align-self:center;padding-left:4px}
-.card .meta{display:flex;align-items:center;gap:11px;margin-top:0;flex-wrap:nowrap}
-.card .meta .tc:first-child{flex:none}
+/* 3.5.14: КАРТКА УРОКУ — СТАРИЙ ДИЗАЙН 3.5.0 (просив власник: «верни старый
+   дизайн: іконка, назва уроку; другий рядок — час (початок–кінець) і ім'я
+   вчителя; кнопка по центру між двома рядками»). Сітка: іконка | контент
+   (назва над мета) | кнопка; кнопка вертикально по центру. */
+.card .mid{min-width:0}
+.card .meta{display:flex;align-items:center;gap:11px;margin-top:5px;flex-wrap:wrap}
 .card .tc{display:inline-flex;align-items:center;gap:4.5px;font-size:clamp(10.5px,3vw,12px);color:var(--sub);font-weight:600;white-space:nowrap}
 .card .tc svg{flex:none;opacity:.8}
 .card .tc.t-time{flex:none;font-variant-numeric:tabular-nums}
-.card .tc.t-teach{flex:1 1 auto;min-width:0;overflow:hidden}
-.card .tc.t-teach > span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* 3.5.14: вчитель — БЕЗ скорочення (просив власник: «не сокращаются»):
+   не вміщається — чесно переноситься на наступний рядок, як у 3.5.0 */
+.card .tc.t-teach{flex:0 1 auto;min-width:0}
 .now-chip,.next-chip{display:inline-flex;align-items:center;gap:4px;font-size:9.3px;font-weight:900;
   letter-spacing:.6px;padding:2.5px 7px;border-radius:999px;flex:none}
 .now-chip{color:var(--now);background:color-mix(in srgb,var(--now) 14%,transparent);border:1px solid color-mix(in srgb,var(--now) 38%,transparent)}
@@ -410,7 +404,7 @@ body[data-theme="light"] .tb-ver{color:#475569}
    вміщаються, «съезжать» нічому. Планшетів (≥560px) не стосується. */
 @media (max-width:439px){
   /* 3.5.12: картки мають clamp-розміри 1-в-1 як у застосунку — тут лише відступи */
-  #list{padding:8px 12px calc(10px + var(--sab))}
+  #list{padding:8px 12px calc(84px + var(--sab))}
   /* 3.5.13: кнопка «Приєднатися» і назва трохи менші на вузьких екранах —
      довгі назви вміщуються в один рядок, а якщо ні — чесно переносяться */
   .b-join{padding:7px 9px;font-size:11px;gap:4px;border-radius:11px}
@@ -461,9 +455,12 @@ body[data-theme="light"] #tabbar{
   border-color:rgba(124,58,237,.22);
   box-shadow:0 12px 30px rgba(15,23,42,.14),inset 0 1px 0 rgba(255,255,255,.9)}
 body[data-theme="glass"] #tabbar{
-  background:radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.24),transparent 58%),linear-gradient(180deg,rgba(52,42,100,.66),rgba(26,19,56,.78));
-  -webkit-backdrop-filter:blur(20px) saturate(180%);
-  backdrop-filter:blur(20px) saturate(180%);
+  /* 3.5.14: щільність .82/.90 + блюр 18px (1-в-1 як у темної теми) —
+     просив власник: «прозрачное и размывалось, так же как во время тёмной
+     темы»; текст більше не просвічує крізь скло */
+  background:radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.24),transparent 58%),linear-gradient(180deg,rgba(52,42,100,.82),rgba(26,19,56,.90));
+  -webkit-backdrop-filter:blur(18px) saturate(165%);
+  backdrop-filter:blur(18px) saturate(165%);
   border-color:rgba(139,92,246,.36);
   box-shadow:0 12px 34px rgba(0,0,0,.5),0 2px 10px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.14)}
 .tbb{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:58px;
@@ -541,9 +538,10 @@ body[data-theme="light"] .tbb.on{color:#6d28d9;background:rgba(139,92,246,.11);b
    3.5.5: компоненти перенесені 1-в-1 з apk/assets/www/ui.css (Android) —
    власник: «скопировать и закинуть дизайн із сурсів». Розміри, радіуси,
    кольори й анімації = сурси 3.5.5. */
-.scrollview{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
-  transform:translateZ(0);-webkit-backface-visibility:hidden;backface-visibility:hidden;
-  padding:12px 14px calc(80px + var(--sab));overscroll-behavior:contain}
+.scrollview{flex:1;min-height:0;overflow-y:auto;
+  /* 3.5.14: без translateZ(0)/backface-visibility — композитний шар ламав
+     блюр нижньої панелі на iPhone (панель «просто прозора») */
+  padding:12px 14px calc(84px + var(--sab));overscroll-behavior:contain}
 .ms-lbl{display:flex;align-items:center;justify-content:space-between;font-size:10.5px;font-weight:800;
   letter-spacing:1.6px;text-transform:uppercase;color:#8b8fa3;margin:16px 6px 8px}
 /* 3.5.13: підзаголовок секції — видно ЛИШЕ в десктопі (як у Windows exe) */
@@ -961,21 +959,21 @@ body[data-theme="light"] .dw-foot b,body[data-theme="light"] .dw-foot span{color
   /* --- каркас: контент по центру, ширший і повітряніший --- */
   body.ready #app{padding-top:50px}
   /* 3.5.12: контент тягнеться на екран (просив власник: «растягивалось») */
-  .view{top:50px;max-width:1200px;margin:0 auto;left:0;right:0;padding-left:20px;padding-right:20px}
+  /* 3.5.14: контент на ВЕСЬ екран (просив власник: «чтобы оно
+     растягивалось прямо на весь экран на сайте для макбуков») */
+  .view{top:50px;left:0;right:0;padding-left:20px;padding-right:20px}
   #vMain .nav,#vSetup .nav,#vAcc .nav,#vAdmin .nav{display:none}   /* лого вже в панелі */
   .lg-head{padding-top:16px}
   .lg-head h2{font-size:21px}
   #tabs{padding:12px 4px 8px}
   #list{padding:10px 24px 26px}
   .scrollview{padding:18px 24px 34px}
-  #vSetup .scrollview,#vAdmin .scrollview{max-width:860px;margin:0 auto;width:100%}
-  #vAcc .scrollview{max-width:600px;margin:0 auto;width:100%}
+  #vSetup .scrollview,#vAdmin .scrollview{width:100%}
+  #vAcc .scrollview{width:100%}
   #toast{bottom:26px}
   /* картки уроків — ширші, з акуратним хвостом */
-  .card{padding:14px 16px;border-radius:var(--r-lg);row-gap:4px}
+  .card{padding:14px 16px;border-radius:var(--r-lg)}
   .card .ic{width:48px;height:48px;transition:transform .25s ease}
-  /* 3.5.13: час+вчитель — ПІД НАЗВОЮ (колонка назви), як у Windows exe */
-  .card .meta{grid-column:2;padding-left:0}
   /* --- hover-стани (миша) --- */
   .card:hover{transform:translateY(-1px);border-color:rgba(139,92,246,.42);
     box-shadow:0 10px 30px rgba(0,0,0,.2),0 0 24px rgba(99,102,241,.08)}
@@ -1002,7 +1000,6 @@ body[data-theme="light"] .dw-foot b,body[data-theme="light"] .dw-foot span{color
      Запуск Zoom + Захід на урок; Мої групи і Тема — на всю ширину.
      Групи перемикаються ПРОСТО НА СТОРІНЦІ (сегменти 1-ша/2-га група),
      велика кнопка-майстер у десктопі схована. */
-  #vSetup .scrollview{max-width:1120px}
   .dsk-two{display:grid;grid-template-columns:1fr 1fr;gap:0 18px;align-items:start}
   .dsk-col{min-width:0}
   #vSetup #bGroups{display:none}
@@ -1030,10 +1027,7 @@ body[data-theme="light"] .dw-foot b,body[data-theme="light"] .dw-foot span{color
   body[data-theme="light"] .dseg button{color:#6a7089}
   body[data-theme="light"] .dseg button:hover{color:#0f172a}
   /* масштаб під великі MacBook/монітори: контент росте разом з екраном */
-  .dsk-two{max-width:1120px;margin:0 auto;width:100%}
-}
-@media (min-width:1600px){
-  .view{max-width:1320px}
+  .dsk-two{width:100%}
 }
 </style>
 </head>
@@ -1482,7 +1476,7 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
    Версія 3.5.13 · Web
    ============================================================ */
 
-var APP_VER = '3.5.13';   /* 3.5.10: ПЕРЕЗАПИСУЄТЬСЯ з versions/beta/latest.json —
+var APP_VER = '3.5.14';   /* 3.5.10: ПЕРЕЗАПИСУЄТЬСЯ з versions/beta/latest.json —
    версія сайту ЗАВЖДИ збігається з версією бета-застосунків (Android/ПК),
    як просив власник: «дві версії — релізнута і бета; якщо бета — збігаються всюди» */
 /* 3.5.5: КАНАЛ — сайт завжди поточний, але версію показуємо з підписом «beta»,
@@ -2576,10 +2570,11 @@ function render(anim) {
     /* 3.5.13: чіп ЗАРАЗ/ДАЛІ — в ПЕРШОМУ рядку одразу після назви (просив
        власник); другий рядок — час + ПІБ вчителя, як у застосунку */
     const h3 = el('h3'); const lnS = el('span', 'ln'); lnS.textContent = l.name; h3.appendChild(lnS);
-    if (i === nowIdx) h3.appendChild(el('span', 'now-chip', '<i></i>ЗАРАЗ'));
-    if (i === nextIdx) h3.appendChild(el('span', 'next-chip', '<i></i>ДАЛІ'));
     mid.appendChild(h3);
     const meta = el('div', 'meta');
+    /* 3.5.14: чіпи ЗАРАЗ/ДАЛІ — у ДРУГОМУ рядку (час + вчитель), як у 3.5.0 */
+    if (i === nowIdx) meta.appendChild(el('span', 'now-chip', '<i></i>ЗАРАЗ'));
+    if (i === nextIdx) meta.appendChild(el('span', 'next-chip', '<i></i>ДАЛІ'));
     const t1 = el('span', 'tc t-time');
     t1.innerHTML = icon('clock', 12);
     const tv = el('span'); tv.textContent = l.t + ' – ' + l.e;
