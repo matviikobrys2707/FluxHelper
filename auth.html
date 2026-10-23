@@ -424,10 +424,25 @@ h2 {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token: accessTok })
         }).then(function (r) { return r.json(); }).then(function (j) {
-          res((j && j.ok && j.localId) ? String(j.localId) : null);
+          res((j && j.ok && j.localId) ? { localId: String(j.localId), resp: j } : null);
         }).catch(function () { res(null); });
       } catch (e) { res(null); }
     });
+  }
+  /* 3.5.16: веб-сесія для webhost.js (сайт = той самий код, що й застосунки;
+     мосту потрібні Firebase id/refresh токени для /api/sync і /api/rtdb) */
+  function saveWebSession(fr, prof) {
+    try {
+      if (!fr || !fr.resp || !fr.resp.idToken) return;
+      var exp = parseInt(fr.resp.expiresIn, 10) || 3600;
+      localStorage.setItem('fh_web_session', JSON.stringify({
+        tok: String(fr.resp.idToken),
+        rtok: String(fr.resp.refreshToken || ''),
+        tokT: Date.now() + exp * 1000 - 120000,
+        sub: String((prof && prof.sub) || ''),
+        email: String((prof && prof.email) || '')
+      }));
+    } catch (e) { }
   }
 
   function gotToken(resp) {
@@ -442,11 +457,14 @@ h2 {
       fetch('https://openidconnect.googleapis.com/v1/userinfo', { headers: { Authorization: 'Bearer ' + resp.access_token } })
         .then(function (r) { return r.ok ? r.json() : null; })
     ]).then(function (rr) {
-      var fid = rr[0];
+      var fr = rr[0];
+      var fid = fr ? fr.localId : null;
       var u = rr[1];
       if (!u || !u.sub) throw new Error('profile');
+      var prof = { sub: String(u.sub), name: String(u.name || ''), email: String(u.email || ''), picture: String(u.picture || ''), fid: fid || '' };
+      saveWebSession(fr, prof);
       deliver(
-        { sub: String(u.sub), name: String(u.name || ''), email: String(u.email || ''), picture: String(u.picture || ''), fid: fid || '' },
+        prof,
         finishOk,
         function () {
           busy(false, 'Спробувати ще раз');

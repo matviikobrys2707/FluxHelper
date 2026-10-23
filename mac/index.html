@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FluxHelper</title>
+<link rel="stylesheet" href="ui.css">
+<!-- 3.5.16: ВЕБ-МІСТ — сайт виконує той самий код, що й Windows-програма -->
+<script src="webhost.js"></script>
+<script>
+/* 3.5.16: диспетчер екранів — вузький екран = телефонний UI (/iphone/) */
+try {
+  if (window.innerWidth < 960 || window.innerHeight < 560) {
+    location.replace('/iphone/' + location.hash);
+  }
+} catch (e) {}
+</script>
+<script>
+/* 2.9.2: РАНІЙ ЗАХИСТ — поза застосунком (звичайний браузер) розмітка
+   приховується ще ДО завантаження ui.js: використати інтерфейс у
+   браузері неможливо. Далі ui.js малює повноцінний екран-замок
+   з кнопками завантаження стабільного релізу. */
+(function(){var ok=false;try{ok=!!((window.chrome&&window.chrome.webview&&window.chrome.webview.postMessage)||(window.AndroidHost&&window.AndroidHost.ver));}catch(e){ok=false;}
+if(!ok){var s=document.createElement('style');s.id='fhEarlyHide';s.textContent='body>*{display:none!important}body{background:#050508!important}';(document.head||document.documentElement).appendChild(s);
+var m=function(){var b=document.body;if(b&&!document.getElementById('fhEarlyHide')){(document.head||document.documentElement).appendChild(s);}};setInterval(m,600);}})();
+</script>
+</head>
+<body class="booting" data-theme=''>
+<script>
+/* тема ДО першого кадру, без спалаху. Пріоритет 2.8.8:
+   1) data-theme на <body>, який хост підставив із __BOOT_THEME__ (тема
+      цього аккаунта, свіжозавантажена з хмари ще ДО показу вікна);
+   2) localStorage (тема з минулого запуску на цьому пристрої);
+   3) standard. Обраний варіант пишемо назад у body + localStorage */
+try{
+  var _t=document.body.getAttribute('data-theme')||'';
+  if(['standard','light','glass','ocean','sunset','forest','aurora'].indexOf(_t)<0){
+    _t=localStorage.getItem('fh_theme')||'';
+    if(['standard','light','glass','ocean','sunset','forest','aurora'].indexOf(_t)<0)_t='standard';
+  }
+  document.body.setAttribute('data-theme',_t);
+  localStorage.setItem('fh_theme',_t);
+}catch(e){try{document.body.setAttribute('data-theme','standard')}catch(e2){}}
+</script>
+<!-- 2.9.0: ТИТУЛЬНУ ПАНЕЛЬ ВИНЕСЕНО З #app (тепер #tbar — безпосередня дитина body).
+     Чому: applyScale() ставить CSS zoom на #app, і WebView2 у цьому випадку малює
+     #agate (гейт входу) ПОВЕРХ панелі — власник бачив екран входу БЕЗ лого і кнопок.
+     Панель поза #app = не масштабується і завжди верхня (z 400 > гейт 230):
+     лого + «Згорнути»/«Закрити» — ПІКСЕЛЬ-У-ПІКСЕЛЬ ті самі на всіх екранах
+     (сплеш/гейт/меню/помилка мережі/оновлення), як просив власник. -->
+<div id="tbar">
+  <div class="tb-l">
+    <span class="lmark" id="logo" aria-hidden="true"><img src="data:image/png;base64,__LOGO_B64__" width="27" height="27" alt="" decoding="sync" style="display:block;border-radius:8px"></span>
+    <span class="tb-name">FluxHelper</span>
+  </div>
+  <div class="tb-seg" role="tablist">
+    <button id="segSched" title="Розклад">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="17" rx="2.5"/><line x1="3" y1="9.5" x2="21" y2="9.5"/><line x1="8" y1="2.5" x2="8" y2="6.5"/><line x1="16" y1="2.5" x2="16" y2="6.5"/><path d="M8 14h3M8 17.5h5"/></svg>
+      <span>Розклад</span>
+    </button>
+    <button id="segSetup" title="Налаштування">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>Налаштування</span>
+    </button>
+    <button id="segAdmin" title="Адмін" style="display:none">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.9 19.4 5.7v5.5c0 4.6-3.1 8-7.4 9.9-4.3-1.9-7.4-5.3-7.4-9.9V5.7L12 2.9z"/><path d="M9 12.2l2.1 2.1 4-4.6"/></svg>
+      <span>Адмін</span>
+    </button>
+  </div>
+    <div class="tb-r">
+    <button class="tb-acc win-only" id="tbAcc" title="Акаунт" style="display:none" type="button">
+      <span class="tb-acc-i" id="tbAccAva"></span>
+      <span class="tb-acc-t"><b id="tbAccName">—</b><span id="tbAccMail"></span></span>
+    </button>
+    <button class="tb-btn win-only" id="bMin" title="Згорнути">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>
+    <button class="tb-btn tb-x win-only" id="bClose" title="Закрити">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+    </button>
+  </div>
+</div>
+
+<div id="app">
+
+<div id="vMain" class="view">
+  <div id="nban" class="ban hidden">
+    <div class="bn-ic">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+    </div>
+    <div class="bn-t"><b>Сповіщення про початок уроку</b><span>підкажемо завчасно — щоб ти не запізнився</span></div>
+    <button class="bn-btn" id="nbOn">Увімкнути</button>
+    <button class="bn-x" id="nbX" title="Сховати">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+    </button>
+  </div>
+  <header>
+    <div class="hd-row">
+      <div class="hd-ic" aria-hidden="true">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="17" rx="2.5"/><line x1="3" y1="9.5" x2="21" y2="9.5"/><line x1="8" y1="2.5" x2="8" y2="6.5"/><line x1="16" y1="2.5" x2="16" y2="6.5"/></svg>
+      </div>
+      <h2 id="dayName">Понеділок</h2>
+    </div>
+    <div class="chip" id="chip"></div>
+  </header>
+  <nav id="tabs"></nav>
+  <main id="list"></main>
+</div>
+
+<div id="vSetup" class="view hidden">
+  <div class="sw-wrap">
+    <div class="sw-head">
+      <div class="sw-head-l">
+        <div class="sw-title-row">
+          <h2>Налаштування</h2>
+        </div>
+        <span class="sw-sub">групи · сповіщення · запуск Zoom</span>
+      </div>
+    </div>
+
+    <div class="sw-grid">
+      <section class="sw-card sw-wide">
+        <div class="sw-c-head">
+          <span class="sw-c-ic grad"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+          <div class="sw-c-tt">
+            <b>Мої групи</b>
+            <span>твій вчитель і посилання підставляться скрізь одразу</span>
+          </div>
+        </div>
+        <div id="sumRows"></div>
+      </section>
+
+      <section class="sw-card">
+        <div class="sw-c-head">
+          <span class="sw-c-ic plain"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span>
+          <div class="sw-c-tt"><b>Сповіщення</b><span>нагадаємо до дзвінка</span></div>
+        </div>
+        <div class="sw-tog-row">
+          <div class="su-ic2">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          </div>
+          <div class="su-body">
+            <b>Повідомити про початок уроку</b>
+            <span>сповіщення Windows з назвою уроку</span>
+          </div>
+          <label class="sw"><input type="checkbox" id="nOn"><i></i></label>
+        </div>
+        <div class="nslider hidden" id="nMinRow">
+          <div class="ns-top"><span class="ns-lbl">повідомити за</span><span class="ns-val" id="nMinVal">5 хв</span></div>
+          <input type="range" id="nMin" min="1" max="15" step="1" value="5" aria-label="Хвилин до уроку">
+          <div class="ns-scale"><span>1 хв</span><span>5</span><span>10</span><span>15 хв</span></div>
+        </div>
+        <div class="sw-tog-row" id="nSndRow">
+          <div class="su-ic2">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+          </div>
+          <div class="su-body">
+            <b>Звук сповіщень</b>
+            <span>мелодія-дзвіночок разом із повідомленням</span>
+          </div>
+          <label class="sw"><input type="checkbox" id="nSnd"><i></i></label>
+        </div>
+        <div class="sw-tog-row" id="nOffRow">
+          <div class="su-ic2">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg>
+          </div>
+          <div class="su-body">
+            <b>Надсилати сповіщення під час офлайн-тижня</b>
+            <span>сповіщати про уроки як в онлайн, так і в офлайн-тижні</span>
+          </div>
+          <label class="sw"><input type="checkbox" id="nOff"><i></i></label>
+        </div>
+        <button class="su-perm" id="bTestN" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:7px;vertical-align:-2px"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>
+          Тестове сповіщення
+        </button>
+        <button class="su-perm hidden" id="bPerm">Надати дозвіл на сповіщення</button>
+      </section>
+
+            <!-- 2.3.8: картку «Акаунт і синхронізація» прибрано -->
+
+
+<section class="sw-card">
+        <div class="sw-c-head">
+          <span class="sw-c-ic grad"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></span>
+          <div class="sw-c-tt"><b>Запуск Zoom</b></div>
+        </div>
+        <div class="seg-z" role="tablist">
+          <button class="seg-z-b" id="zApp" type="button">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="5" width="15" height="14" rx="2"/><path d="M16 10l7-3v10l-7-3z"/></svg>
+            <b>Додаток</b>
+          </button>
+          <button class="seg-z-b" id="zWeb" type="button">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            <b>Браузер</b>
+          </button>
+        </div>
+        <div class="sw-tog-row c-row">
+          <div class="su-body">
+            <b>Підтверджувати захід на урок</b>
+          </div>
+          <label class="sw"><input type="checkbox" id="cOn"><i></i></label>
+        </div>
+      </section>
+
+      <section class="sw-card sw-wide">
+        <div class="sw-c-head">
+          <span class="sw-c-ic grad"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z"/></svg></span>
+          <div class="sw-c-tt"><b>Тема оформлення</b><span>як виглядає застосунок</span></div>
+        </div>
+        <div class="theme-rows" id="themeRows">
+          <button class="theme-tile" data-t="standard" type="button"><span class="tp std"></span><b>Стандарт</b><span>темна, фірмова</span></button>
+          <button class="theme-tile" data-t="light" type="button"><span class="tp lit"></span><b>Світла</b><span>денне світло</span></button>
+          <button class="theme-tile" data-t="glass" type="button"><span class="tp gls"></span><b>Liquid Glass</b><span>прозоре скло</span></button>
+        </div>
+      </section>
+
+      <!-- 2.9.1: ПУСТИЙ КВАДРАТ ПІСЛЯ РАМКИ ТЕМИ ПРИБРАНО — секцію #ac2Card
+           (залишок 2.8.0: вміст давно видалено, а секція показувалась після
+           входу) знесено повністю -->
+
+      <section class="sw-card sw-wide" id="secUpd">
+        <div class="sw-c-head">
+          <span class="sw-c-ic grad"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
+          <div class="sw-c-tt"><b>Оновлення</b><span>перевірка і встановлення нової версії</span></div>
+        </div>
+        <div class="sw-tog-row c-row">
+          <div class="su-body">
+            <b>Перевірити оновлення</b>
+            <span>нова версія встановиться прямо в програмі</span>
+          </div>
+          <button class="b-mini" id="bUpdNow" type="button">Перевірити</button>
+        </div>
+      </section>
+
+      <!-- 2.3.10: рамка «Про програму» ПОВЕРНЕНА (власник попросив) -->
+      <div class="sw-about" id="aboutBox">
+        <span class="lmark" id="abLogo" aria-hidden="true"></span>
+        <div class="ab-t"><b>FluxHelper</b><span>розклад 8-го Б класу</span></div>
+        <span class="ab-ver" id="abVer">версія</span>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- 2.3.8: СТОРІНКА ПРОФІЛЮ — акаунт + синхронізація + вихід живуть тут,
+     у «Налаштуваннях» їх більше немає (власник попросив окрему сторінку) -->
+
+<!-- 2.8.3: сторінка акаунта — профіль + синхронізація. Всередині #app
+     (раніше була зовні й ділила екран навпіл із розкладом) -->
+<div id="vAcc" class="view hidden">
+  <div class="acc-wrap">
+    <button class="back-btn" id="accBack" type="button">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      Назад
+    </button>
+    <div class="acc-hero-card">
+      <span class="acc-ava-big" id="acAva">?</span>
+      <div class="acc-id">
+        <b id="acName">—</b>
+        <span class="acc-mail" id="acMail"></span>
+      </div>
+      <span class="ac-role r-user" id="acRole">—</span>
+    </div>
+    <div class="acc-stats">
+      <div class="acc-stat"><b id="acStSync">—</b><span>синхронізація</span></div>
+      <div class="acc-stat"><b id="acStDev">—</b><span>пристрій</span></div>
+      <div class="acc-stat"><b id="acStVer">—</b><span>версія</span></div>
+    </div>
+    <div class="ms-sec">
+      <div class="ms-lbl"><span>Акаунт і синхронізація</span></div>
+      <div class="ms-card">
+        <div class="ms-row">
+          <span class="ms-tile" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          </span>
+          <div class="ms-body" style="flex:1">
+            <b>Синхронізація</b>
+            <span>налаштування на сервері й однакові на всіх пристроях. Вимкнена — теж зберігаються (копія), але не підтягуються.</span>
+          </div>
+          <label class="sw" title="Увімкнути/вимкнути синхронізацію" style="flex:none"><input type="checkbox" id="acSync"><i></i></label>
+        </div>
+        <!-- 3.4.5: перемикач бета-оновлень — показується ЛИШЕ адмінам/розробнику
+             (видимість керує refreshAccUI за роллю); звичайні акаунти і без
+             входу отримують тільки релізні версії -->
+        <div class="ms-row hidden" id="rowBeta">
+          <span class="ms-tile" style="background:linear-gradient(135deg,#f59e0b,#f97316)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.5L4.5 19a2 2 0 0 0 1.7 3h11.6a2 2 0 0 0 1.7-3L14 9.5V2"/><path d="M8.5 2h7"/><path d="M7 15h10"/></svg>
+          </span>
+          <div class="ms-body" style="flex:1">
+            <b>Бета-версії</b>
+            <span>отримувати бета-оновлення раніше за інших; лише для адмінів</span>
+          </div>
+          <label class="sw" title="Бета-оновлення" style="flex:none"><input type="checkbox" id="acBeta"><i></i></label>
+        </div>
+        <!-- 3.4.0: бета-канал переїхав у «Налаштування» -> картку «Оновлення» -->
+        <!-- 2.8.6: кнопку «Завантажити з хмари» прибрано — налаштування
+             підтягуються з акаунта АВТОМАТИЧНО (під час входу і далі
+             в реальному часі, див. syncWatch) -->
+        <!-- 3.4.8: скидання налаштувань акаунта (rs:1 на сервері + чистий майстер груп) -->
+        <div class="ms-row" id="acReset" role="button" title="Скинути налаштування акаунта">
+          <span class="ms-tile" style="background:linear-gradient(135deg,#38bdf8,#6366f1)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          </span>
+          <div class="ms-body"><b class="danger-t">Скинути налаштування акаунта</b><span>вибереш групи заново; на всіх пристроях</span></div>
+        </div>
+        <div class="ms-row" id="acOut" role="button" title="Вийти з акаунта Google">
+          <span class="ms-tile" style="background:linear-gradient(135deg,#f43f5e,#b91c1c)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </span>
+          <div class="ms-body"><b class="danger-t">Вийти з акаунта</b><span>вхід буде потрібен знову</span></div>
+        </div>
+      </div>
+      <div class="ac-note" id="accNote">Синхронізуються: групи предметів, сповіщення про уроки, режим Zoom і тема. Розклад завжди спільний для всього класу.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     3.0.0 — АДМІН-ПАНЕЛЬ (видима лише з роллю admin/developer,
+     роль видається в базі: users.role). У браузері недоступна.
+     ============================================================ -->
+<div id="vAdmin" class="view hidden">
+  <div class="adm-wrap">
+    <button class="adm-back" id="admBack" type="button">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.6 5.6 8.2 12l6.4 6.4"/></svg>
+      <span>До розкладу</span>
+    </button>
+    <!-- 3.4.0: ВЕЛИКА РАМКА «Редагування розкладу» — усередині три вкладки
+         (Розклад / Zoom / Вчителі іконки); тижні — окремою рамкою нижче -->
+    <section class="adm-card adm-frame">
+      <div class="adm-c-head"><span class="sw-c-ic grad"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.6" y="5" width="16.8" height="15.4" rx="2"/><path d="M3.6 10h16.8"/><path d="M8.2 2.8v4M15.8 2.8v4"/></svg></span>
+        <div class="sw-c-tt"><b>Редагування розкладу</b><span>зміни летять у базу — клас отримує їх миттєво</span></div>
+      </div>
+      <div class="adm-seg" id="admSeg">
+      <button class="adm-seg-b on" data-t="0" type="button"><b>Розклад</b></button>
+      <button class="adm-seg-b" data-t="1" type="button"><b>Zoom</b></button>
+      <button class="adm-seg-b" data-t="2" type="button"><b>Вчителі іконки</b></button>
+      </div>
+      <div id="admBody"></div>
+    </section>
+    <div id="admWeeks"></div>
+  </div>
+</div>
+<div id="admwrap" class="hidden">
+  <div class="adm-backdrop" id="admBackDrop"></div>
+  <div class="adm-modal" id="admModalBox"></div>
+</div>
+</div><!-- /#app -->
+
+<div id="mwrap" class="hidden">
+  <div class="mback" id="mback"></div>
+  <div class="modal">
+    <div class="m-head">
+      <div class="m-ic" id="mIc"></div>
+      <div class="m-tt"><b id="mName"></b><span id="mSub">обери групу — скопіюємо посилання</span></div>
+    </div>
+    <div id="mItems"></div>
+  </div>
+</div>
+
+<div id="gwrap" class="hidden">
+  <div class="mback" id="gback"></div>
+  <div class="modal gmodal">
+    <div class="m-head">
+      <div class="m-ic" style="background:linear-gradient(135deg,#8b5cf6,#6366f1)">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <div class="m-tt"><b>Мої групи</b><span id="gSub">обери групу для кожного предмета</span></div>
+    </div>
+    <div class="g-rows" id="gRows"></div>
+    <div class="g-foot">
+      <button class="b-mini" id="gCancel">Скасувати</button>
+      <button class="b-save" id="gSave" disabled>Зберегти</button>
+    </div>
+  </div>
+</div>
+
+<!-- 3.5.1: «ЩО НОВОГО» — віконце змін, яке зустрічає користувача після
+     оновлення (перший запуск нової версії). Маркери: + додали, − прибрали,
+   / переділали, ✦ виправили — кожен пункт у своїй рамочці. -->
+<div id="wn" class="hidden">
+  <div class="mback" id="wnBack"></div>
+  <div class="modal wn-modal">
+    <div class="m-head">
+      <div class="m-ic wn-ic">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3z"/></svg>
+      </div>
+      <div class="m-tt"><b>Що нового</b><span id="wnSub">оновлення встановлено</span></div>
+      <span class="wn-ver" id="wnVer"></span>
+    </div>
+    <div class="wn-list" id="wnList"></div>
+    <button class="b-save wn-ok" id="wnOk">Зрозуміло</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- підтвердження заходу на урок (можно ввімкнути в налаштуваннях) -->
+<div id="cwrap" class="hidden">
+  <div class="mback" id="cback"></div>
+  <div class="modal cmodal">
+    <div class="m-head">
+      <div class="m-ic" id="cIc" style="background:linear-gradient(135deg,#8b5cf6,#6366f1)"></div>
+      <div class="m-tt"><b id="cTitle">Приєднатися до уроку?</b><span id="cSub">захід у Zoom — підтверди, щоб випадково не зайти</span></div>
+    </div>
+    <div class="c-info" id="cInfo"></div>
+    <div class="g-foot" style="margin-top:2px">
+      <button class="b-mini" id="cNo">Ні, скасувати</button>
+      <button class="b-save" id="cYes" style="width:auto">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5v14l11-7z"/></svg>
+        Так, приєднатися
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 2.7.3: гейт входу — закрити неможливо, доки не увійдеш; вкладки сховані -->
+<!-- 3.3.2: гейт входу — як на телефоні:
+     титульна панель (#tbar) залишається ВГОРІ — зліва лого + назва (як на всіх
+     інших сторінках), справа кнопки вікна; вкладки й акаунт сховані (CSS).
+     Фон = ТОЙ САМИЙ, що й в основної частини, гейт починається ПІД панеллю.
+     У центрі — ОДНА іконка (лого FluxHelper), без Google і без «+».
+     Ідентифікатори agLogo/agGo/agGoT/agStat/agSub НЕ змінено (ui.js і main.cpp
+     очікують саме їх, зокрема ReplaceFirst у main.cpp). -->
+<div id="agate" class="hidden">
+  <div class="ag-glow"></div>
+  <div class="us-logo" id="agLogo"></div>
+  <div class="us-chip">особистий кабінет</div>
+  <h2>Вітаємо у FluxHelper</h2>
+  <p class="ag-sub" id="agSub">Увійди в акаунт Google — розклад, групи та налаштування житимуть на всіх твоїх пристроях.</p>
+  <div class="ag-mini">
+    <span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9"/><polyline points="21 3 21 9 15 9"/></svg>синхронізація</span>
+    <span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>безпечно</span>
+    <span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>нічого не губиться</span>
+  </div>
+  <button class="us-btn ag-go" id="agGo" type="button">
+    <svg width="17" height="17" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.1 5.7l6.2 5.2C40.9 35.6 44 30.3 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
+    <span id="agGoT">Увійти через Google</span>
+  </button>
+  <div class="ag-stat" id="agStat"></div>
+  <div class="ag-foot">FluxHelper __APP_VER__ · вхід захищає Google</div>
+</div>
+<div id="boot" class="pre">
+  <div class="bt-tb" id="btTb">
+    <div class="bt-tb-l"><img src="data:image/png;base64,__LOGO_B64__" width="27" height="27" alt="" decoding="sync" style="display:block;border-radius:8px"><span>FluxHelper</span></div>
+    <div class="bt-tb-r">
+      <button class="bt-wbtn win-only" id="btMin" type="button" aria-label="Згорнути">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <button class="bt-wbtn bt-x win-only" id="btClose" type="button" aria-label="Закрити">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="bt-mid">
+    <div class="bt-mark" id="btMark"><img src="data:image/png;base64,__LOGO_B64__" width="92" height="92" alt="" decoding="sync" fetchpriority="high" style="display:block;border-radius:20px"></div>
+    <div class="bt-name">FluxHelper</div>
+    <div class="bt-bar"><i id="btFill"></i></div>
+    <div class="bt-pct" id="btPct">0%</div>
+  </div>
+</div>
+
+<div id="neterr" class="hidden">
+  <div class="us-card">
+    <div class="us-logo" id="neLogo"></div>
+    <h2>Немає з'єднання</h2>
+    <p class="us-sub" id="neStat">FluxHelper бере розклад з інтернету — увімкни мережу і спробуй ще раз.</p>
+    <button class="us-btn" id="neRetry">Спробувати ще раз</button>
+  </div>
+</div>
+
+<div id="upd" class="hidden">
+  <div class="us-card">
+    <div class="us-logo" id="upLogo"></div>
+    <div class="us-chip" id="updChip">доступне оновлення</div>
+    <h2><span id="updOld"></span> → <b id="updNew"></b></h2>
+    <p class="us-sub">щоб користуватися програмою, спершу встанови нову версію</p>
+    <div class="us-prog" id="updProg"><i id="upFill"></i></div>
+    <div class="us-row"><span id="uStat">готово до встановлення</span><span id="upPct"></span></div>
+    <button class="us-btn" id="updGo">Оновити</button>
+    <!-- 3.5.5: помилка завантаження — замість «Оновити» два рядки: повтор і ручне завантаження -->
+    <button class="us-btn alt hidden" id="updRetry" type="button">Повторити знову</button>
+    <button class="us-btn alt2 hidden" id="updMan" type="button">Завантажити оновлення вручну</button>
+    <!-- 3.5.15: вихід БЕЗ оновлення — модалка більше не замкнює користувача
+         (просив власник: «не могу зайти в программу» через вічне оновлення) -->
+    <p class="us-sub" id="updWarn" hidden style="color:#fbbf24;font-weight:600;margin:6px 0 0">автооновлення не вдалося кілька разів поспіль — натисни «Завантажити оновлення вручну» або «Пізніше»</p>
+    <button class="us-btn ghost" id="updLater" type="button">Пізніше — увійти без оновлення</button>
+  </div>
+</div>
+
+<script src="ui.js"></script>
+</body>
+</html>
