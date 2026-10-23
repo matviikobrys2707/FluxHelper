@@ -263,8 +263,15 @@ body.ready #app{animation:apin .55s cubic-bezier(.16,1,.3,1) both}
 /* шапка — ТИТУЛЬНА ПАНЕЛЬ 1-в-1 ІЗ ЗАСТОСУНКУ (3.5.13, #tbar з ui.css):
    лого + FluxHelper + дрібний ПІДПИС СЕКЦІЇ (РОЗКЛАД/НАЛАШТУВАННЯ/…),
    як на ПК і телефоні в програмі. Бейдж «8-Б» зі старої веб-шапки знято. */
-.nav{flex:none;padding:calc(8px + var(--sat)) 14px 4px;background:transparent;z-index:30}
-.tb-row{display:flex;align-items:center;gap:10px;min-height:34px}
+.nav{flex:none;padding:calc(5px + var(--sat)) 12px 5px;background:rgba(9,9,16,.6);
+  border-bottom:1px solid rgba(255,255,255,.06);z-index:30;
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+/* 3.5.12: шапка 1-в-1 як #tbar застосунку — лого + FluxHelper, підпису
+   секції на телефоні НЕМАЄ (у застосунку .tb-ver захований на body.mob) */
+.nav .tb-ver{display:none!important}
+.tb-row{display:flex;align-items:center;gap:10px;min-height:40px}
+body[data-theme="light"] .nav{background:rgba(255,255,255,.78);border-bottom:1px solid rgba(139,92,246,.2)}
+body[data-theme="glass"] .nav{background:rgba(19,15,44,.62);border-bottom:1px solid rgba(255,255,255,.14)}
 .tb-l{display:flex;align-items:center;gap:10px;min-width:0}
 .tb-r{display:flex;align-items:center}
 .lmark{width:29px;height:29px;border-radius:9px;overflow:hidden;flex:none;display:grid;place-items:center;
@@ -274,12 +281,15 @@ body.ready #app{animation:apin .55s cubic-bezier(.16,1,.3,1) both}
 .tb-ver{font-size:9.5px;font-weight:800;letter-spacing:1.2px;color:#a5b4fc;text-transform:uppercase;opacity:.85;
   margin-left:2px;transform:translateY(1px);white-space:nowrap}
 body[data-theme="light"] .tb-ver{color:#475569}
-.lg-head{padding:10px 18px 2px}
-.lg-head h2{font-size:30px;font-weight:800;letter-spacing:.2px;transition:opacity .18s}
+.lg-head{padding:10px 18px 2px;display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+/* 3.5.12: h2 — «гумовий» clamp застосунку (було 30px — «все поїхало») */
+.lg-head h2{font-size:clamp(18px,5.2vw,22px);font-weight:800;letter-spacing:.3px;transition:opacity .18s;white-space:nowrap}
+.lg-head .chip{margin-top:0;flex:none;max-width:56%;}
 .lg-head h2.dchg{animation:dchg .3s ease}
 @keyframes dchg{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-.chip{display:inline-flex;align-items:center;gap:6px;margin-top:5px;font-size:11.5px;color:var(--sub);
-  background:var(--soft-bg);border:1px solid var(--soft-bd);border-radius:999px;padding:4.5px 11px;font-weight:600}
+.chip{display:inline-flex;align-items:center;gap:6px;margin-top:5px;font-size:clamp(10.5px,3vw,12px);color:var(--sub);
+  background:var(--soft-bg);border:1px solid var(--soft-bd);border-radius:999px;padding:6px 11px;font-weight:600;
+  white-space:nowrap;min-width:0}
 .chip .today-dot{width:6px;height:6px;border-radius:50%;background:#818cf8;box-shadow:0 0 8px #818cf8}
 
 /* банер «увімкни сповіщення» */
@@ -295,14 +305,14 @@ body[data-theme="light"] .tb-ver{color:#475569}
 #nban .bn-x{flex:none;color:var(--dim);padding:4px}
 
 /* вкладки днів */
-#tabs{flex:none;display:flex;gap:6px;padding:10px 14px 6px;overflow-x:auto;scrollbar-width:none}
+#tabs{flex:none;display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:10px 14px 6px}
 #tabs::-webkit-scrollbar{display:none}
-.tab{flex:1 1 0;min-width:52px;position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;
-  padding:7.5px 4px;border-radius:13px;background:var(--soft-bg);border:1px solid var(--soft-bd);
+.tab{flex:none;min-width:0;position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;
+  padding:9px 2px;border-radius:12px;background:var(--soft-bg);border:1px solid var(--soft-bd);
   transition:transform .12s ease,background .2s,border-color .2s}
 .tab:active{transform:scale(.96)}
-.tab .d{font-size:13px;font-weight:800}
-.tab .dt{font-size:9.5px;color:var(--dim);font-weight:600}
+.tab .d{font-size:clamp(12px,3.3vw,14.5px);font-weight:800}
+.tab .dt{font-size:clamp(8.5px,2.3vw,10px);color:var(--dim);font-weight:600}
 .tab.on{background:var(--grad-wide);background-size:220% 100%;border-color:transparent;
   box-shadow:0 6px 18px rgba(99,102,241,.4);animation:tabPop .3s cubic-bezier(.34,1.56,.64,1)}
 /* 3.5.13: пружні анімації активації (дні + таббар) */
@@ -317,9 +327,11 @@ body[data-theme="light"] .tb-ver{color:#475569}
 /* =================== СПИСОК УРОКІВ =================== */
 #list{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
   transform:translateZ(0);-webkit-backface-visibility:hidden;backface-visibility:hidden;
-  padding:8px 16px calc(74px + var(--sab));overscroll-behavior:contain}
-.card{position:relative;display:grid;grid-template-columns:46px minmax(0,1fr) auto;gap:12px;align-items:center;
-  padding:13px 14px;border-radius:var(--r-md);background:var(--card);border:1px solid var(--card-bd);
+  /* 3.5.12: падіння резерву 74px -> 10px — останні уроки заходять ПІД скло,
+     за панеллю видно картки, а не порожній фон (як просив власник) */
+  padding:8px 16px calc(10px + var(--sab));overscroll-behavior:contain}
+.card{position:relative;display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:11px;align-items:center;
+  padding:12px 12px;border-radius:16px;background:var(--card);border:1px solid var(--card-bd);
   margin-bottom:10px;box-shadow:0 6px 22px rgba(0,0,0,.14);
   animation:cardIn .34s ease both;transition:transform .12s ease}
 @keyframes cardIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -329,9 +341,9 @@ body[data-theme="light"] .tb-ver{color:#475569}
 @keyframes slL{from{opacity:0;transform:translateX(26px)}to{opacity:1;transform:none}}
 @keyframes slR{from{opacity:0;transform:translateX(-26px)}to{opacity:1;transform:none}}
 .card:active{transform:scale(.985)}
-.card .ic{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;color:#fff;flex:none;
+.card .ic{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;color:#fff;flex:none;
   box-shadow:0 6px 16px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.25)}
-.card h3{display:flex;align-items:center;min-width:0;font-size:15px;font-weight:700;line-height:1.25;color:var(--txt)}
+.card h3{display:flex;align-items:center;min-width:0;font-size:clamp(13.5px,3.8vw,15.5px);font-weight:700;line-height:1.25;color:var(--txt)}
 .card h3 .ln{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* 3.5.12: мета — ВСЕ В ОДНОМУ РЯДКУ (просив власник після iPhone 16:
    «название урока, время, имя учителя — всё съехало… чтобы максимально
@@ -347,14 +359,19 @@ body[data-theme="light"] .tb-ver{color:#475569}
    вчитель НА ВСЮ ШИРИНУ картки (просив власник: «чтобы максимально было
    видно имя учителя»). .mid -> display:contents, щоб h3/.meta стали
    прямими grid-елементами без зміни розмітки. */
-.card{row-gap:4px}
+/* 3.5.12: row-gap 11px — 1-в-1 як у застосунку (body.mob .card gap:11px);
+   інакше рядок «час + вчитель» наїжджає на нижній край іконки */
+.card{row-gap:11px}
 .card .mid{display:contents}
-.card .ic{grid-row:1/3}
+/* 3.5.12: іконка — ЯВНО колонка 1 (як у застосунку), інакше при meta на
+   всю ширину авто-розкладка створює 4-ту колонку й іконка їде вправо */
+.card .ic{grid-column:1;grid-row:1/3}
 .card h3{grid-column:2;grid-row:1}
 .card .b-join{grid-column:3;grid-row:1}
-.card .meta{grid-column:2/4;grid-row:2;align-self:center}
-.card .meta{display:flex;align-items:center;gap:4px 12px;margin-top:5px;flex-wrap:wrap}
-.card .tc{display:inline-flex;align-items:center;gap:4.5px;font-size:11px;color:var(--sub);font-weight:600;white-space:nowrap}
+.card .meta{grid-column:1/4;grid-row:2;align-self:center;padding-left:4px}
+.card .meta{display:flex;align-items:center;gap:11px;margin-top:0;flex-wrap:nowrap}
+.card .meta .tc:first-child{flex:none}
+.card .tc{display:inline-flex;align-items:center;gap:4.5px;font-size:clamp(10.5px,3vw,12px);color:var(--sub);font-weight:600;white-space:nowrap}
 .card .tc svg{flex:none;opacity:.8}
 .card .tc.t-time{flex:none;font-variant-numeric:tabular-nums}
 .card .tc.t-teach{flex:1 1 auto;min-width:0;overflow:hidden}
@@ -367,8 +384,8 @@ body[data-theme="light"] .tb-ver{color:#475569}
   padding:3px 9px;box-shadow:0 0 10px color-mix(in srgb,var(--next) 14%,transparent)}
 .now-chip i,.next-chip i{width:5px;height:5px;border-radius:50%;background:currentColor;animation:blink 1.4s ease infinite}
 @keyframes blink{50%{opacity:.35}}
-.b-join{flex:none;display:inline-flex;align-items:center;gap:6px;padding:9px 13px;border-radius:12px;
-  background:var(--grad);color:var(--on-acc);font-size:11.5px;font-weight:800;
+.b-join{flex:none;display:inline-flex;align-items:center;gap:6px;padding:9px 12px;border-radius:12px;
+  background:var(--grad);color:var(--on-acc);font-size:12px;font-weight:700;
   box-shadow:0 6px 16px rgba(99,102,241,.38);transition:transform .12s}
 .b-join:active{transform:scale(.94)}
 /* 3.5.13: блиск, що пробігає головними кнопками при наведенні (як в ui.css) */
@@ -387,14 +404,10 @@ body[data-theme="light"] .tb-ver{color:#475569}
    тощо): трохи менші відступи/іконка/кнопка — назва, час і вчитель гарантовано
    вміщаються, «съезжать» нічому. Планшетів (≥560px) не стосується. */
 @media (max-width:439px){
-  #list{padding:8px 12px calc(74px + var(--sab))}
-  .card{grid-template-columns:42px minmax(0,1fr) auto;gap:10px;padding:12px 12px}
-  .card .ic{width:42px;height:42px;border-radius:12px}
-  .b-join{padding:8px 11px;font-size:11px;border-radius:11px}
-  .card h3{font-size:14.5px}
-  .card .tc{font-size:10.4px}
-  .nav{padding-left:14px;padding-right:14px}
-  .lg-head{padding:10px 14px 2px}
+  /* 3.5.12: картки мають clamp-розміри 1-в-1 як у застосунку — тут лише відступи */
+  #list{padding:8px 12px calc(10px + var(--sab))}
+  .nav{padding-left:10px;padding-right:10px}
+  .lg-head{padding:10px 12px 2px}
   #tabs{padding:10px 10px 6px}
   .su-item{gap:9px}
   .su-opt{padding:8px 24px 8px 10px}
@@ -413,38 +426,33 @@ body[data-theme="light"] .tb-ver{color:#475569}
    • контент тепер ЗАХОДИТЬ ПІД панель (#list паддінг 74px замість 116px) —
      у Розкладі видно уроки крізь скло, панель більше не «чорна плашка»,
      що закриває розклад. */
+/* 3.5.12: панель = #bnav застосунку ТОЧЬ-В-ТОЧЬ (просив власник: «точь-в-точь
+   як зараз на телефоні»). Ті самі значення ui.css: радіальний фіолетовий
+   підсвіт + градієнт скла 60%/72%, blur(18px) saturate(165%), рамка .32,
+   глибокі тіні.Glass-тема застосунку не перевизначає панель — темні
+   значення спільні для standard і glass, тому окремого блока немає. */
 #tabbar{position:fixed;left:0;right:0;bottom:calc(9px + var(--sab));z-index:40;
-  display:flex;gap:3px;padding:6px 7px;border-radius:24px;width:max-content;
+  display:flex;flex-direction:row;align-items:stretch;gap:3px;padding:6px 7px;border-radius:24px;width:max-content;
   max-width:calc(100vw - 16px);margin:0 auto;
-  background:
-    radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.22),transparent 60%),
-    linear-gradient(180deg,rgba(38,30,74,.46),rgba(16,12,34,.54));
-  -webkit-backdrop-filter:blur(16px) saturate(160%);
-  backdrop-filter:blur(16px) saturate(160%);
-  border:1px solid rgba(139,92,246,.30);
-  box-shadow:0 12px 34px rgba(0,0,0,.42),0 2px 10px rgba(0,0,0,.30),inset 0 1px 0 rgba(255,255,255,.12)}
+  background:radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.20),transparent 58%),linear-gradient(180deg,rgba(44,35,84,.60),rgba(20,15,42,.72));
+  -webkit-backdrop-filter:blur(18px) saturate(165%);
+  backdrop-filter:blur(18px) saturate(165%);
+  border:1px solid rgba(139,92,246,.32);
+  box-shadow:0 12px 34px rgba(0,0,0,.5),0 2px 10px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.10)}
 body[data-theme="light"] #tabbar{
-  background:
-    radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.16),transparent 60%),
-    linear-gradient(180deg,rgba(255,255,255,.72),rgba(243,242,251,.80));
-  -webkit-backdrop-filter:blur(16px) saturate(150%);
-  backdrop-filter:blur(16px) saturate(150%);
+  background:radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.14),transparent 58%),linear-gradient(180deg,rgba(255,255,255,.78),rgba(244,243,252,.86));
+  -webkit-backdrop-filter:blur(18px) saturate(150%);
+  backdrop-filter:blur(18px) saturate(150%);
   border-color:rgba(124,58,237,.22);
-  box-shadow:0 12px 30px rgba(15,23,42,.16),inset 0 1px 0 rgba(255,255,255,.9)}
-body[data-theme="glass"] #tabbar{
-  background:
-    radial-gradient(120% 90% at 50% 0%,rgba(168,85,247,.26),transparent 60%),
-    linear-gradient(180deg,rgba(46,34,96,.44),rgba(22,16,48,.56));
-  -webkit-backdrop-filter:blur(18px) saturate(170%);
-  backdrop-filter:blur(18px) saturate(170%);
-  border-color:rgba(255,255,255,.20)}
-.tbb{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:60px;
-  padding:7px 11px 5px;color:var(--dim);border-radius:19px;transition:color .18s,background .18s,transform .1s}
-.tbb:active{transform:scale(.93)}
-.tbb.on{color:var(--acc);background:color-mix(in srgb,var(--acc) 14%,transparent);
+  box-shadow:0 12px 30px rgba(15,23,42,.14),inset 0 1px 0 rgba(255,255,255,.85)}
+.tbb{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:58px;
+  padding:7px 10px 5px;color:#9aa0b4;border-radius:19px;transition:color .18s,background .18s,transform .1s}
+.tbb:active{transform:scale(.92)}
+.tbb.on{color:#c9b8ff;background:rgba(139,92,246,.17);
   box-shadow:inset 0 0 0 1px rgba(139,92,246,.30);animation:tabPop .3s cubic-bezier(.34,1.56,.64,1)}
 .tbb.on svg{animation:icPop .38s cubic-bezier(.34,1.56,.64,1)}
-body[data-theme="light"] .tbb.on{color:#7c3aed}
+body[data-theme="light"] .tbb{color:#64748b}
+body[data-theme="light"] .tbb.on{color:#6d28d9;background:rgba(139,92,246,.11);box-shadow:inset 0 0 0 1px rgba(139,92,246,.22)}
 .tbb svg{display:block}
 /* підписи під іконками — як у застосунку (3.5.7+) */
 .tbb > span:not(.tb-ava){display:block;font-size:9px;font-weight:700;letter-spacing:.2px;line-height:1;color:inherit}
@@ -874,11 +882,46 @@ body[data-theme="light"] .dw-foot{border-top-color:rgba(15,23,42,.08)}
 body[data-theme="light"] .dw-foot b,body[data-theme="light"] .dw-foot span{color:#475569}
 @media (min-width:930px) and (min-height:560px){
   /* --- титульна панель 1-в-1 як у застосунку (#tbar) --- */
+  /* 3.5.12: панель 1-в-1 як у WINDOWS EXE — ПРОЗОРА (як #tbar у pc_ui.css),
+     лого + FluxHelper зліва, сегменти вкладок по центру (.tb-seg),
+     рамка акаунта справа (.tb-acc). Бургера/шестерні немає. */
   body.ready #dtbar{display:flex;align-items:center;justify-content:space-between;gap:14px;position:fixed;top:0;left:0;right:0;z-index:60;
-    height:48px;padding:0 6px 0 10px;
-    background:rgba(9,9,16,.6);border-bottom:1px solid rgba(255,255,255,.06)}
-  body[data-theme="light"] #dtbar{background:rgba(255,255,255,.8);border-bottom:1px solid rgba(139,92,246,.2)}
-  body[data-theme="glass"] #dtbar{background:rgba(14,10,32,.66);border-bottom:1px solid rgba(255,255,255,.10)}
+    height:50px;padding:0 14px;background:transparent;border-bottom:0}
+  body[data-theme="light"] #dtbar,body[data-theme="glass"] #dtbar{background:transparent;border-bottom:0}
+  #dtbar .lmark{width:27px;height:27px;border-radius:8px}
+  .tb-seg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;gap:3px;
+    background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:3px;
+    box-shadow:0 6px 18px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.06)}
+  .tb-seg button{display:inline-flex;align-items:center;gap:7px;border:0;background:transparent;color:#9aa0b4;
+    font-family:inherit;font-size:11.5px;font-weight:800;padding:5px 17px;border-radius:8px;cursor:pointer;
+    transition:all .15s ease;letter-spacing:.2px;white-space:nowrap}
+  .tb-seg button svg{flex:none;opacity:.85;transition:opacity .15s ease,transform .2s ease}
+  .tb-seg button:hover{color:#e0e2f0;background:rgba(255,255,255,.06)}
+  .tb-seg button:hover svg{opacity:1;transform:rotate(-6deg) scale(1.08)}
+  .tb-seg button.on{background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff;box-shadow:0 4px 14px rgba(99,102,241,.4)}
+  .tb-seg button.on svg{opacity:1}
+  .tb-seg button:active{transform:scale(.96)}
+  .tb-acc{display:flex;align-items:center;gap:9px;height:34px;padding:0 13px 0 5px;
+    border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);border-radius:10px;cursor:pointer;
+    font-family:inherit;color:inherit;transition:background .15s ease,border-color .15s ease,transform .1s ease}
+  .tb-acc:hover{background:rgba(255,255,255,.1);border-color:rgba(139,92,246,.4)}
+  .tb-acc:active{transform:scale(.97)}
+  .tb-acc .tb-acc-i{width:24px;height:24px;border-radius:50%;flex:none;display:grid;place-items:center;
+    font-weight:800;font-size:12px;color:#fff;background:linear-gradient(135deg,#8b5cf6,#6366f1);overflow:hidden}
+  .tb-acc .tb-acc-i img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+  .tb-acc .tb-acc-i svg{width:12px;height:12px}
+  .tb-acc .tb-acc-t{min-width:0;display:flex;flex-direction:column;line-height:1.15;text-align:left}
+  .tb-acc .tb-acc-t b{font-size:11.5px;font-weight:700;color:#f0f1f7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+  .tb-acc .tb-acc-t span{font-size:9.5px;color:#8b8fa3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+  body[data-theme="light"] .tb-seg{background:rgba(15,23,42,.05);border-color:rgba(15,23,42,.10);
+    box-shadow:0 6px 18px rgba(15,23,42,.08),inset 0 1px 0 rgba(255,255,255,.5)}
+  body[data-theme="light"] .tb-seg button{color:#64748b}
+  body[data-theme="light"] .tb-seg button:hover{color:#0f172a;background:rgba(15,23,42,.06)}
+  body[data-theme="light"] .tb-acc{border-color:rgba(15,23,42,.12);background:rgba(255,255,255,.6)}
+  body[data-theme="light"] .tb-acc .tb-acc-t b{color:#0f172a}
+  body[data-theme="light"] .tb-acc .tb-acc-t span{color:#64748b}
+  /* 3.5.12: шухляди більше нема — вся навігація у верхній панелі */
+  #drawer,#dback{display:none!important}
   .tb-btn{width:48px;height:48px;display:grid;place-items:center;background:transparent;border:0;cursor:pointer;
     color:#c8cad8;transition:background .15s ease,color .15s ease,transform .1s ease;padding:0}
   .tb-btn:hover{background:rgba(255,255,255,.07);color:#fff}
@@ -886,11 +929,12 @@ body[data-theme="light"] .dw-foot b,body[data-theme="light"] .dw-foot span{color
   body[data-theme="light"] .tb-btn{color:#334155}
   body[data-theme="light"] .tb-btn:hover{background:#f3e8ff;color:#581c87}
   /* --- каркас: контент по центру, ширший і повітряніший --- */
-  body.ready #app{padding-top:48px}
-  .view{top:48px;max-width:980px;margin:0 auto;left:0;right:0}
+  body.ready #app{padding-top:50px}
+  /* 3.5.12: контент тягнеться на екран (просив власник: «растягивалось») */
+  .view{top:50px;max-width:1200px;margin:0 auto;left:0;right:0;padding-left:20px;padding-right:20px}
   #vMain .nav,#vSetup .nav,#vAcc .nav,#vAdmin .nav{display:none}   /* лого вже в панелі */
   .lg-head{padding-top:16px}
-  .lg-head h2{font-size:26px}
+  .lg-head h2{font-size:21px}
   #tabs{padding:12px 4px 8px}
   #list{padding:10px 24px 26px}
   .scrollview{padding:18px 24px 34px}
@@ -898,7 +942,7 @@ body[data-theme="light"] .dw-foot b,body[data-theme="light"] .dw-foot span{color
   #vAcc .scrollview{max-width:600px;margin:0 auto;width:100%}
   #toast{bottom:26px}
   /* картки уроків — ширші, з акуратним хвостом */
-  .card{padding:14px 16px;border-radius:var(--r-lg)}
+  .card{padding:14px 16px;border-radius:var(--r-lg);row-gap:4px}
   .card .ic{width:48px;height:48px;transition:transform .25s ease}
   /* --- hover-стани (миша) --- */
   .card:hover{transform:translateY(-1px);border-color:rgba(139,92,246,.42);
@@ -1163,7 +1207,7 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
 
   <div id="tabbar">
       <button class="tbb on" id="tbSched" type="button">
-        <svg class="ic-o" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14.5l2.5 2.5 5-5"/></svg>
+        <svg class="ic-o" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="17" rx="2.5"/><line x1="3" y1="9.5" x2="21" y2="9.5"/><line x1="8" y1="2.5" x2="8" y2="6.5"/><line x1="16" y1="2.5" x2="16" y2="6.5"/></svg>
         <span>Розклад</span>
       </button>
       <button class="tbb hidden" id="tbAdm" type="button">
@@ -1171,7 +1215,7 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
         <span>Адмін</span>
       </button>
       <button class="tbb" id="tbSetup" type="button">
-        <svg class="ic-o" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <svg class="ic-o" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         <span>Налаштування</span>
       </button>
       <button class="tbb" id="tbProf" type="button">
@@ -1189,18 +1233,32 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
 <!-- ДЕСКТОП-ПАНЕЛЬ (3.5.13) — 1-в-1 титульна панель Windows exe:
      бургер + лого + FluxHelper + підпис секції, справа шестерня.
      Навігація та акаунт — у висувному меню (#drawer), як у програмі. -->
+<!-- 3.5.12: панель 1-в-1 як у WINDOWS EXE (pc_ui.html #tbar): зліва лого +
+     FluxHelper, ПО ЦЕНТРУ сегменти Розклад/Налаштування/Адмін, справа рамка
+     акаунта. Бургер, підпис секції й шестерня прибрані (просив власник). -->
 <div id="dtbar">
   <div class="tb-l">
-    <button class="tb-btn" id="burger" type="button" title="Меню" aria-label="Меню">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
-    </button>
     <span class="lmark"><img src="icon-192.png" alt=""></span>
     <span class="tb-name">FluxHelper</span>
-    <span class="tb-ver" id="dtSec">розклад</span>
+  </div>
+  <div class="tb-seg" role="tablist">
+    <button id="segSched" type="button" title="Розклад">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="17" rx="2.5"/><line x1="3" y1="9.5" x2="21" y2="9.5"/><line x1="8" y1="2.5" x2="8" y2="6.5"/><line x1="16" y1="2.5" x2="16" y2="6.5"/><path d="M8 14h3M8 17.5h5"/></svg>
+      <span>Розклад</span>
+    </button>
+    <button id="segSetup" type="button" title="Налаштування">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>Налаштування</span>
+    </button>
+    <button id="segAdmin" type="button" title="Адмін" class="hidden">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.9 19.4 5.7v5.5c0 4.6-3.1 8-7.4 9.9-4.3-1.9-7.4-5.3-7.4-9.9V5.7L12 2.9z"/><path d="M9 12.2l2.1 2.1 4-4.6"/></svg>
+      <span>Адмін</span>
+    </button>
   </div>
   <div class="tb-r">
-    <button class="tb-btn" id="bCfg" type="button" title="Налаштування" aria-label="Налаштування">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <button class="tb-acc" id="dtAcc" type="button" title="Акаунт">
+      <span class="tb-acc-i" id="dtAccAva">?</span>
+      <span class="tb-acc-t"><b id="dtAccName">Увійти</b><span id="dtAccMail">через Google</span></span>
     </button>
   </div>
 </div>
@@ -1341,7 +1399,7 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass'].inde
    Версія 3.5.12 · Web
    ============================================================ */
 
-var APP_VER = '3.5.13';   /* 3.5.10: ПЕРЕЗАПИСУЄТЬСЯ з versions/beta/latest.json —
+var APP_VER = '3.5.12';   /* 3.5.10: ПЕРЕЗАПИСУЄТЬСЯ з versions/beta/latest.json —
    версія сайту ЗАВЖДИ збігається з версією бета-застосунків (Android/ПК),
    як просив власник: «дві версії — релізнута і бета; якщо бета — збігаються всюди» */
 /* 3.5.5: КАНАЛ — сайт завжди поточний, але версію показуємо з підписом «beta»,
@@ -2736,7 +2794,9 @@ const VIEW_HASH = { vMain: 'розклад', vSetup: 'налаштування',
 const HASH_VIEW = { 'розклад': 'vMain', 'налаштування': 'vSetup', 'профіль': 'vAcc', 'адмін': 'vAdmin' };
 /* 3.5.13: підпис секції в шапці (як setTbSec у застосунку) + висувне меню */
 const VIEW_SEC = { vMain: 'розклад', vSetup: 'налаштування', vAcc: 'профіль', vAdmin: 'адмін' };
-function setTbSec(t) { try { document.querySelectorAll('.tb-ver').forEach(function (e) { e.textContent = t || ''; }); } catch (e2) {} }
+/* 3.5.12: підпис «розклад/налаштування/адмін» біля FluxHelper прибрано —
+   шапка 1-в-1 як у застосунку: тільки лого + назва (просив власник) */
+function setTbSec(t) { }
 function drawerOpen() { const d = byId('drawer'), b = byId('dback'); if (d) d.classList.add('on'); if (b) b.classList.add('on'); }
 function drawerClose() { const d = byId('drawer'), b = byId('dback'); if (d) d.classList.remove('on'); if (b) b.classList.remove('on'); }
 function showView(id) {
@@ -2821,6 +2881,11 @@ function markTab(mode) {   // 'sched' | 'setup' | 'acc' | 'adm' — таббар
   if (dS) dS.classList.toggle('on', mode === 'sched');
   if (dZ) dZ.classList.toggle('on', mode === 'setup');
   if (dA) dA.classList.toggle('on', mode === 'adm');
+  /* 3.5.12: сегменти у верхній панелі (десктоп) */
+  const gS = byId('segSched'), gZ = byId('segSetup'), gA = byId('segAdmin');
+  if (gS) gS.classList.toggle('on', mode === 'sched');
+  if (gZ) gZ.classList.toggle('on', mode === 'setup');
+  if (gA) gA.classList.toggle('on', mode === 'adm');
 }
 function buildSummary() {
   /* 3.5.5: перенесено 1-в-1 із застосунку — довідкові рядки «предмет ->
@@ -3172,6 +3237,11 @@ function refreshAccUI() {
   });
   /* 3.5.13: картка акаунта у висувному меню (1-в-1 як dw-acc у застосунку) */
   const dAva = byId('dwAva'); if (dAva) dAva.innerHTML = avaHtml(has);
+  /* 3.5.12: рамка акаунта у верхній панелі (як tb-acc у застосунку на ПК) */
+  const gAva = byId('dtAccAva'), gNm = byId('dtAccName'), gMl = byId('dtAccMail');
+  if (gAva) gAva.innerHTML = avaHtml(has);
+  if (gNm) gNm.textContent = has ? (ACC.user.name || 'Акаунт') : 'Увійти';
+  if (gMl) gMl.textContent = has ? (ACC.user.email || 'акаунт Google') : 'через Google';
   const dNm = byId('dwAccName'); if (dNm) dNm.textContent = has ? (ACC.user.name || 'Акаунт') : 'Акаунт';
   const dMl = byId('dwAccSub'); if (dMl) dMl.textContent = has ? (ACC.user.email || 'увійти через Google') : 'увійти через Google';
   const acAva = byId('acAva');
@@ -3203,7 +3273,7 @@ function refreshAccUI() {
   const sc = byId('acSync'); if (sc) sc.checked = !!ACC.sync;
   /* 3.5.4: вкладка «Адмін» (таббар + шухляда) — лише для ролі з бази */
   const admOk = !!(has && staffAcc());
-  ['tbAdm', 'dwAdmin'].forEach(function (id) {
+  ['tbAdm', 'dwAdmin', 'segAdmin'].forEach(function (id) {
     const t = byId(id);
     if (t) { t.classList.toggle('hidden', !admOk); if (!admOk) t.classList.remove('on'); }
   });
@@ -3344,14 +3414,18 @@ pushDataLoad();
   byId('tbSetup').onclick = function () { showSetup(); };
   byId('tbProf').onclick = profTap;
   byId('tbAdm').onclick = showAdmin;
-  /* 3.5.13: висувне меню (десктоп, 1-в-1 як у застосунку) + шестерня в шапці */
-  byId('burger').onclick = drawerOpen;
+  /* 3.5.12: бургера більше нема; навігація — у верхній панелі (як у exe) */
+  byId('burger') && (byId('burger').onclick = drawerOpen);
+  byId('segSched') && (byId('segSched').onclick = function () { showMain(true); });
+  byId('segSetup') && (byId('segSetup').onclick = showSetup);
+  byId('segAdmin') && (byId('segAdmin').onclick = showAdmin);
+  byId('dtAcc') && (byId('dtAcc').onclick = profTap);
   byId('dback').onclick = drawerClose;
   byId('dwSched').onclick = function () { drawerClose(); showMain(true); };
   byId('dwSet').onclick = function () { drawerClose(); showSetup(); };
   byId('dwAdmin').onclick = function () { drawerClose(); showAdmin(); };
   byId('dwAcc').onclick = function () { drawerClose(); profTap(); };
-  byId('bCfg').onclick = function () { drawerClose(); showSetup(); };
+  byId('bCfg') && (byId('bCfg').onclick = function () { drawerClose(); showSetup(); });
 byId('bGroups').onclick = function () { openGroups(); };
 byId('accBack') && (byId('accBack').onclick = function () { showSetup(); });
 byId('gSave').onclick = saveGroups;
