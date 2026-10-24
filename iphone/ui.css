@@ -1645,8 +1645,10 @@ body.mob .card,body.android .card{background:rgba(255,255,255,.05);border-color:
    подними вверх, буквально на пару пикселей») — 2px -> 8px от края.
    3.5.21: ПОДНЯТА ЕЩЁ ВЫШЕ (просил владелец: «расстояние между самым
    низом и началом панели — где-то 0.5 см, 0.5 или 0.4 см») —
-   8px -> 17px ≈ 0.45 см на любом-density CSS-пикселях. */
-#bnav{position:fixed;left:50%;transform:translateX(-50%);bottom:17px;z-index:60;display:none;
+   8px -> 17px ≈ 0.45 см на любом-density CSS-пикселях.
+   3.5.25: ПІДНЯТА ЩЕ ВИЩЕ (просив власник: «подними ещё где-то в полтора
+   раза от текущего отступа») — 17px -> 26px ≈ 0.7 см від краю. */
+#bnav{position:fixed;left:50%;transform:translateX(-50%);bottom:26px;z-index:60;display:none;
   flex-direction:row;align-items:stretch;gap:3px;padding:6px 7px;border-radius:24px;width:max-content;max-width:calc(100vw - 16px);
   /* 3.5.13: темна тема — панель ПОТЕМНІША (просив власник: «немножечко
      потемнее, реально как будто тёмная тема»); колишній фіолетовий колір
@@ -1716,7 +1718,7 @@ body.android #burger,body.android #drawer,body.android #dback{display:none!impor
    Панель ≈63px + bottom 8px + повітря ~13px = 84px. Поле останньої
    картки і нижній відступ .view прибрано — відстань «остання штука ->
    панель» ОДНАКОВА в Розкладі, Налаштуваннях, Аккаунті й Адмінці. */
-:root{--fh-navres:84px}
+:root{--fh-navres:93px}
 body.android #vMain{padding-bottom:0}
 body.android main#list{padding-bottom:calc(var(--fh-navres) + var(--fh-sab, env(safe-area-inset-bottom, 0px)))}
 body.android main#list > :last-child{margin-bottom:0!important}
