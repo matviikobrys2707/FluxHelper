@@ -215,6 +215,29 @@ try{
         </div>
       </section>
 
+      <!-- 3.5.21: АВТОМАТИЧНИЙ ВХІД У ZOOM (ТЕСТ) — ЛИШЕ Windows-застосунок;
+           на сайті секцію ховає webhost.js (міст fh:zautojoin є тільки в exe) -->
+      <section class="sw-card" id="secZAuto">
+        <div class="sw-c-head">
+          <span class="sw-c-ic grad"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></span>
+          <div class="sw-c-tt"><b>Автоматичний вхід у Zoom</b><span>тест: запуск за 3 хв до уроку</span></div>
+        </div>
+        <div class="sw-tog-row">
+          <span class="su-tile" style="background:linear-gradient(135deg,#34d399,#059669)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg>
+          </span>
+          <div class="su-body">
+            <b>Заходити автоматично</b>
+            <span>за 3 хв до уроку сам відкриє Zoom, вимкне звук і камеру та натисне «Увійти»</span>
+          </div>
+          <label class="sw"><input type="checkbox" id="zautoOn"><i></i></label>
+        </div>
+        <button class="su-perm" id="zautoTest" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:7px;vertical-align:-2px"><path d="M5 3l14 9-14 9V3z"/></svg>
+          Тест автоматичного входу (моя конференція)
+        </button>
+      </section>
+
       <!-- 3.5.19: id="secNotif" — на сайті секцію ховає webhost.js
            (сповіщення — лише в застосунках Android/Windows) -->
       <section class="sw-card" id="secNotif">

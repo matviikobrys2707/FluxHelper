@@ -64,6 +64,8 @@ try {
     '#bMin,#bClose,#btMin,#btClose{display:none!important}' +
     '#bnav{bottom:calc(17px + env(safe-area-inset-bottom, 0px))!important}' +
     '#secNotif,#nban,#bPerm,#bTestN,#rowNotif{display:none!important}' +
+    '/* 3.5.21: авто-вхід у Zoom — тестова функція ЛИШЕ Windows-застосунку */' +
+    '#secZAuto{display:none!important}' +
     'body:not(.fh-beta) .beta-only{display:none!important}' +
     (FH_IS_MAC ? 'body:not(.fh-beta) #secZoom{display:none!important}'
                : '#secZoom{display:none!important}');
