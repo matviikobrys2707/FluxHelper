@@ -155,18 +155,20 @@ main::-webkit-scrollbar{width:0;height:0;display:none}
 .empty{display:flex;flex-direction:column;align-items:center;gap:10px;padding:60px 0;color:#8b8fa3;font-size:13px}
 .empty svg{opacity:.5}
 
-.card{position:relative;display:grid;grid-template-columns:46px minmax(0,1fr) auto;gap:13px;align-items:center;
+.card{position:relative;display:grid;grid-template-columns:46px minmax(0,1fr) auto;gap:13px;align-items:center;min-height:76px;
   padding:13px 15px;border-radius:18px;margin-bottom:10px;cursor:pointer;overflow:hidden;
-  /* 3.4.7: рамку уроків ЗРОБИНО ПОМІТНІШОЮ — у темній темі .075 було майже невидимо */
-  background:rgba(255,255,255,.032);border:1px solid rgba(255,255,255,.16);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 2px 10px rgba(0,0,0,.18);
+  /* 3.5.23 (власник: «сделай, чтобы все рамки были темнее» + «все рамки
+     одного размера»): ОДНАКОВА темніша рамка в усіх карток і ОДНАКОВА
+     висота (min-height 76px — вміщується і дворядкова назва, нічого
+     не налазить одне на одного); анімацію появи знято, тож жодна картка
+     більше не може бути «світлішою» за іншу */
+  background:rgba(255,255,255,.032);border:1px solid rgba(255,255,255,.11);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.025),0 2px 10px rgba(0,0,0,.18);
   transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
 /* 3.5.22: анімація появи лише з класом .pop (знімається після завершення —
   страховка від «завислої» проміжної прозорості карток у Safari) */
-.card.pop{animation:pop .3s ease both}
 .card:hover{transform:translateY(-2px);border-color:rgba(139,92,246,.28);box-shadow:0 10px 34px -18px rgba(99,102,241,.5)}
 .card:hover .ic{transform:scale(1.07) rotate(-2deg)}
-@keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 main.still .card{animation:none!important}
 .ic{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;color:#fff;flex:none;
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),0 4px 12px rgba(0,0,0,.3);transition:transform .25s ease}
@@ -184,8 +186,10 @@ main.still .card{animation:none!important}
    старый дизайн… иконка, название урока; второй рядок — время и имя
    учителя; кнопка по центру между двумя рядками»). Сітка: іконка |
    контент (назва над мета) | кнопка; кнопка вертикально по центру. */
-.meta{display:flex;align-items:center;gap:11px;margin-top:5px;flex-wrap:wrap}
-.tc{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#9aa0b4;font-weight:600;white-space:nowrap}
+.meta{display:flex;align-items:center;gap:11px;margin-top:5px;flex-wrap:wrap;max-height:40px;overflow:hidden}
+.tc{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#9aa0b4;font-weight:600;white-space:nowrap;max-width:100%;min-width:0}
+/* 3.5.23: довге ім'я вчителя акуратно обрізається крапками */
+.tc span{min-width:0;overflow:hidden;text-overflow:ellipsis}
 .tc svg{opacity:.75;flex:none}
 .card,.card *{user-select:none;-webkit-user-select:none;cursor:pointer}
 

@@ -33,7 +33,7 @@
    ============================================================ */
 (function () {
 'use strict';
-var VER = '3.5.22';
+var VER = '3.5.23';
 var BACKEND = 'https://fluxhelper-backend.onrender.com';
 var ORIGIN = 'https://fluxhelper.pages.dev';
 var DB_URL = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app';
@@ -60,17 +60,19 @@ try {
      • #secZoom («Запуск Zoom»: Додаток/Браузер) — ТЕПЕР ВИДНИЙ на сайті
        для будь-якої версії («почему убрала? Это должно быть») — вибраний
        режим відкриття уроків працює і на сайті;
-     • кнопка «Приєднатися» на картці уроку (.b-join) — навпаки, ТІЛЬКИ
-       в застосунках Android/Windows: на сайті її нема, урок відкривається
-       тапом по картці (за бажанням — через підтвердження), режим задає
+     • кнопка «Приєднатися» на картці уроку (.b-join) — 3.5.23: ПОВЕРНЕНА
+       на сайт у всіх версіях (власник: «почему убрала? Я не говорил её
+       убирать»). Режим відкриття (додаток/браузер/підтвердження) задає
        рамка «Запуск Zoom». */
   st.textContent =
     '#neterr{display:none!important}' +
     '#bMin,#bClose,#btMin,#btClose{display:none!important}' +
     '#bnav{bottom:calc(17px + env(safe-area-inset-bottom, 0px))!important}' +
     '#secNotif,#nban,#bPerm,#bTestN,#rowNotif{display:none!important}' +
-    'body:not(.fh-beta) .beta-only{display:none!important}' +
-    '#list .card .b-join{display:none!important}';
+    'body:not(.fh-beta) .beta-only{display:none!important}';
+  /* 3.5.23: правило, що ховало кнопку «Приєднатися» на картці (.b-join),
+     ЗНЯТО — власник повертає кнопку на сайт («почему убрала? Я не говорил
+     её убирать»). Кнопка тепер на сайті в УСІХ версій. */
   (document.head || document.documentElement).appendChild(st);
 } catch (eS) {}
 
@@ -586,7 +588,14 @@ window.AndroidHost = {
   prewarm: function () {},
   markLesson: function () {},
   upd: function () {
-    /* веб-сторінка оновлюється сама: новий деплой = нова версія */
+    /* веб-сторінка оновлюється сама: новий деплой = нова версія.
+       3.5.23: страховка — для однієї версії перезавантаження ОДИН раз
+       за сесію, щоб ніколи не виходило циклу оновлень. */
+    try {
+      var uk = 'fh_webupd_' + VER;
+      if (sessionStorage.getItem(uk)) return;
+      sessionStorage.setItem(uk, '1');
+    } catch (eU) {}
     setTimeout(function () { try { location.reload(); } catch (e) {} }, 300);
   },
   theme: function () {}
@@ -639,6 +648,9 @@ window.AndroidHost = {
       else if (h === 'admin' && typeof window.admShow === 'function') window.admShow();
     } catch (e) {}
   }
+  /* 3.5.23: ui.js викликає це ПІСЛЯ синк-продовжень старту — інакше
+     перезавантаження на вкладці «Профіль» перекидало назад на Розклад */
+  window.__fhHashApply = applyHash;
   window.addEventListener('load', function () {
     wrap('showMain', 'schedule');
     wrap('showSetup', 'settings');

@@ -108,18 +108,21 @@ main::-webkit-scrollbar{width:0;height:0;display:none}
 .empty{display:flex;flex-direction:column;align-items:center;gap:10px;padding:60px 0;color:#8b8fa3;font-size:13px}
 .empty svg{opacity:.5}
 
-.card{position:relative;display:grid;grid-template-columns:46px minmax(0,1fr) auto;gap:12px;align-items:center;
+.card{position:relative;display:grid;grid-template-columns:46px minmax(0,1fr) auto;gap:12px;align-items:center;height:108px;
   padding:13px 15px;border-radius:18px;margin-bottom:10px;cursor:pointer;overflow:hidden;contain:layout style;
-  /* 3.4.7: рамку уроків ЗРОБИНО ПОМІТНІШОЮ — у темній темі .075 було майже невидимо */
-  background:rgba(255,255,255,.032);border:1px solid rgba(255,255,255,.16);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 2px 10px rgba(0,0,0,.18);
+  /* 3.5.23 (власник: «сделай, чтобы все рамки были темнее» + «все рамки
+     одного размера... чтобы всё влезало, на друг друга не налазило»):
+     ОДНАКОВА темніша рамка в усіх карток і ОДНАКОВА ФІКСОВАНА висота
+     (108px: назва до 2 рядків + час/вчитель до 2 рядків — усе вміщується,
+     довший текст акуратно обрізається, нічого не налазить одне на одного);
+     анімацію появи знято, тож жодна картка не буває «світлішою» за іншу */
+  background:rgba(255,255,255,.032);border:1px solid rgba(255,255,255,.11);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.025),0 2px 10px rgba(0,0,0,.18);
   transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
 /* 3.5.22: анімація появи лише з класом .pop (знімається після завершення —
   страховка від «завислої» проміжної прозорості карток у Safari) */
-.card.pop{animation:pop .3s ease both}
 .card:hover{transform:translateY(-2px);border-color:rgba(139,92,246,.28);box-shadow:0 10px 34px -18px rgba(99,102,241,.5)}
 .card:hover .ic{transform:scale(1.07) rotate(-2deg)}
-@keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 main.still .card{animation:none!important}
 .ic{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;color:#fff;flex:none;
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),0 4px 12px rgba(0,0,0,.3);transition:transform .25s ease}
@@ -133,14 +136,16 @@ main.still .card{animation:none!important}
 .card h3{display:flex;align-items:center;min-width:0;font-size:15px;font-weight:700;line-height:1.25;color:#f4f4f8}
 /* 3.5.13: назва уроку більше НЕ скорочується (просив власник) —
    чесний перенос на другий рядок, як на сайті */
-.card h3 .ln{flex:0 1 auto;min-width:0;overflow-wrap:break-word;white-space:normal}
+.card h3 .ln{flex:0 1 auto;min-width:0;overflow-wrap:break-word;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .now-chip,.next-chip{flex:none}
 /* 3.5.14: КАРТКА УРОКУ — СТАРИЙ ДИЗАЙН 3.5.0 (просив власник: «верни
    старый дизайн… иконка, название урока; второй рядок — время и имя
    учителя; кнопка по центру между двумя рядками»). Сітка: іконка |
    контент (назва над мета) | кнопка; кнопка вертикально по центру. */
-.meta{display:flex;align-items:center;gap:11px;margin-top:5px;flex-wrap:wrap}
-.tc{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#9aa0b4;font-weight:600;white-space:nowrap}
+.meta{display:flex;align-items:center;gap:11px;margin-top:5px;flex-wrap:wrap;max-height:40px;overflow:hidden}
+.tc{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#9aa0b4;font-weight:600;white-space:nowrap;max-width:100%;min-width:0}
+/* 3.5.23: довге ім'я вчителя акуратно обрізається крапками, не налазить на край */
+.tc span{min-width:0;overflow:hidden;text-overflow:ellipsis}
 .tc svg{opacity:.75;flex:none}
 .card,.card *{user-select:none;-webkit-user-select:none;cursor:pointer}
 
@@ -621,15 +626,15 @@ body.mob nav{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding-bo
 body.mob .tab{flex:none;min-width:0;padding:9px 2px;border-radius:12px}
 body.mob .tab .d{font-size:clamp(12px,3.3vw,14.5px)}
 body.mob .tab .dt{font-size:clamp(8.5px,2.3vw,10px)}
-body.mob .card{grid-template-columns:44px minmax(0,1fr) auto;gap:11px;padding:12px 12px;border-radius:16px}
+body.mob .card{grid-template-columns:44px minmax(0,1fr) auto;gap:10px;padding:12px 12px;border-radius:16px}
 body.mob .ic{width:44px;height:44px;border-radius:13px}
 /* плавне масштабування тексту під ширину екрана та поворот пристрою */
 /* 3.4.7: без переносів — довга назва лишається одним рядком (ellipsis у запасі) */
-body.mob .card h3{font-size:clamp(13.5px,3.8vw,15.5px);white-space:nowrap;overflow-wrap:normal;word-break:normal}
+body.mob .card h3{font-size:clamp(12.5px,3.55vw,15px);white-space:nowrap;overflow-wrap:normal;word-break:normal} /* 3.5.23: трохи менший шрифт назви — найдовші назви («Основи медіаграмотності») вміщаються у 2 рядки без обрізання */
 body.mob h2{font-size:clamp(18px,5.2vw,22px)}
 body.mob .chip{font-size:clamp(10.5px,3vw,12px);padding:6px 11px}
 /* кнопка «Приєднатися» — більша, з текстом (не тільки іконка) */
-body.mob .b-join{width:auto;height:auto;padding:9px 12px;border-radius:12px;font-size:12px;gap:6px}
+body.mob .b-join{width:auto;height:auto;padding:8px 10px;border-radius:12px;font-size:11.5px;gap:5px} /* 3.5.23: компактніша кнопка — назва уроку отримує більше місця */
 body.mob .b-join span{display:inline}
 body.mob .tc{font-size:clamp(10.5px,3vw,12px)}
 /* бургер — більший і помітніший */
@@ -1603,7 +1608,7 @@ body[data-theme="light"] .wk-row.vac{background:#f8fafc;border:1.5px solid rgba(
    але екран телефону (AMOLED, високий контраст, DPR 2.5-3) «з'їдає» їх —
    картки виглядають чисто чорними. Трохи сильніший тон = той самий
    сіро-чорний вигляд, що бачить користувач ПК у стандартній темі */
-body.mob .card,body.android .card{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.19)}
+body.mob .card,body.android .card{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.11)} /* 3.5.23: та сама темніша рамка, що в усіх карток */
 
 /* Скрол приховано ВІЗУАЛЬНО скрізь (Розклад, Налаштування, Акаунт, модалки —
    всюди). Скрол працює як звичайно — зникає лише смуга, яка «псувала дизайн» */
