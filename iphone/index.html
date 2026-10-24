@@ -125,7 +125,9 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass','ocea
       </div>
     </div>
 
-        <div class="ms-sec">
+        <!-- 3.5.19: id="secNotif" — на сайті секцію ховає webhost.js
+             (сповіщення — лише в застосунках Android/Windows) -->
+        <div class="ms-sec" id="secNotif">
       <div class="ms-lbl"><span>Сповіщення</span></div>
       <div class="ms-card">
         <div class="ms-row">
@@ -245,7 +247,9 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass','ocea
   </div>
     <div class="acc-stats">
       <div class="acc-stat"><b id="acStSync">—</b><span>синхронізація</span></div>
-      <div class="acc-stat"><b id="acStDev">—</b><span>пристрій</span></div>
+      <!-- 3.5.19: рамка «Пристрой» — ім'я пристрою з ОС + іконка платформи
+           (Android/iPhone/Windows/macOS) -->
+      <div class="acc-stat acc-dev"><span class="ac-devic" id="acDevIc"></span><b id="acStDev">—</b><span>пристрій</span></div>
       <div class="acc-stat"><b id="acStVer">—</b><span>версія</span></div>
     </div>
   <div class="ms-sec">
@@ -467,7 +471,8 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass','ocea
     <span id="agGoT">Увійти через Google</span>
   </button>
   <div class="ag-stat" id="agStat"></div>
-  <div class="ag-foot">FluxHelper 3.5.15 · вхід захищає Google</div>
+  <!-- 3.5.19: у підвалі входу — лише «вхід захищає Google» (без версії) -->
+  <div class="ag-foot">вхід захищає Google</div>
 </div>
 
 <div id="boot" class="pre">

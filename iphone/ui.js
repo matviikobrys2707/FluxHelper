@@ -262,7 +262,7 @@ function validS(x) {
 // вічно вважав себе старішим. Тепер версію підставляє build.sh з манифеста
 // (2.4.1 -> versionName), а ПІСЛЯ завантаження Java-міст AndroidHost.ver()
 // віддає СПРАВЖНЮ версію встановленого пакета (PackageManager) — найнадійніше.
-let APP_VER = '3.5.18';              // X.Y.Z — підставляється при збірці з манифеста
+let APP_VER = '3.5.19';              // X.Y.Z — підставляється при збірці з манифеста
 try {
   if (window.AndroidHost && AndroidHost.ver) {
     const jv = AndroidHost.ver();
@@ -1725,6 +1725,14 @@ function parseNotes(txt) {
 // пріоритет. Третій елемент пункта ('pc'/'android') — показувати лише
 // на одній платформі; без нього — на обох.
 const WHATS_NEW = {
+  '3.5.19': [
+    ['/', 'Екран входу — лише «Вітаємо у FluxHelper»: логотип і назву зверху прибрано, унизу — «вхід захищає Google»'],
+    ['/', 'Після вибору акаунта Google одразу з’являється екран завантаження — жодних «перевіряємо акаунт»'],
+    ['+', 'Рамка «Пристрой» — ім’я пристрою з ОС (Телефон (Android), Телефон (iPhone), Комп’ютер (Windows), Комп’ютер (macOS)) та іконка платформи'],
+    ['/', 'Нижня панель трохи піднята від краю; відступ від останнього елемента до панелі тепер однаковий в усіх вкладках', 'android'],
+    ['-', 'Сайт: сповіщення про початок уроку прибрано — ця функція лише в застосунках Android і Windows'],
+    ['-', 'Сайт для Mac: кнопки «Згорнути»/«Закрити» прибрано — вони потрібні лише програмі Windows']
+  ],
   '3.5.13': [
     ['/', 'Панель знизу по темах: темна — темніша, світла — світла, а «прикольний» фіолетовий колір переїхав у Liquid Glass', 'android'],
     ['/', 'Назви уроків більше не скорочуються — довга назва переноситься на другий рядок'],
@@ -2469,6 +2477,32 @@ function collectDevInfo() {
     if (!o.name) o.name = 'Комп\u2019ютер';
   }
   return o;
+}
+/* 3.5.19: РАМКА «ПРИСТРІЙ» — «Тип (ОС)» + іконка платформи (просив власник:
+   «пиши имя текущего пристроя: Телефон (Android), Телефон (iPhone),
+   Комп'ютер (Windows), Комп'ютер (macOS) — с красивой иконкой»).
+   Застосунки: APK -> Телефон (Android), EXE -> Комп'ютер (Windows).
+   Сайт: ім'я визначаємо за пристроєм/ОС користувача. */
+function deviceLabel() {
+  const IC = {
+    android: '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.6 9.48l1.84-3.18c.16-.31.04-.7-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24a11.43 11.43 0 0 0-8.94 0L5.65 5.67c-.18-.28-.58-.36-.85-.2-.3.15-.42.54-.26.85l1.86 3.16C4.2 11 2.4 13.9 2.1 17.3v.2h19.8v-.2c-.3-3.4-2.1-6.3-5.3-7.82zM7.9 15.1c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm8.2 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/></svg>',
+    apple: '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M16.7 12.65c.02 2.06 1.81 2.75 1.83 2.76-.02.05-.29 1-1.05 1.98-.63.83-1.29 1.66-2.33 1.68-1.02.02-1.35-.55-2.52-.55-1.17 0-1.53.53-2.5.57-1 .04-1.76-.97-2.4-1.8-1.25-1.61-2.2-4.57-.92-6.36.63-.88 1.76-1.44 2.98-1.46.98-.01 1.9.62 2.5.62.6 0 1.71-.77 2.9-.66.49.02 1.87.18 2.76 1.36-.07.05-1.63.95-1.61 2.83M14.6 5.3c.52-.63.87-1.5.78-2.38-.85.03-1.9.57-2.5 1.2-.54.56-.99 1.46-.86 2.32.94.07 1.9-.48 2.58-1.14"/></svg>',
+    windows: '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.55l7.4-1.05v6.9H3v-5.85zm0 12.9v-5.85h7.4v6.9L3 18.45zm8.6-14.1L21 3.1v8.7h-9.4V4.35zm0 14.1v-7.35H21V21l-9.4-1.2z"/></svg>',
+    linux: '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c-3 0-4.8 2.6-4.8 5.6 0 1.9.5 2.7-.4 4.2-.9 1.5-2.3 3.1-2.3 5 0 1.7 1.2 2.4 1.2 2.4s.3 1 1.4 1c1.2 0 1.7-.9 4.9-.9s3.7.9 4.9.9c1.1 0 1.4-1 1.4-1s1.2-.7 1.2-2.4c0-1.9-1.4-3.5-2.3-5-.9-1.5-.4-2.3-.4-4.2C16.8 4.6 15 2 12 2zm-2.4 3.2a.9.9 0 1 1 0 1.8.9.9 0 0 1 0-1.8zm4.8 0a.9.9 0 1 1 0 1.8.9.9 0 0 1 0-1.8zM12 8.6c1.3 0 2.4.8 2.4 1.1 0 .3-1.1.3-2.4.3s-2.4 0-2.4-.3c0-.3 1.1-1.1 2.4-1.1z"/></svg>'
+  };
+  const web = !!window.FH_WEB;
+  if (!web) return ANDROID ? { name: 'Телефон (Android)', ic: IC.android }
+                           : { name: 'Комп\u2019ютер (Windows)', ic: IC.windows };
+  const ua = String(navigator.userAgent || '');
+  const touch = (navigator.maxTouchPoints || 0) > 1;
+  const small = Math.min(screen.width || 9999, screen.height || 9999) < 820;
+  if (/iPhone|iPod/i.test(ua)) return { name: 'Телефон (iPhone)', ic: IC.apple };
+  if (/iPad/i.test(ua) || (/Macintosh/.test(ua) && touch)) return { name: 'Планшет (iPadOS)', ic: IC.apple };
+  if (/Android/i.test(ua)) return { name: 'Телефон (Android)', ic: IC.android };
+  if (/Macintosh|Mac OS X/i.test(ua)) return { name: 'Комп\u2019ютер (macOS)', ic: IC.apple };
+  if (/Windows/i.test(ua)) return { name: 'Комп\u2019ютер (Windows)', ic: IC.windows };
+  if (/Linux/i.test(ua)) return { name: 'Комп\u2019ютер (Linux)', ic: IC.linux };
+  return ANDROID ? { name: 'Телефон (Android)', ic: IC.android } : { name: 'Комп\u2019ютер (Windows)', ic: IC.windows };
 }
 // ---------- пристрій у базі (2.9.0: таблиця device — WRITE-ONLY) ----------
 // КОЖЕН запуск програми пише рядок про цей пристрій: id, ВЛАСНИК (Firebase UID
@@ -3223,7 +3257,7 @@ function refreshAccUI() {
   }
   // 3.4.0: живі плитки профілю (остання синхронізація / пристрій / версія)
   const sV = byId('acStVer'); if (sV) sV.textContent = verLabel();
-  const sD = byId('acStDev'); if (sD) { try { sD.textContent = (collectDevInfo().name || '\u2014'); } catch (eAc) { sD.textContent = '\u2014'; } }
+  const sD = byId('acStDev'); if (sD) { try { const dl = deviceLabel(); sD.textContent = dl.name; const di = byId('acDevIc'); if (di) di.innerHTML = dl.ic; } catch (eAc) { sD.textContent = '\u2014'; } }
   const sS = byId('acStSync');
   if (sS) {
     if (!syncLastTs) sS.textContent = 'ще не було';

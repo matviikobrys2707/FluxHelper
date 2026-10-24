@@ -76,12 +76,12 @@ body.booting #tbar{justify-content:flex-end}   /* кнопки вікна лиш
    малював вкладки ще ~0.3 с після кліку «Вийти». На гейті перемикання
    миттєве, без плавного зникнення */
 body.gate-on .tb-seg,body.gate-on .tb-acc{transition:none;opacity:0;visibility:hidden;pointer-events:none}
-/* 2.8.8: ФІКС «лого і назва зникають при виході»: після fh:logout хост
-   перезбирає ui.html і сторінка стартує з body.booting (лого сховано).
-   Якщо аккаунта немає (gate-on уже в HTML із першого кадру) — лого в
-   панелі видно ВІДРАЗУ і він не зникає ні на один кадр */
-body.booting.gate-on .tb-l{display:flex}
-body.booting.gate-on #tbar{justify-content:space-between}
+/* 2.8.8: ФІКС «вкладки ще висять після виходу» — вище.
+   3.5.19: на екрані входу — ТІЛЬКИ «Вітаємо у FluxHelper» (просив власник):
+   лого і назву зліва більше НЕ показуємо — ні на гейті, ні під час
+   сплешу перед гейтом. Сплеш має власний великий логотип по центру. */
+body.booting.gate-on .tb-l{display:none}
+body.booting.gate-on #tbar{justify-content:flex-end}
 body.booting.gate-on .tb-seg,body.booting.gate-on .tb-acc{opacity:0;visibility:hidden;pointer-events:none}
 /* на ПК титульна панель — ЗАВЖДИ найвища: згорнути/закрити/лого/назва видно
    навіть поверх екранів оновлення і «немає з'єднання» (модалка нижче панелі).
@@ -961,11 +961,16 @@ body[data-theme="light"] .theme-tile .tp.for,body[data-theme="light"] .theme-til
     radial-gradient(580px 400px at 88% 114%, rgba(79,70,229,.14), transparent 66%),
     #050508}
 #agate.hidden{display:none}
-/* під час входу титульна панель повністю безшовна і прозора над гейтом */
-body.gate-on #tbar{justify-content:space-between;z-index:400;background:transparent;border-bottom:0}
-body.gate-on .tb-l{display:flex}
+/* під час входу титульна панель повністю безшовна і прозора над гейтом.
+   3.5.19: на екрані входу — лише «Вітаємо у FluxHelper»: лого і назву
+   зліва ховаємо (власник просив прибрати іконку і назва зверху). */
+body.gate-on #tbar{justify-content:flex-end;z-index:400;background:transparent;border-bottom:0}
+body.gate-on .tb-l{display:none}
 body.gate-on .tb-ver{visibility:hidden}
 body.gate-on .tb-acc{visibility:hidden}
+/* 3.5.19: після вибору акаунта Google — одразу ЕКРАН ЗАВАНТАЖЕННЯ
+   (без «перевіряємо акаунт»): boot піднімається НАД гейтом (230) */
+body.dl-over #boot{z-index:320}
 /* ===== 3.3.0: ГЕЙТ ВХОДУ — ЯК НА ТЕЛЕФОНІ ===== */
 /* 3.3.2: ОДНА іконка по центру — тільки лого FluxHelper (без Google і «+») */
 #agate .ag-glow{position:absolute;top:calc(50% - 270px);left:50%;transform:translateX(-50%);width:320px;height:180px;background:radial-gradient(closest-side,rgba(139,92,246,.35),transparent);pointer-events:none}
@@ -1310,6 +1315,14 @@ body[data-theme="light"] .adm-ib.set:hover{color:#fff;background:#6366f1;border-
 .acc-stat{background:rgba(148,163,184,.055);border:1px solid rgba(148,163,184,.13);border-radius:16px;padding:12px 8px 10px;text-align:center;min-width:0}
 .acc-stat b{display:block;font-size:13px;font-weight:800;color:#e8eaf2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .acc-stat span{display:block;font-size:9px;color:#8b8fa3;margin-top:3px;font-weight:800;letter-spacing:.6px;text-transform:uppercase}
+/* 3.5.19: рамка «Пристрой» — іконка платформи (Android/Apple/Windows)
+   над ім'ям пристрою; значення довші — трохи компактніший шрифт */
+.acc-stat.acc-dev b{font-size:11.5px;letter-spacing:-.15px}
+.ac-devic{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:9px;margin-bottom:5px;
+  background:linear-gradient(135deg,rgba(139,92,246,.28),rgba(99,102,241,.16));box-shadow:inset 0 0 0 1px rgba(139,92,246,.38);color:#c4b5fd}
+.ac-devic svg{display:block}
+body[data-theme="light"] .ac-devic{background:rgba(124,58,237,.10);box-shadow:inset 0 0 0 1px rgba(124,58,237,.30);color:#6d28d9}
+body[data-theme="glass"] .ac-devic{background:rgba(255,255,255,.10);color:#ddd6fe}
 body[data-theme="light"] .acc-stat{background:rgba(20,24,46,.04);border-color:rgba(20,24,46,.1)}
 body[data-theme="light"] .acc-stat b{color:#1c1f33}
 body[data-theme="light"] .acc-stat span{color:#6a7089}

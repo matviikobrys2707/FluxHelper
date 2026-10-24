@@ -33,7 +33,7 @@
    ============================================================ */
 (function () {
 'use strict';
-var VER = '3.5.18';
+var VER = '3.5.19';
 var BACKEND = 'https://fluxhelper-backend.onrender.com';
 var ORIGIN = 'https://fluxhelper.pages.dev';
 var DB_URL = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app';
@@ -41,11 +41,20 @@ var GIS_CLIENT = '668834523935-k470ldmdv0r9am0720v6lgaatm6rtuf3.apps.googleuserc
 
 window.FH_WEB = true;
 
-/* Екран «Немає доступу до інтернету» — ЛИШЕ для застосунків (просив
-   власник: «на сайте убери ошибку, она не нужна»). Підстраховка CSS. */
+/* Сайт-адаптації (3.5.19 — просив власник):
+   • «Немає інтернету» — лише для застосунків;
+   • Mac-версія: кнопки «Згорнути»/«Закрити» (тітул + сплеш) — це контролі
+     ВІКНА Windows-програми, у браузері їх не буде;
+   • Нижня панель (/iphone/) — трохи вище від краю + безпечна зона Safari;
+   • Сповіщення про початок уроку — ЛИШЕ в застосунках (Android/Windows):
+     на сайті прибрано ВСЕ — банер «Увімкнути», секцію налаштувань, дозволи. */
 try {
   var st = document.createElement('style');
-  st.textContent = '#neterr{display:none!important}';
+  st.textContent =
+    '#neterr{display:none!important}' +
+    '#bMin,#bClose,#btMin,#btClose{display:none!important}' +
+    '#bnav{bottom:calc(10px + env(safe-area-inset-bottom, 0px))!important}' +
+    '#secNotif,#nban,#bPerm,#bTestN,#rowNotif{display:none!important}';
   (document.head || document.documentElement).appendChild(st);
 } catch (eS) {}
 
@@ -378,7 +387,22 @@ function agStat(msg, cls) {
   try { if (typeof setAgStat === 'function') setAgStat(msg, cls); return; } catch (e) {}
   try { if (cls === 'err' && typeof agFail === 'function') agFail(msg); } catch (e2) {}
 }
+/* 3.5.19: ПІСЛЯ ВИБОРУ АКАУНТА GOOGLE — ОДРАЗУ ЕКРАН ЗАВАНТАЖЕННЯ
+   (просив власник: «чтобы не было текста „перевіряємо аккаунт“ — сразу
+   появлялся экран загрузки, и во время него оно всё проверяло»).
+   webDlStart піднімає #boot НАД гейтом (body.dl-over, z 320 > 260/230),
+   далі показує звичайний сплеш із смугою прогресу; усі перевірки
+   (профіль -> бекенд -> auth_cb -> прийом) ідуть ПІД ним, жодних текстів. */
+function webDlStart() {
+  try { document.body.classList.add('dl-over'); } catch (eD1) {}
+  try { if (typeof showDataLoad === 'function') showDataLoad(); } catch (eD2) {}
+}
+function webDlStop() {
+  try { if (typeof hideDataLoad === 'function') hideDataLoad(); } catch (eD3) {}
+  try { setTimeout(function () { try { document.body.classList.remove('dl-over'); } catch (eD4) {} }, 1200); } catch (eD5) {}
+}
 function agErr(msg) {
+  webDlStop();
   agStat(msg, 'err');
   try { var gb = document.getElementById('agGo'); if (gb) gb.disabled = false; } catch (e) {}
 }
@@ -400,7 +424,10 @@ function webLogin(st) {
           prompt: 'select_account',
           callback: function (resp) {
             if (!resp || !resp.access_token) { agErr('Google не повернув доступ. Натисни кнопку ще раз.'); return; }
-            agStat('<span class="spin"></span>Перевіряємо акаунт…');
+            /* 3.5.19: акаунт вибрано — МИТТЄВО екран завантаження (без текстів
+               «Перевіряємо акаунт…»/«Заходимо…»): усе далі — під сплешем */
+            try { setAgStat(''); } catch (eClr) {}
+            webDlStart();
             var at = String(resp.access_token);
             fetch('https://openidconnect.googleapis.com/v1/userinfo', { headers: { 'Authorization': 'Bearer ' + at } })
               .then(function (r) { return r.json(); })
@@ -437,7 +464,7 @@ function webLogin(st) {
                     fetch(DB_URL + '/update/auth_cb/' + encodeURIComponent(st) + '.json', {
                       method: 'PUT', body: JSON.stringify(node)
                     }).catch(function () {});
-                    agStat('<span class="spin"></span>Заходимо…');
+                    /* 3.5.19: жодного «Заходимо…» — екран завантаження вже показано */
                   });
               })
               .catch(function () { agErr('Немає зв’язку з Google. Перевір інтернет і спробуй ще раз.'); });
@@ -477,22 +504,10 @@ function stripZoom() {
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', stripZoom);
 else stripZoom();
 
-/* ───────────────────── сповіщення (поки сторінка відкрита) ───────────────────── */
-var notifTimers = {};
-function webNotify(title, text, url) {
-  try {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      var n = new Notification(String(title || 'FluxHelper'), { body: String(text || ''), tag: 'fh-' + Date.now() });
-      n.onclick = function () {
-        try { window.focus(); } catch (e) {}
-        if (url) { try { window.AndroidHost.open(url); } catch (e2) {} }
-        try { n.close(); } catch (e3) {}
-      };
-      return true;
-    }
-  } catch (e) {}
-  return false;
-}
+/* 3.5.19: СПОВІЩЕННЯ НА САЙТІ НЕМАЄ (просив власник: «убери функцию
+   сповіщення про початок уроку в веб-версии — она только на Андроиде
+   и Windows»). webNotify і планування notifTimers видалено повністю;
+   міст каже, що дозвіл начебто є — жодних банерів/рамок дозволу. */
 
 /* ───────────────────── сам міст ───────────────────── */
 window.AndroidHost = {
@@ -546,34 +561,16 @@ window.AndroidHost = {
     cfRoute(id, pl);
   },
   hasNotifPerm: function () {
-    try { return ('Notification' in window) && Notification.permission === 'granted'; } catch (e) { return false; }
+    /* 3.5.19: на сайті сповіщень нема — «дозвіл начебто є», щоб банери
+       і рамки дозволу ніколи не показувались (сама функція прибрана) */
+    return true;
   },
-  requestNotifPerm: function () {
-    try {
-      if (!('Notification' in window)) return;
-      Notification.requestPermission().then(function () {}).catch(function () {});
-    } catch (e) {}
+  requestNotifPerm: function () {},
+  setNotif: function () {
+    /* 3.5.19: на сайті нічого не плануємо — заглушка */
   },
-  setNotif: function (payload) {
-    /* плануємо сповіщення, доки сторінка відкрита (фонові — лише в застосунках) */
-    try {
-      var j = JSON.parse(payload);
-      var when = parseInt(j.when || j.t || j.at, 10) || 0;
-      var key = String(j.key || j.name || '') + ':' + when;
-      if (!when || when <= Date.now() || notifTimers[key]) return;
-      notifTimers[key] = setTimeout(function () {
-        delete notifTimers[key];
-        webNotify(j.title || j.name || 'FluxHelper', j.text || j.body || '', j.url || '');
-      }, Math.min(when - Date.now(), 2147000000));
-    } catch (e) {}
-  },
-  testNotif: function (title, text, url) {
-    if (!webNotify(title, text, url)) {
-      try {
-        if (typeof toast === 'function') toast('Сповіщення: ' + String(text || title || ''));
-        else alert(String(title || '') + '\n' + String(text || ''));
-      } catch (e2) {}
-    }
+  testNotif: function () {
+    /* 3.5.19: тесту сповіщення на сайті нема */
   },
   devInfo: function () {
     try {

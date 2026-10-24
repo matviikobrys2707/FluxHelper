@@ -134,7 +134,9 @@ try{
         <div id="sumRows"></div>
       </section>
 
-      <section class="sw-card">
+      <!-- 3.5.19: id="secNotif" — на сайті секцію ховає webhost.js
+           (сповіщення — лише в застосунках Android/Windows) -->
+      <section class="sw-card" id="secNotif">
         <div class="sw-c-head">
           <span class="sw-c-ic plain"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span>
           <div class="sw-c-tt"><b>Сповіщення</b><span>нагадаємо до дзвінка</span></div>
@@ -270,7 +272,8 @@ try{
     </div>
     <div class="acc-stats">
       <div class="acc-stat"><b id="acStSync">—</b><span>синхронізація</span></div>
-      <div class="acc-stat"><b id="acStDev">—</b><span>пристрій</span></div>
+      <!-- 3.5.19: рамка «Пристрой» — ім'я пристрою з ОС + іконка платформи -->
+      <div class="acc-stat acc-dev"><span class="ac-devic" id="acDevIc"></span><b id="acStDev">—</b><span>пристрій</span></div>
       <div class="acc-stat"><b id="acStVer">—</b><span>версія</span></div>
     </div>
     <div class="ms-sec">
@@ -445,7 +448,8 @@ try{
     <span id="agGoT">Увійти через Google</span>
   </button>
   <div class="ag-stat" id="agStat"></div>
-  <div class="ag-foot">FluxHelper __APP_VER__ · вхід захищає Google</div>
+  <!-- 3.5.19: у підвалі входу — лише «вхід захищає Google» (без версії) -->
+  <div class="ag-foot">вхід захищає Google</div>
 </div>
 <div id="boot" class="pre">
   <div class="bt-tb" id="btTb">
