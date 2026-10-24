@@ -33,7 +33,7 @@
    ============================================================ */
 (function () {
 'use strict';
-var VER = '3.5.21';
+var VER = '3.5.22';
 var BACKEND = 'https://fluxhelper-backend.onrender.com';
 var ORIGIN = 'https://fluxhelper.pages.dev';
 var DB_URL = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app';
@@ -50,25 +50,30 @@ window.FH_WEB = true;
      на сайті прибрано ВСЕ — банер «Увімкнути», секцію налаштувань, дозволи. */
 try {
   var st = document.createElement('style');
-  /* 3.5.20: ХТО СХОВАН І КОЛИ:
+  /* 3.5.20→3.5.22: ХТО СХОВАН І КОЛИ:
      • #secNotif/#nban/#bPerm/#bTestN/#rowNotif — сповіщення лише в застосунках;
-     • #secZoom («Запуск Zoom») — на iPhone-версії сайту його нема НІКОЛИ;
-       на Mac-версії — лише для бета-адмінів (просив власник: «верни
-       „Запуск Zoom“»), решта бачить релізну поведінку 3.5.19;
      • .beta-only (нові красиві елементи) — на сайті видимі лише бета-адмінам
        (клас body.fh-beta ставить ui.js після синку); у застосунках цих
-       правил просто нема — там новий дизайн ЗАВЖДИ. */
-  var FH_IS_MAC = /\/mac(\/?$|\?)/.test(location.pathname + location.search) || /\/mac\//.test(location.pathname);
+       правил просто нема — там новий дизайн ЗАВЖДИ.
+
+     3.5.22 (просив власник):
+     • #secZoom («Запуск Zoom»: Додаток/Браузер) — ТЕПЕР ВИДНИЙ на сайті
+       для будь-якої версії («почему убрала? Это должно быть») — вибраний
+       режим відкриття уроків працює і на сайті;
+     • кнопка «Приєднатися» на картці уроку (.b-join) — навпаки, ТІЛЬКИ
+       в застосунках Android/Windows: на сайті її нема, урок відкривається
+       тапом по картці (за бажанням — через підтвердження), режим задає
+       рамка «Запуск Zoom». */
   st.textContent =
     '#neterr{display:none!important}' +
     '#bMin,#bClose,#btMin,#btClose{display:none!important}' +
     '#bnav{bottom:calc(17px + env(safe-area-inset-bottom, 0px))!important}' +
     '#secNotif,#nban,#bPerm,#bTestN,#rowNotif{display:none!important}' +
-    '/* 3.5.21: авто-вхід у Zoom — тестова функція ЛИШЕ Windows-застосунку */' +
-    '#secZAuto{display:none!important}' +
     'body:not(.fh-beta) .beta-only{display:none!important}' +
-    (FH_IS_MAC ? 'body:not(.fh-beta) #secZoom{display:none!important}'
-               : '#secZoom{display:none!important}');
+    /* «Автоматичний вхід у Zoom (тест)» — ЛИШЕ у Windows-програмі (3.5.21) */
+    '#secZAuto{display:none!important}' +
+    '/* 3.5.22: «Приєднатися» на картці уроку — лише в застосунках */' +
+    '#list .card .b-join{display:none!important}';
   (document.head || document.documentElement).appendChild(st);
 } catch (eS) {}
 

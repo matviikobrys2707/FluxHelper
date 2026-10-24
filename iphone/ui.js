@@ -262,7 +262,7 @@ function validS(x) {
 // вічно вважав себе старішим. Тепер версію підставляє build.sh з манифеста
 // (2.4.1 -> versionName), а ПІСЛЯ завантаження Java-міст AndroidHost.ver()
 // віддає СПРАВЖНЮ версію встановленого пакета (PackageManager) — найнадійніше.
-let APP_VER = '3.5.21';              // X.Y.Z — підставляється при збірці з манифеста
+let APP_VER = '3.5.22';              // X.Y.Z — підставляється при збірці з манифеста
 try {
   if (window.AndroidHost && AndroidHost.ver) {
     const jv = AndroidHost.ver();
@@ -959,7 +959,11 @@ function render(anim) {
     let cls = 'card';
     if (i === nowIdx) cls += ' now'; else if (i === nextIdx) cls += ' next';
     const card = el('div', cls);
-    if (anim !== false) card.style.animationDelay = (i * 0.05) + 's';
+    /* 3.5.22: анімація появи — окремим класом .pop (а не всім .card).
+       Після завершення клас знімається (страховка нижче): Safari іноді
+       «замикає» картку на проміжній прозорості анімації — звідси йшли
+       скарги «деякі уроки світліші/темніші, рамка різна» на телефоні. */
+    if (anim !== false) { card.classList.add('pop'); card.style.animationDelay = (i * 0.05) + 's'; }
     /* 3.5.8: сторож — якщо на якомусь уроці щось падає (нова іконка з адмінки,
        криві дані), список НЕ лишається ПОРОЖНІМ (це і була «чорна смуга»
        замість розкладу на телефоні) — безпечна картка-фолбек */
@@ -1037,6 +1041,16 @@ function render(anim) {
     }
     list.appendChild(card);
   });
+      /* 3.5.22: страховка від «завислої прозорості» (Safari): через 1.6 с
+       після малювання знімаємо .pop — анімація гарантовано завершена,
+       картка у фінальному непрозорому стані незалежно від примх WebKit */
+    if (render._popT) clearTimeout(render._popT);
+    render._popT = setTimeout(function () {
+      try {
+        const cs = byId('list').querySelectorAll('.card.pop');
+        for (let k = 0; k < cs.length; k++) { cs[k].classList.remove('pop'); cs[k].style.animationDelay = ''; }
+      } catch (ePop) {}
+    }, 1600);
   tabEls.forEach(function (t, i) { if (t.classList) t.classList.toggle('on', i === sel); });
   setChip();
   fitLessonTitles();
@@ -1519,7 +1533,7 @@ function applyDb(db, fromCache) {
       if (typeof v['2'] === 'string' && v['2']) g['2'] = v['2'];
       if (g['1'] || g['2']) t[k] = g;
     }
-    DBD.teachers = t; changed = true;
+    if (JSON.stringify(t) !== JSON.stringify(DBD.teachers)) { DBD.teachers = t; changed = true; }   // 3.5.22: без змін — не перемальовуємо
   }
   if (db.subjects !== undefined && validNode(db.subjects)) {
     const t = {};
@@ -1539,7 +1553,7 @@ function applyDb(db, fromCache) {
       if (Array.isArray(v.lbl) && v.lbl.length === 2) o.lbl = [String(v.lbl[0]), String(v.lbl[1])];
       t[k] = o;
     }
-    DBD.subjects = t; changed = true;
+    if (JSON.stringify(t) !== JSON.stringify(DBD.subjects)) { DBD.subjects = t; changed = true; }   // 3.5.22: без змін — не перемальовуємо
   }
   if (db.schedule !== undefined && validNode(db.schedule)) {
     const t = {}; let okCnt = 0;
@@ -1557,7 +1571,7 @@ function applyDb(db, fromCache) {
       }
       if (ok && ls.length) { t[dk] = ls; okCnt++; }
     }
-    if (okCnt) { DBD.schedule = t; changed = true; }
+    if (okCnt && JSON.stringify(t) !== JSON.stringify(DBD.schedule)) { DBD.schedule = t; changed = true; }   // 3.5.22: без змін — не перемальовуємо
   }
   if (db.weeks !== undefined) {                     // 3.4.1: чергування онлайн/офлайн без двох однакових тижнів поспіль
     let inv = false;
@@ -1576,6 +1590,11 @@ function applyDb(db, fromCache) {
       if (typeof admWeeksRefresh === 'function') admWeeksRefresh();
     }
   }
+  /* 3.5.22: чи прийшла хоча б одна відома вузла (для кешу/dbOnline) */
+  const hasNode = (db.teachers !== undefined && validNode(db.teachers)) ||
+                  (db.subjects !== undefined && validNode(db.subjects)) ||
+                  (db.schedule !== undefined && validNode(db.schedule)) ||
+                  db.weeks !== undefined || (db.app !== undefined && validNode(db.app));
   if (db.app !== undefined && validNode(db.app)) {
     const r = (typeof db.app.repo === 'string') ? db.app.repo.trim() : '';
     if (r && r !== UPDATE_REPO) {
@@ -1583,12 +1602,24 @@ function applyDb(db, fromCache) {
       try { localStorage.setItem('fh_repo', r); } catch (e) {}
     }
   }
-  if (changed) {
-    if (!fromCache) {
-      try { localStorage.setItem('fh_cache', JSON.stringify({ ts: Date.now(), data: db })); } catch (e) {}
-      cacheTs = Date.now();
-    }
+  /* 3.5.22: ФІКС «СТАРІ ІКОНКИ ПРИ ПЕРЕЗАВАНТАЖЕННІ» (просив власник).
+     1) Кеш тепер ЗЛИВАЄТЬСЯ: легкі запити (schedule.json / subjects.json)
+        більше не витирають інші вузли з fh_cache — раніше pubEarly зберігав
+        кеш ВИКЛЮЧНО зі schedule, subjects зникали, і щоразу при старті
+        малювалися вбудовані іконки, які «стрибаємо» на адмінські після
+        мережевої відповіді.
+     2) ПОРІВНЯННЯ: якщо вузол збігається з тим, що вже в DBD, — не
+        перемальовуємо взагалі (нічого не блимає, анімації не грають знову). */
+  if (hasNode && !fromCache) {
     dbOnline = true;
+    try {
+      const prev = JSON.parse(localStorage.getItem('fh_cache') || 'null');
+      const merged = Object.assign({}, (prev && prev.data) || {}, db);
+      localStorage.setItem('fh_cache', JSON.stringify({ ts: Date.now(), data: merged }));
+      cacheTs = Date.now();
+    } catch (eCache) {}
+  }
+  if (changed) {
     if (!setupOpen) render(false);
     pushNotifSched();
   }
@@ -1747,6 +1778,14 @@ function parseNotes(txt) {
 // пріоритет. Третій елемент пункта ('pc'/'android') — показувати лише
 // на одній платформі; без нього — на обох.
 const WHATS_NEW = {
+  '3.5.22': [
+    ['✦', 'ОДИН URL для всього сайту: fluxhelper.pages.dev/main — старі адреси /iphone/ і /mac/ більше не існують; сайт сам визначає телефон чи комп\u2019ютер/планшет і відкриває потрібну версію, адреса не змінюється'],
+    ['/', 'Фікс: при перезавантаженні більше не блимають старі іконки уроків — актуальні підвантажуються одразу'],
+    ['+', 'Налаштування: «Запуск Zoom» (Додаток/Браузер) тепер на сайті для будь-якої версії — вибраний режим відкриття уроків працює і в браузері'],
+    ['/', 'Кнопка «Приєднатися» на картці уроку — тепер лише в застосунках Android/Windows; на сайті урок відкривається тапом по картці'],
+    ['/', 'Фікс: на телефоні більше не трапляється «прозорі» картки уроків з різною рамкою (зависла анімація появи)'],
+    ['+', 'Windows (тест): «Автоматичний вхід у Zoom» тепер справді відкриває КОНФЕРЕНЦІЮ за посиланням — прев\u2019ю-вікно, вимкнення звуку/камери і «Подключиться» натискаються автоматично', 'windows']
+  ],
   '3.5.21': [
     ['/', 'Скролбари приховано візуально на всіх платформах — скрол коліщатком/тачем працює, смуг на екрані нема'],
     ['/', 'Нижня панель на телефоні піднята ще трохи вище від краю — ~0.45 см', 'phone'],
@@ -1844,7 +1883,7 @@ const WN_PLAT = (function () {
   var macPage = /\/mac(\/|$)/.test(String(location.pathname || ''));
   return macPage ? 'mac' : 'iphone';
 })();
-const WN_SITE_BETA_ONLY = { '3.5.20': 1, '3.5.21': 1 };   // на сайті цю версію анонсуємо лише бета-адмінам
+const WN_SITE_BETA_ONLY = { '3.5.20': 1, '3.5.21': 1, '3.5.22': 1 };   // на сайті цю версію анонсуємо лише бета-адмінам
 function wnShowItem(tag) {
   if (!tag) return true;
   if (tag === 'phone') return (WN_PLAT === 'android' || WN_PLAT === 'iphone');

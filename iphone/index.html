@@ -20,71 +20,19 @@
      /api/sync + дзеркала, outbox); без екрана помилки; без «Запуск Zoom» -->
 <script src="webhost.js"></script>
 <script>
-/* 3.5.20: САЙТ ПЕРЕВІРЯЄ ПРИСТРІЙ (просив власник: «не перекидає на інший
-   сайт, а з'являється красиве вікно, яке далі не пускає; воно завжди
-   перевіряє твій пристрій, і якщо він той — вікна нема, одразу сайт»).
-   Сторінка /iphone/ відкривається лише на iPhone/iPad.
-   ?demo — прихований обхід для бета-тестів (посилання ніде не показуємо). */
+/* 3.5.22: ЄДИНИЙ URL — /main (просив власник: «убери все URL типа /iphone/,
+   /mac/ — щоб був один URL, який сам відкриває потрібну версію»).
+   /iphone/ та /mac/ більше НЕ окремі сторінки: вони лише джерела вмісту,
+   які сторінка /main підтягує собі (fetch + <base href>). Прямий вхід
+   на /mac/... чи /iphone/... миттю переадресовує на /main/ — там сам
+   визначається телефон чи комп'ютер/планшет. Хеш вкладки зберігається.
+   У застосунках (APK/EXE) цей файл-сирець не використовується як є,
+   а перевірка протоколу страховує file:// збірки. */
 (function () {
   try {
-    if (/[?&]demo/.test(location.search)) return;
-    /* 3.5.21: перепустка з /main (універсальний вхід веб-версії для всіх
-       пристроїв): /main сам перевірив пристрій і переадресував сюди —
-       блокуюче вікно не показуємо, URL лишається чистим без ?demo */
-    try { if (sessionStorage.getItem('fh_main_ok') === '/iphone/') return; } catch (eM1) {}
-    var ua = navigator.userAgent || '';
-    var macPage = false;
-    var iOS = /iPhone|iPod|iPad/i.test(ua);
-    var isMac = /Macintosh/i.test(ua);
-    if (macPage ? isMac : iOS) return;
-    var and = /Android/i.test(ua), win = /Windows/i.test(ua);
-    var s = document.createElement('style');
-    s.textContent =
-      'html,body{background:#050508!important}body>*{display:none!important}' +
-      '#devlock{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:24px;' +
-        'font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',system-ui,sans-serif;' +
-        'background:radial-gradient(120% 90% at 50% 0%,rgba(72,58,148,.45),transparent 55%),rgba(6,6,12,.97)}' +
-      '#devlock .dl-card{width:min(400px,100%);border-radius:26px;padding:30px 26px 24px;text-align:center;color:#f4f4f8;' +
-        'background:linear-gradient(165deg,rgba(139,92,246,.14),rgba(255,255,255,.04) 60%,rgba(255,255,255,.02));' +
-        'border:1px solid rgba(139,92,246,.35);box-shadow:0 30px 90px rgba(0,0,0,.6),0 0 0 1px rgba(139,92,246,.08);' +
-        'animation:dlc .5s cubic-bezier(.16,1,.3,1)}' +
-      '@keyframes dlc{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}' +
-      '#devlock .dl-logo{width:80px;height:80px;border-radius:23px;margin:0 auto 18px;display:grid;place-items:center;overflow:hidden;' +
-        'background:linear-gradient(135deg,#8b5cf6,#6366f1);box-shadow:0 18px 44px rgba(99,102,241,.5),inset 0 0 0 1px rgba(255,255,255,.25)}' +
-      '#devlock .dl-logo img{width:100%;height:100%;display:block}' +
-      '#devlock .dl-t{font-size:19px;font-weight:800;letter-spacing:.2px;margin-bottom:8px}' +
-      '#devlock .dl-x{font-size:13px;color:#9aa0b4;line-height:1.65;margin-bottom:20px}' +
-      '#devlock .dl-b{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:15px 18px;border:none;' +
-        'border-radius:15px;font-size:14.5px;font-weight:800;font-family:inherit;color:#fff;cursor:pointer;text-decoration:none;' +
-        'transition:transform .15s ease,box-shadow .25s ease}' +
-      '#devlock .dl-b:active{transform:scale(.97)}' +
-      '#devlock .dl-b.g{background:linear-gradient(135deg,#22c55e,#10b981);box-shadow:0 14px 34px rgba(16,185,129,.35)}' +
-      '#devlock .dl-b.v{background:linear-gradient(135deg,#8b5cf6,#6366f1);box-shadow:0 14px 34px rgba(99,102,241,.42)}' +
-      '#devlock .dl-b.b{background:linear-gradient(135deg,#0078D4,#005EA6);box-shadow:0 14px 34px rgba(0,120,212,.35)}' +
-      '#devlock .dl-b+.dl-b{margin-top:10px}' +
-      '#devlock .dl-f{margin-top:16px;font-size:11px;color:#6b7086;line-height:1.6}';
-    (document.head || document.documentElement).appendChild(s);
-    var btns = '';
-    if (and) btns += '<a class="dl-b g" href="/FluxHelper.apk" download>Завантажити для Android</a>';
-    if (win) btns += '<a class="dl-b b" href="/FluxHelper.exe" download>Завантажити для Windows</a>';
-    if (macPage && iOS) btns += '<a class="dl-b v" href="/iphone/">Відкрити версію для iPhone</a>';
-    if (!macPage && isMac) btns += '<a class="dl-b v" href="/mac/">Відкрити версію для Mac</a>';
-    var txt = macPage
-      ? 'Ця версія сайту створена для комп\'ютерів Mac. З iPhone відкрий версію для айфона, а з Windows або Android — установи застосунок FluxHelper.'
-      : 'Ця версія сайту створена для айфонів. З телефону на Android установи застосунок FluxHelper, а з комп\'ютера відкрий версію для Mac.';
-    var d = document.createElement('div');
-    d.id = 'devlock';
-    d.innerHTML = '<div class="dl-card">' +
-      '<div class="dl-logo"><img src="/icon-192.png?v=3520" alt="FluxHelper"></div>' +
-      '<div class="dl-t">Версія лише для iPhone</div>' +
-      '<div class="dl-x">' + txt + '</div>' + btns +
-      '<div class="dl-f">FluxHelper · розклад 8-Б класу · вхід захищає Google</div>' +
-      '</div>';
-    (document.body || document.documentElement).appendChild(d);
-    var readd = function () {
-      try { if (!document.getElementById('devlock')) (document.body || document.documentElement).appendChild(d); } catch (eR) {}
-    };
-    setInterval(readd, 800);
+    if (!/^https?:$/.test(location.protocol)) return;              /* file:// (застосунок) — не чіпаємо */
+    if (/^\/main(\/|$|\?|#)/.test(location.pathname + location.search)) return;  /* вже /main — ок */
+    location.replace('/main/' + (location.hash || ''));
   } catch (e) {}
 })();
 </script>
