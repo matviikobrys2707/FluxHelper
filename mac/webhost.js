@@ -33,7 +33,7 @@
    ============================================================ */
 (function () {
 'use strict';
-var VER = '3.5.19';
+var VER = '3.5.20';
 var BACKEND = 'https://fluxhelper-backend.onrender.com';
 var ORIGIN = 'https://fluxhelper.pages.dev';
 var DB_URL = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app';
@@ -50,11 +50,23 @@ window.FH_WEB = true;
      на сайті прибрано ВСЕ — банер «Увімкнути», секцію налаштувань, дозволи. */
 try {
   var st = document.createElement('style');
+  /* 3.5.20: ХТО СХОВАН І КОЛИ:
+     • #secNotif/#nban/#bPerm/#bTestN/#rowNotif — сповіщення лише в застосунках;
+     • #secZoom («Запуск Zoom») — на iPhone-версії сайту його нема НІКОЛИ;
+       на Mac-версії — лише для бета-адмінів (просив власник: «верни
+       „Запуск Zoom“»), решта бачить релізну поведінку 3.5.19;
+     • .beta-only (нові красиві елементи) — на сайті видимі лише бета-адмінам
+       (клас body.fh-beta ставить ui.js після синку); у застосунках цих
+       правил просто нема — там новий дизайн ЗАВЖДИ. */
+  var FH_IS_MAC = /\/mac(\/?$|\?)/.test(location.pathname + location.search) || /\/mac\//.test(location.pathname);
   st.textContent =
     '#neterr{display:none!important}' +
     '#bMin,#bClose,#btMin,#btClose{display:none!important}' +
     '#bnav{bottom:calc(10px + env(safe-area-inset-bottom, 0px))!important}' +
-    '#secNotif,#nban,#bPerm,#bTestN,#rowNotif{display:none!important}';
+    '#secNotif,#nban,#bPerm,#bTestN,#rowNotif{display:none!important}' +
+    'body:not(.fh-beta) .beta-only{display:none!important}' +
+    (FH_IS_MAC ? 'body:not(.fh-beta) #secZoom{display:none!important}'
+               : '#secZoom{display:none!important}');
   (document.head || document.documentElement).appendChild(st);
 } catch (eS) {}
 
@@ -483,26 +495,10 @@ function webLogin(st) {
   } catch (e) { agErr('Не вдалося почати вхід. Спробуй ще раз.'); }
 }
 
-/* ─────────── сайт-деталі: прибрати «Запуск Zoom» (не для сайту) ─────────── */
-function stripZoom() {
-  try {
-    var z = document.getElementById('zApp');
-    if (!z) return;
-    var sec = z.closest('.ms-sec');            /* /iphone/: ціла секція «Запуск Zoom» */
-    if (sec) { sec.remove(); return; }
-    var seg = z.closest('.seg-z');             /* /mac/: прибрати сегмент + заголовок картки */
-    if (seg) {
-      var card = seg.closest('.sw-card');
-      if (card) {
-        var hd = card.querySelector('.sw-c-head');
-        if (hd && /Zoom/i.test(String(hd.textContent || ''))) hd.remove();
-      }
-      seg.remove();
-    }
-  } catch (e) {}
-}
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', stripZoom);
-else stripZoom();
+/* 3.5.20: «Запуск Zoom» більше НЕ вирізається з розмітки — картка
+   #secZoom просто ховається CSS'ом вище (iPhone — завжди, Mac — поки
+   користувач не бета-адмін). Так картку можна ПОКАЗАТИ назад одразу,
+   щойно бета-прапорець доїде з бази (body.fh-beta), без перезавантаження. */
 
 /* 3.5.19: СПОВІЩЕННЯ НА САЙТІ НЕМАЄ (просив власник: «убери функцию
    сповіщення про початок уроку в веб-версии — она только на Андроиде

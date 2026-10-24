@@ -20,11 +20,69 @@
      /api/sync + дзеркала, outbox); без екрана помилки; без «Запуск Zoom» -->
 <script src="webhost.js"></script>
 <script>
-try {
-  if (window.innerWidth >= 960 && window.innerHeight >= 560 && !/fhm=1/.test(location.search)) {
-    location.replace('/mac/' + location.hash);
-  }
-} catch (e) {}
+/* 3.5.20: САЙТ ПЕРЕВІРЯЄ ПРИСТРІЙ (просив власник: «не перекидає на інший
+   сайт, а з'являється красиве вікно, яке далі не пускає; воно завжди
+   перевіряє твій пристрій, і якщо він той — вікна нема, одразу сайт»).
+   Сторінка /iphone/ відкривається лише на iPhone/iPad.
+   ?demo — прихований обхід для бета-тестів (посилання ніде не показуємо). */
+(function () {
+  try {
+    if (/[?&]demo/.test(location.search)) return;
+    var ua = navigator.userAgent || '';
+    var macPage = false;
+    var iOS = /iPhone|iPod|iPad/i.test(ua);
+    var isMac = /Macintosh/i.test(ua);
+    if (macPage ? isMac : iOS) return;
+    var and = /Android/i.test(ua), win = /Windows/i.test(ua);
+    var s = document.createElement('style');
+    s.textContent =
+      'html,body{background:#050508!important}body>*{display:none!important}' +
+      '#devlock{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:24px;' +
+        'font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',system-ui,sans-serif;' +
+        'background:radial-gradient(120% 90% at 50% 0%,rgba(72,58,148,.45),transparent 55%),rgba(6,6,12,.97)}' +
+      '#devlock .dl-card{width:min(400px,100%);border-radius:26px;padding:30px 26px 24px;text-align:center;color:#f4f4f8;' +
+        'background:linear-gradient(165deg,rgba(139,92,246,.14),rgba(255,255,255,.04) 60%,rgba(255,255,255,.02));' +
+        'border:1px solid rgba(139,92,246,.35);box-shadow:0 30px 90px rgba(0,0,0,.6),0 0 0 1px rgba(139,92,246,.08);' +
+        'animation:dlc .5s cubic-bezier(.16,1,.3,1)}' +
+      '@keyframes dlc{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}' +
+      '#devlock .dl-logo{width:80px;height:80px;border-radius:23px;margin:0 auto 18px;display:grid;place-items:center;overflow:hidden;' +
+        'background:linear-gradient(135deg,#8b5cf6,#6366f1);box-shadow:0 18px 44px rgba(99,102,241,.5),inset 0 0 0 1px rgba(255,255,255,.25)}' +
+      '#devlock .dl-logo img{width:100%;height:100%;display:block}' +
+      '#devlock .dl-t{font-size:19px;font-weight:800;letter-spacing:.2px;margin-bottom:8px}' +
+      '#devlock .dl-x{font-size:13px;color:#9aa0b4;line-height:1.65;margin-bottom:20px}' +
+      '#devlock .dl-b{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:15px 18px;border:none;' +
+        'border-radius:15px;font-size:14.5px;font-weight:800;font-family:inherit;color:#fff;cursor:pointer;text-decoration:none;' +
+        'transition:transform .15s ease,box-shadow .25s ease}' +
+      '#devlock .dl-b:active{transform:scale(.97)}' +
+      '#devlock .dl-b.g{background:linear-gradient(135deg,#22c55e,#10b981);box-shadow:0 14px 34px rgba(16,185,129,.35)}' +
+      '#devlock .dl-b.v{background:linear-gradient(135deg,#8b5cf6,#6366f1);box-shadow:0 14px 34px rgba(99,102,241,.42)}' +
+      '#devlock .dl-b.b{background:linear-gradient(135deg,#0078D4,#005EA6);box-shadow:0 14px 34px rgba(0,120,212,.35)}' +
+      '#devlock .dl-b+.dl-b{margin-top:10px}' +
+      '#devlock .dl-f{margin-top:16px;font-size:11px;color:#6b7086;line-height:1.6}';
+    (document.head || document.documentElement).appendChild(s);
+    var btns = '';
+    if (and) btns += '<a class="dl-b g" href="/FluxHelper.apk" download>Завантажити для Android</a>';
+    if (win) btns += '<a class="dl-b b" href="/FluxHelper.exe" download>Завантажити для Windows</a>';
+    if (macPage && iOS) btns += '<a class="dl-b v" href="/iphone/">Відкрити версію для iPhone</a>';
+    if (!macPage && isMac) btns += '<a class="dl-b v" href="/mac/">Відкрити версію для Mac</a>';
+    var txt = macPage
+      ? 'Ця версія сайту створена для комп\'ютерів Mac. З iPhone відкрий версію для айфона, а з Windows або Android — установи застосунок FluxHelper.'
+      : 'Ця версія сайту створена для айфонів. З телефону на Android установи застосунок FluxHelper, а з комп\'ютера відкрий версію для Mac.';
+    var d = document.createElement('div');
+    d.id = 'devlock';
+    d.innerHTML = '<div class="dl-card">' +
+      '<div class="dl-logo"><img src="/icon-192.png?v=3520" alt="FluxHelper"></div>' +
+      '<div class="dl-t">Версія лише для iPhone</div>' +
+      '<div class="dl-x">' + txt + '</div>' + btns +
+      '<div class="dl-f">FluxHelper · розклад 8-Б класу · вхід захищає Google</div>' +
+      '</div>';
+    (document.body || document.documentElement).appendChild(d);
+    var readd = function () {
+      try { if (!document.getElementById('devlock')) (document.body || document.documentElement).appendChild(d); } catch (eR) {}
+    };
+    setInterval(readd, 800);
+  } catch (e) {}
+})();
 </script>
 
 <script>
@@ -80,10 +138,8 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass','ocea
 </div>
 
 <div id="vSetup" class="view hidden">
-    <button class="ms-back" id="bBack" title="Назад до розкладу">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-      <span>До розкладу</span>
-    </button>
+    <!-- 3.5.20: кнопки «До розкладу»/«Назад» прибрано всюди — вкладки завжди
+         доступні в нижній панелі (просив власник) -->
 
     <div class="ms-sec">
       <div class="ms-lbl"><span>Мої групи</span></div>
@@ -96,7 +152,10 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass','ocea
       </div>
     </div>
 
-    <div class="ms-sec">
+    <!-- 3.5.20: id=secZoom — webhost ховає «Запуск Zoom» на сайті-iPhone назавжди
+         (сайт не може відкривати десктопний/мобільний Zoom-клієнт напряму);
+         в APK-застосунку секція працює як завжди -->
+    <div class="ms-sec" id="secZoom">
       <div class="ms-lbl"><span>Запуск Zoom</span></div>
       <div class="ms-card">
         <div class="seg-z" role="tablist">
@@ -234,9 +293,7 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass','ocea
 <!-- 2.8.3: сторінка акаунта (телефон) — ВСЕРЕДИНІ #app (раніше була зовні,
      через що ділила екран навпіл із розкладом: «половина чорна, половина акаунт») -->
 <div id="vAcc" class="view hidden">
-  <button class="back-btn" id="accBack" type="button" aria-label="Назад">
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-  </button>
+  <!-- 3.5.20: accBack прибрано (нижня панель завжди під рукою) -->
   <div class="ac-hero-card">
     <span class="ac-ava-big" id="acAva">?</span>
     <div class="ac-id">
@@ -306,10 +363,7 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass','ocea
      роль видається в базі: users.role). У браузері недоступна.
      ============================================================ -->
 <div id="vAdmin" class="view hidden">
-  <button class="adm-back" id="admBack" type="button">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.6 5.6 8.2 12l6.4 6.4"/></svg>
-    <span>До розкладу</span>
-  </button>
+  <!-- 3.5.20: admBack прибрано -->
   <section class="adm-card adm-frame">
     <div class="adm-c-head"><span class="sw-c-ic grad"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.6" y="5" width="16.8" height="15.4" rx="2"/><path d="M3.6 10h16.8"/><path d="M8.2 2.8v4M15.8 2.8v4"/></svg></span>
       <div class="sw-c-tt"><b>Редагування розкладу</b><span>зміни летять у базу — клас отримує їх миттєво</span></div>
@@ -482,12 +536,17 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass','ocea
   <div class="bt-pct" id="btPct">0%</div>
 </div>
 
-<div id="neterr" class="hidden">
-  <div class="us-card">
-    <div class="us-logo" id="neLogo"></div>
-    <h2>Немає з'єднання</h2>
-    <p class="us-sub" id="neStat">FluxHelper бере розклад з інтернету — увімкни мережу і спробуй ще раз.</p>
-    <button class="us-btn" id="neRetry">Спробувати ще раз</button>
+<!-- 3.5.20: ЕКРАН «НЕМАЄ ІНТЕРНЕТУ» ЗНЕСЕНО НАПОВНІСТЬ (просив власник:
+     «убери цю помилку повністю, щоб вона перестала вискакувати»). Натомість —
+     спокійне закривне віконце, яке з'являється ЛИШЕ при дії без мережі
+     (зайти на урок, вийти з акаунта, скинути налаштування, змінити тему) -->
+<div id="offl" class="hidden">
+  <div class="offl-back" id="offlBack"></div>
+  <div class="offl-card">
+    <span class="offl-ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg></span>
+    <b>Немає підключення до інтернету</b>
+    <span>Перевір Wi-Fi або мобільний інтернет і спробуй ще раз. Це вікно можна закрити — усі зміни збережуться, коли мережа повернеться.</span>
+    <button type="button" id="offlOk">Закрити</button>
   </div>
 </div>
 

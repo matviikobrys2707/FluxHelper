@@ -1317,12 +1317,16 @@ body[data-theme="light"] .adm-ib.set:hover{color:#fff;background:#6366f1;border-
 .acc-stat span{display:block;font-size:9px;color:#8b8fa3;margin-top:3px;font-weight:800;letter-spacing:.6px;text-transform:uppercase}
 /* 3.5.19: рамка «Пристрой» — іконка платформи (Android/Apple/Windows)
    над ім'ям пристрою; значення довші — трохи компактніший шрифт */
+/* 3.5.20: рамка «Пристрой» — ВЛАСНІ іконки платформ: градієнтна плитка ОС
+   (ставить JS: deviceLabel().tile) + білий гліф — точь-в-точь як плитки
+   іконок уроків; внутрішнє кільце + м'яка тінь */
 .acc-stat.acc-dev b{font-size:11.5px;letter-spacing:-.15px}
-.ac-devic{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:9px;margin-bottom:5px;
-  background:linear-gradient(135deg,rgba(139,92,246,.28),rgba(99,102,241,.16));box-shadow:inset 0 0 0 1px rgba(139,92,246,.38);color:#c4b5fd}
-.ac-devic svg{display:block}
-body[data-theme="light"] .ac-devic{background:rgba(124,58,237,.10);box-shadow:inset 0 0 0 1px rgba(124,58,237,.30);color:#6d28d9}
-body[data-theme="glass"] .ac-devic{background:rgba(255,255,255,.10);color:#ddd6fe}
+.ac-devic{display:inline-flex;align-items:center;justify-content:center;width:27px;height:27px;border-radius:9px;margin-bottom:5px;
+  background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.28),0 5px 14px rgba(0,0,0,.38)}
+.ac-devic svg{display:block;filter:drop-shadow(0 1px 1px rgba(0,0,0,.22))}
+body[data-theme="light"] .ac-devic{box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),0 5px 14px rgba(76,29,149,.25)}
+body[data-theme="glass"] .ac-devic{box-shadow:inset 0 0 0 1px rgba(255,255,255,.30),0 5px 14px rgba(0,0,0,.30)}
 body[data-theme="light"] .acc-stat{background:rgba(20,24,46,.04);border-color:rgba(20,24,46,.1)}
 body[data-theme="light"] .acc-stat b{color:#1c1f33}
 body[data-theme="light"] .acc-stat span{color:#6a7089}
@@ -1498,3 +1502,34 @@ body[data-theme="light"] .bn-x{border-color:rgba(20,24,46,.12);background:rgba(2
 body[data-theme="light"] .bn-x:hover{background:rgba(124,58,237,.12);color:#5b21b6}
 body[data-theme="light"] .g-rows::-webkit-scrollbar-thumb,
 body[data-theme="light"] .wn-list::-webkit-scrollbar-thumb{background:rgba(124,58,237,.35)}
+
+/* ===== 3.5.20: спокійне закривне вікно «немає інтернету» (замість повного екрана помилки) ===== */
+#offl{position:fixed;inset:0;z-index:340;display:flex;align-items:center;justify-content:center;padding:22px}
+#offl.hidden{display:none}
+#offl .offl-back{position:absolute;inset:0;background:rgba(4,4,10,.74);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+#offl .offl-card{position:relative;width:min(380px,100%);border-radius:24px;padding:26px 22px 22px;text-align:center;
+  background:linear-gradient(165deg,rgba(139,92,246,.14),rgba(255,255,255,.04) 60%,rgba(255,255,255,.02));
+  border:1px solid rgba(139,92,246,.35);box-shadow:0 30px 90px rgba(0,0,0,.6);
+  animation:offlIn .4s cubic-bezier(.16,1,.3,1)}
+@keyframes offlIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+#offl .offl-ic{display:inline-flex;align-items:center;justify-content:center;width:58px;height:58px;border-radius:18px;margin-bottom:14px;color:#fbbf24;
+  background:linear-gradient(135deg,rgba(251,191,36,.18),rgba(245,158,11,.10));box-shadow:inset 0 0 0 1px rgba(251,191,36,.35)}
+#offl b{display:block;font-size:16.5px;letter-spacing:.2px;color:#f4f4f8;margin-bottom:8px}
+#offl span{display:block;font-size:12.5px;color:#9aa0b4;line-height:1.65;margin-bottom:18px}
+#offl button{width:100%;padding:13px 18px;border:none;border-radius:14px;cursor:pointer;color:#fff;font-size:14px;font-weight:800;font-family:inherit;
+  background:linear-gradient(135deg,#8b5cf6,#6366f1);box-shadow:0 12px 28px rgba(99,102,241,.38);transition:transform .15s ease}
+#offl button:active{transform:scale(.98)}
+body[data-theme="light"] #offl .offl-back{background:rgba(30,20,60,.34)}
+body[data-theme="light"] #offl .offl-card{background:linear-gradient(165deg,#ffffff,#f7f5ff);border-color:rgba(124,58,237,.28)}
+body[data-theme="light"] #offl b{color:#141830}
+body[data-theme="light"] #offl span{color:#64748b}
+body[data-theme="glass"] #offl .offl-card{background:linear-gradient(165deg,rgba(40,32,74,.72),rgba(22,18,44,.78));backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px)}
+
+/* ===== 3.5.20: su-tile — градієнтні плитки рядків налаштувань, точь-в-точь
+   як на телефоні (ms-tile sm): кольоровий фон + білий значок + внутрішнє кільце */
+.su-tile{width:34px;height:34px;border-radius:11px;flex:none;display:grid;place-items:center;color:#fff;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),0 6px 16px rgba(0,0,0,.30)}
+.su-tile svg{stroke:#fff;display:block}
+.sw-tog-row.c-row .su-tile{width:36px;height:36px}
+body[data-theme="light"] .su-tile{box-shadow:inset 0 0 0 1px rgba(255,255,255,.30),0 6px 16px rgba(0,0,0,.16)}
+body[data-theme="glass"] .su-tile{box-shadow:inset 0 0 0 1px rgba(255,255,255,.25),0 6px 16px rgba(0,0,0,.26)}

@@ -262,7 +262,7 @@ function validS(x) {
 // вічно вважав себе старішим. Тепер версію підставляє build.sh з манифеста
 // (2.4.1 -> versionName), а ПІСЛЯ завантаження Java-міст AndroidHost.ver()
 // віддає СПРАВЖНЮ версію встановленого пакета (PackageManager) — найнадійніше.
-let APP_VER = '3.5.19';              // X.Y.Z — підставляється при збірці з манифеста
+let APP_VER = '3.5.20';              // X.Y.Z — підставляється при збірці з манифеста
 try {
   if (window.AndroidHost && AndroidHost.ver) {
     const jv = AndroidHost.ver();
@@ -273,7 +273,19 @@ try {
    словом «beta» скрізь у інтерфейсі (профіль, «Про програму», вікно оновлення),
    релізні показують чистий номер. Перед релізом змінюємо тут і перезбираємо. */
 const APP_CHANNEL = 'beta';
-function verLabel() { return APP_VER + (APP_CHANNEL === 'beta' ? ' beta' : ''); }
+/* 3.5.20: БЕТА-РЕЖИМ САЙТУ (просив власник): звичайний користувач бачить
+   РЕЛІЗНУ поведінку сайту (без нових функцій) і версію БЕЗ слова «beta»;
+   адмін з увімкненим перемикачем «Бета-версії» після перезавантаження
+   сторінки отримує бета-функції і версію «X.Y.Z beta» (URL не змінюється).
+   У застосунках (APK/EXE) бета = канал збірки, як і раніше. */
+function FH_BETA() {
+  if (!window.FH_WEB) return false;
+  try { return !!(BETA && BETA.on && typeof staff === 'function' && staff()); } catch (e) { return false; }
+}
+function verLabel() {
+  const b = window.FH_WEB ? FH_BETA() : (APP_CHANNEL === 'beta');
+  return APP_VER + (b ? ' beta' : '');
+}
 let FIRST = !S;                             // групи ще не налаштовані -> майстер обов'язковий
 let AUTO_SETUP = false;                     // 2.3.6: майстер відкритий АВТОМАТИЧНО (не користувачем)
 
@@ -594,6 +606,9 @@ let lastJoinBtn = null;     // кнопка «Приєднатися», яку �
 let LAST_OPEN_LESSON = null;   // 3.4.11: урок, який відкриваємо (для маркера «закрито»)
 function joinLesson(l) {
   if (!l || !l.url) return;
+  /* 3.5.20: «зайти на урок» без мережі — спокійне закривне віконце,
+     а не мовчазний збій (просив власник) */
+  if (fhOfflineNow()) { showOffl(); return; }
   try { LAST_OPEN_LESSON = { name: String(l.name || ''), t: String(l.t || ''), url: String(l.url || '') }; } catch (eLL) {}
   if (CONFIRM.on) {
     pendingLesson = l;
@@ -1166,8 +1181,7 @@ function showSetup() {
   const _ad2 = byId('vAdmin'); if (_ad2) _ad2.classList.add('hidden');   // 3.3.0
   document.body.setAttribute('data-view', 'setup');
   byId('vSetup').classList.remove('hidden');
-  const bb = byId('bBack');
-  if (bb) bb.style.display = FIRST ? 'none' : '';     // у майстрі першого запуску немає «назад»
+  /* 3.5.20: bBack більше не існує — прибрано разом з кнопкою */
   buildSummary();
   refreshNotifUI();
   refreshZoomUI();
@@ -1725,42 +1739,53 @@ function parseNotes(txt) {
 // пріоритет. Третій елемент пункта ('pc'/'android') — показувати лише
 // на одній платформі; без нього — на обох.
 const WHATS_NEW = {
+  '3.5.20': [
+    ['✦', 'Сповіщення Windows більше не губляться — приходять рівно за обраний час', 'windows'],
+    ['/', 'Сповіщення — картка-«розмова» як у Telegram: розгорнув — кнопки «Зайти на урок» і «Нагадати за 1 хв»', 'android'],
+    ['/', 'Рамка «Сповіщення» на ПК — іконки точь-в-точь як на телефоні', 'windows'],
+    ['/', 'Рамка «Пристрой» — нові власні іконки платформ (Android, iPhone, Windows, macOS)'],
+    ['-', 'Кнопки «До розкладу» і «Назад» прибрано — вкладки завжди під рукою'],
+    ['/', 'Екран «Немає інтернету» зник — замість нього спокійне закривне віконце при діях без мережі'],
+    ['+', 'Сайт перевіряє пристрій: версія для iPhone — на iPhone, версія для Mac — на Mac', 'iphone'],
+    ['/', 'Сайт для Mac: повернуто «Запуск Zoom» — через додаток або браузер', 'mac'],
+    ['/', '«Що нового» показує зміни лише для твого пристрою']
+  ],
   '3.5.19': [
     ['/', 'Екран входу — лише «Вітаємо у FluxHelper»: логотип і назву зверху прибрано, унизу — «вхід захищає Google»'],
     ['/', 'Після вибору акаунта Google одразу з’являється екран завантаження — жодних «перевіряємо акаунт»'],
     ['+', 'Рамка «Пристрой» — ім’я пристрою з ОС (Телефон (Android), Телефон (iPhone), Комп’ютер (Windows), Комп’ютер (macOS)) та іконка платформи'],
-    ['/', 'Нижня панель трохи піднята від краю; відступ від останнього елемента до панелі тепер однаковий в усіх вкладках', 'android'],
+    ['/', 'Нижня панель трохи піднята від краю; відступ від останнього елемента до панелі тепер однаковий в усіх вкладках', 'phone'],
     ['-', 'Сайт: сповіщення про початок уроку прибрано — ця функція лише в застосунках Android і Windows'],
     ['-', 'Сайт для Mac: кнопки «Згорнути»/«Закрити» прибрано — вони потрібні лише програмі Windows']
   ],
   '3.5.13': [
-    ['/', 'Панель знизу по темах: темна — темніша, світла — світла, а «прикольний» фіолетовий колір переїхав у Liquid Glass', 'android'],
+    ['/', 'Панель знизу по темах: темна — темніша, світла — світла, а «прикольний» фіолетовий колір переїхав у Liquid Glass', 'phone'],
     ['/', 'Назви уроків більше не скорочуються — довга назва переноситься на другий рядок'],
     ['✦', 'Фіолетовий градієнт фону — як на сайті; Liquid Glass перероблено на справжнє скло iOS 26']
   ],
   '3.5.12': [
-    ['/', 'Панель знизу просто накладається: уроки видно крізь скло до самого низу — жодної чорної смуги на Розкладі', 'android'],
+    ['/', 'Панель знизу просто накладається: уроки видно крізь скло до самого низу — жодної чорної смуги на Розкладі', 'phone'],
     ['/', 'Картки уроків — як у застосунку: назва + чіп у першому рядку, час і вчитель у другому, все рівненько']
   ],
   '3.5.11': [
-    ['/', 'Нижня панель більше НІКОЛИ не чорніє: нове градієнтне скло однакове в усіх вкладках', 'android'],
-    ['/', 'Іконки вкладок повернені до контурних (без заливки)', 'android'],
+    ['/', 'Нижня панель більше НІКОЛИ не чорніє: нове градієнтне скло однакове в усіх вкладках', 'phone'],
+    ['/', 'Іконки вкладок повернені до контурних (без заливки)', 'phone'],
     ['✦', 'Розклад підтягується з бази ще на екрані завантаження — без «стрибка» даних']
   ],
   '3.5.6': [
     ['✦', 'Фікс входу через Google: на мобільному інтернеті програма більше ніколи не перекидає в браузер'],
-    ['/', 'Нижня панель — новий дизайн як у Telegram: округлена панель, порядок Розклад, Адмін, Налаштування, Профіль', 'android'],
-    ['/', 'На кнопці «Профіль» видно аватарку твого акаунта', 'android'],
+    ['/', 'Нижня панель — новий дизайн як у Telegram: округлена панель, порядок Розклад, Адмін, Налаштування, Профіль', 'phone'],
+    ['/', 'На кнопці «Профіль» видно аватарку твого акаунта', 'phone'],
     ['✦', 'Зміни з веб-версії для айфона тепер доходять навіть після перезапуску програми']
   ],
   '3.5.5': [
-    ['/', 'Оновлення тепер качаються з нашого сайту — швидше і без помилок GitHub', 'android'],
-    ['/', 'Якщо завантаження не вдалося — є «Повторити знову» і «Завантажити оновлення вручну»', 'android'],
+    ['/', 'Оновлення тепер качаються з нашого сайту — швидше і без помилок GitHub', 'phone'],
+    ['/', 'Якщо завантаження не вдалося — є «Повторити знову» і «Завантажити оновлення вручну»', 'phone'],
     ['+', 'Синхронізація стала повною: групи, сповіщення, Zoom, тема і перемикач синку — однакові всюди']
   ],
   '3.5.4': [
-    ['/', 'НОВЕ ТЕСТОВЕ МЕНЮ: панель знизу — Розклад, Налаштування, Профіль і Адмін завжди в один дотик', 'android'],
-    ['/', '«ДАЛІ» біля наступного уроку тепер у помаранчевій рамці — видно з першого погляду', 'android'],
+    ['/', 'НОВЕ ТЕСТОВЕ МЕНЮ: панель знизу — Розклад, Налаштування, Профіль і Адмін завжди в один дотик', 'phone'],
+    ['/', '«ДАЛІ» біля наступного уроку тепер у помаранчевій рамці — видно з першого погляду', 'phone'],
     ['✦', 'Дрібні виправлення стабільності']
   ],
   '3.5.3': [
@@ -1768,7 +1793,7 @@ const WHATS_NEW = {
     ['✦', 'Дрібні виправлення стабільності']
   ],
   '3.5.2': [
-    ['/', 'Сповіщення про урок при розгортанні — тільки охайний опис: жодних дублів іконки чи назви', 'android'],
+    ['/', 'Сповіщення про урок при розгортанні — тільки охайний опис: жодних дублів іконки чи назви', 'phone'],
     ['✦', 'Дрібні виправлення стабільності']
   ],
   '3.5.1': [
@@ -1785,19 +1810,46 @@ function wnSchedule(d) {
 function wnMark(m) {
   return m === '+' ? 'wn-add' : m === '-' ? 'wn-rem' : m === '/' ? 'wn-chg' : 'wn-fix';
 }
+/* 3.5.20: ЧЕНДЖЛОГ ТІЛЬКИ ДЛЯ ТВОГО ПРИСТРОЮ (просив власник: «в списку
+   оновлень — тільки оновлення для моєї версії: на телефоні (Android) лише
+   Android, на комп'ютері (Windows) лише Windows, і так само для сайту на
+   iPhone і Mac»). Мітки пунктів (третій елемент):
+     'phone'   -> телефонні платформи: Android-застосунок + сайт iPhone
+     'pc'      -> комп'ютерні платформи: Windows-програма + сайт Mac
+     'android' -> лише Android-застосунок;  'iphone' -> лише сайт iPhone
+     'windows' -> лише Windows-програма;    'mac'    -> лише сайт Mac
+     без мітки -> усі платформи. */
+const WN_PLAT = (function () {
+  const web = !!window.FH_WEB;
+  if (!web) return ANDROID ? 'android' : 'windows';   // застосунки: APK / EXE
+  /* Сайт: webhost імітує AndroidHost НАВІТЬ на сторінці /mac/, тож прапорець
+     ANDROID тут бреше. Надійне джерело — шлях сторінки: /mac/ -> mac */
+  var macPage = /\/mac(\/|$)/.test(String(location.pathname || ''));
+  return macPage ? 'mac' : 'iphone';
+})();
+const WN_SITE_BETA_ONLY = { '3.5.20': 1 };   // на сайті цю версію анонсуємо лише бета-адмінам
+function wnShowItem(tag) {
+  if (!tag) return true;
+  if (tag === 'phone') return (WN_PLAT === 'android' || WN_PLAT === 'iphone');
+  if (tag === 'pc') return (WN_PLAT === 'windows' || WN_PLAT === 'mac');
+  return tag === WN_PLAT;
+}
 function wnCheck() {
   if (wnShown) return;
   if (updOpen() || UPD.pending) { wnSchedule(1500); return; }   // модалка оновлення — почекаємо
   const items = WHATS_NEW[APP_VER];
   if (!items || !items.length) return;
   try { if (localStorage.getItem('fh_wn_seen') === APP_VER) return; } catch (e) { return; }
+  /* 3.5.20: САЙТ — анонс версії, що живе в бета-режимі, бачить лише бета-адмін
+     (звичайний користувач отримує релізну поведінку — нових функцій у нього
+     не з'являється, тож нічого й не анонсуємо) */
+  if (window.FH_WEB && WN_SITE_BETA_ONLY[APP_VER] && !FH_BETA()) return;
   const list = byId('wnList');
   if (!list) return;
   let h = '';
   for (let i = 0; i < items.length; ++i) {
     const it = items[i];
-    if (it[2] === 'pc' && ANDROID) continue;
-    if (it[2] === 'android' && !ANDROID) continue;
+    if (!wnShowItem(it[2])) continue;   // 3.5.20: пункт лише для моєї платформи
     h += '<div class="wn-row ' + wnMark(it[0]) + '"><span class="wn-mark">' + it[0] + '</span><i>' + it[1] + '</i></div>';
   }
   if (!h) return;   // для цієї платформи змін немає
@@ -2147,26 +2199,46 @@ function startUpdate() {
     byId('uStat').textContent = 'не вдалося запустити завантаження — спробуй ще раз';
   }
 }
-// --- немає інтернету: жодного інтерфейсу, тільки екран помилки ---
-function showNetErr(msg) {
-  /* 3.5.18: САЙТ — екран «Немає інтернету» не показуємо (просив власник:
-     «убери ошибку, она не нужна — только для телефона и компьютера»).
-     Дані тягнуться тихо (webProbe), застосунки показують свою помилку. */
-  if (window.FH_WEB) return;
-  const ne = byId('neterr');
-  if (!ne) return;
-  document.body.classList.add('net-lock');   // титульна панель поверх (ПК)
-  const s = byId('neStat');
-  if (s) s.textContent = msg || 'FluxHelper бере розклад з інтернету — увімкни мережу і спробуй ще раз.';
-  const b = byId('boot');
-  if (b && !b.classList.contains('hidden')) { b.classList.add('off'); setTimeout(function () { b.classList.add('hidden'); }, 400); }
-  ne.classList.remove('hidden');
-  const r = byId('neRetry');
-  if (r) { r.disabled = false; r.textContent = 'Спробувати ще раз'; }
+/* ---------- 3.5.20: ПОЛІТИКА ОФЛАЙН ПЕРЕРОБЛЕНА (просив власник) ----------
+   Екран «немає інтернету» ЗНЕСЕНО НАПОВНІСТЬ: більше він НІКОЛИ не
+   вискакує сам. Мережа відстежується ПАСИВНО (fhNet.down); старт без
+   мережі — екран завантаження просто чекає з тихим ретраєм; а будь-яка
+   ДІЯ, якій потрібен інтернет (зайти на урок, вийти з акаунта, скинути
+   налаштування, змінити тему), охороняється needOnline() — воно показує
+   СПОКІЙНЕ ВІКНО «Немає підключення до інтернету», яке можна закрити. */
+let fhNet = { down: false, retryT: 0 };
+function fhNetRetry() {            // старт без мережі: тихо пробуємо ще раз за 4 с
+  if (fhNet.retryT) return;
+  fhNet.retryT = setTimeout(function () {
+    fhNet.retryT = 0;
+    try { netProbe(false); } catch (eR) {}
+  }, 4000);
 }
-function hideNetErr() {
-  const ne = byId('neterr'); if (ne) ne.classList.add('hidden');
-  document.body.classList.remove('net-lock');
+function showNetErr() {            // колишній «екран помилки» -> тепер лише ПАСИВНИЙ стан
+  fhNet.down = true;               // needOnline() бачить «мережі нема»
+  try {
+    if (typeof dataVerified !== 'undefined' && !dataVerified) fhNetRetry();
+  } catch (eV) {}
+}
+function hideNetErr() { fhNet.down = false; }   // мережа відповіла — знімаємо стан
+function fhOfflineNow() {
+  return (navigator.onLine === false) || fhNet.down;
+}
+function showOffl() {
+  const w = byId('offl'); if (w) w.classList.remove('hidden');
+  try { document.body.classList.add('offl-lock'); } catch (eL) {}
+}
+function hideOffl() {
+  const w = byId('offl'); if (w) w.classList.add('hidden');
+  try { document.body.classList.remove('offl-lock'); } catch (eL2) {}
+}
+/* needOnline(fn): пустити дію лише коли мережа є; інакше — закривне
+   спокійне віконце (просив власник: «люба дія без мережі — помилка,
+   яку можна закрити») */
+function needOnline(fn) {
+  if (fhOfflineNow()) { showOffl(); return false; }
+  if (typeof fn === 'function') fn();
+  return true;
 }
 let netBusy = false;
 /* 3.5.18: САЙТ — без екрана помилки: невдалий запуск бази = тихий
@@ -2478,31 +2550,39 @@ function collectDevInfo() {
   }
   return o;
 }
-/* 3.5.19: РАМКА «ПРИСТРІЙ» — «Тип (ОС)» + іконка платформи (просив власник:
-   «пиши имя текущего пристроя: Телефон (Android), Телефон (iPhone),
-   Комп'ютер (Windows), Комп'ютер (macOS) — с красивой иконкой»).
-   Застосунки: APK -> Телефон (Android), EXE -> Комп'ютер (Windows).
-   Сайт: ім'я визначаємо за пристроєм/ОС користувача. */
+/* 3.5.20: РАМКА «ПРИСТРІЙ» — ВЛАСНІ іконки платформ (просив власник: «ти
+   це зробив — воно максимально криве; спробуй зробити іконку власну, SVG,
+   реально красиво»). Кожна ОС — СВОЯ плитка-градієнт + білий гліф
+   (як іконки уроків і вкладок): Android — зелений робот, iPhone/iPad —
+   синє яблуко (iOS-градієнт), macOS — графітове яблуко, Windows —
+   прямий логотип Win11 (4 квадратів), Linux — бурштиновий Тукс.
+   Ім'я лишається «Тип (ОС)» (Телефон (Android) тощо). */
 function deviceLabel() {
-  const IC = {
-    android: '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.6 9.48l1.84-3.18c.16-.31.04-.7-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24a11.43 11.43 0 0 0-8.94 0L5.65 5.67c-.18-.28-.58-.36-.85-.2-.3.15-.42.54-.26.85l1.86 3.16C4.2 11 2.4 13.9 2.1 17.3v.2h19.8v-.2c-.3-3.4-2.1-6.3-5.3-7.82zM7.9 15.1c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm8.2 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/></svg>',
-    apple: '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M16.7 12.65c.02 2.06 1.81 2.75 1.83 2.76-.02.05-.29 1-1.05 1.98-.63.83-1.29 1.66-2.33 1.68-1.02.02-1.35-.55-2.52-.55-1.17 0-1.53.53-2.5.57-1 .04-1.76-.97-2.4-1.8-1.25-1.61-2.2-4.57-.92-6.36.63-.88 1.76-1.44 2.98-1.46.98-.01 1.9.62 2.5.62.6 0 1.71-.77 2.9-.66.49.02 1.87.18 2.76 1.36-.07.05-1.63.95-1.61 2.83M14.6 5.3c.52-.63.87-1.5.78-2.38-.85.03-1.9.57-2.5 1.2-.54.56-.99 1.46-.86 2.32.94.07 1.9-.48 2.58-1.14"/></svg>',
-    windows: '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.55l7.4-1.05v6.9H3v-5.85zm0 12.9v-5.85h7.4v6.9L3 18.45zm8.6-14.1L21 3.1v8.7h-9.4V4.35zm0 14.1v-7.35H21V21l-9.4-1.2z"/></svg>',
-    linux: '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c-3 0-4.8 2.6-4.8 5.6 0 1.9.5 2.7-.4 4.2-.9 1.5-2.3 3.1-2.3 5 0 1.7 1.2 2.4 1.2 2.4s.3 1 1.4 1c1.2 0 1.7-.9 4.9-.9s3.7.9 4.9.9c1.1 0 1.4-1 1.4-1s1.2-.7 1.2-2.4c0-1.9-1.4-3.5-2.3-5-.9-1.5-.4-2.3-.4-4.2C16.8 4.6 15 2 12 2zm-2.4 3.2a.9.9 0 1 1 0 1.8.9.9 0 0 1 0-1.8zm4.8 0a.9.9 0 1 1 0 1.8.9.9 0 0 1 0-1.8zM12 8.6c1.3 0 2.4.8 2.4 1.1 0 .3-1.1.3-2.4.3s-2.4 0-2.4-.3c0-.3 1.1-1.1 2.4-1.1z"/></svg>'
+  const GL = {
+    android: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.6 9.48l1.84-3.18c.16-.31.04-.7-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24a11.43 11.43 0 0 0-8.94 0L5.65 5.67c-.18-.28-.58-.36-.85-.2-.3.15-.42.54-.26.85l1.86 3.16C4.2 11 2.4 13.9 2.1 17.3v.2h19.8v-.2c-.3-3.4-2.1-6.3-5.3-7.82zM7.9 15.1c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm8.2 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/></svg>',
+    apple: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16.7 12.65c.02 2.06 1.81 2.75 1.83 2.76-.02.05-.29 1-1.05 1.98-.63.83-1.29 1.66-2.33 1.68-1.02.02-1.35-.55-2.52-.55-1.17 0-1.53.53-2.5.57-1 .04-1.76-.97-2.4-1.8-1.25-1.61-2.2-4.57-.92-6.36.63-.88 1.76-1.44 2.98-1.46.98-.01 1.9.62 2.5.62.6 0 1.71-.77 2.9-.66.49.02 1.87.18 2.76 1.36-.07.05-1.63.95-1.61 2.83M14.6 5.3c.52-.63.87-1.5.78-2.38-.85.03-1.9.57-2.5 1.2-.54.56-.99 1.46-.86 2.32.94.07 1.9-.48 2.58-1.14"/></svg>',
+    win11: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8.3" height="8.3" rx="1.6"/><rect x="12.7" y="3" width="8.3" height="8.3" rx="1.6"/><rect x="3" y="12.7" width="8.3" height="8.3" rx="1.6"/><rect x="12.7" y="12.7" width="8.3" height="8.3" rx="1.6"/></svg>',
+    linux: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c-3 0-4.8 2.6-4.8 5.6 0 1.9.5 2.7-.4 4.2-.9 1.5-2.3 3.1-2.3 5 0 1.7 1.2 2.4 1.2 2.4s.3 1 1.4 1c1.2 0 1.7-.9 4.9-.9s3.7.9 4.9.9c1.1 0 1.4-1 1.4-1s1.2-.7 1.2-2.4c0-1.9-1.4-3.5-2.3-5-.9-1.5-.4-2.3-.4-4.2C16.8 4.6 15 2 12 2zm-2.4 3.2a.9.9 0 1 1 0 1.8.9.9 0 0 1 0-1.8zm4.8 0a.9.9 0 1 1 0 1.8.9.9 0 0 1 0-1.8zM12 8.6c1.3 0 2.4.8 2.4 1.1 0 .3-1.1.3-2.4.3s-2.4 0-2.4-.3c0-.3 1.1-1.1 2.4-1.1z"/></svg>'
+  };
+  const TL = {
+    android: 'linear-gradient(135deg,#4ADE80,#15803D)',
+    iphone: 'linear-gradient(135deg,#60A5FA,#2563EB)',
+    macos: 'linear-gradient(135deg,#A1A1AA,#3F3F46)',
+    windows: 'linear-gradient(135deg,#38BDF8,#0369A1)',
+    linux: 'linear-gradient(135deg,#FBBF24,#B45309)'
   };
   const web = !!window.FH_WEB;
-  if (!web) return ANDROID ? { name: 'Телефон (Android)', ic: IC.android }
-                           : { name: 'Комп\u2019ютер (Windows)', ic: IC.windows };
+  if (!web) return ANDROID ? { name: 'Телефон (Android)', ic: GL.android, tile: TL.android }
+                           : { name: 'Комп\u2019ютер (Windows)', ic: GL.win11, tile: TL.windows };
   const ua = String(navigator.userAgent || '');
   const touch = (navigator.maxTouchPoints || 0) > 1;
-  const small = Math.min(screen.width || 9999, screen.height || 9999) < 820;
-  if (/iPhone|iPod/i.test(ua)) return { name: 'Телефон (iPhone)', ic: IC.apple };
-  if (/iPad/i.test(ua) || (/Macintosh/.test(ua) && touch)) return { name: 'Планшет (iPadOS)', ic: IC.apple };
-  if (/Android/i.test(ua)) return { name: 'Телефон (Android)', ic: IC.android };
-  if (/Macintosh|Mac OS X/i.test(ua)) return { name: 'Комп\u2019ютер (macOS)', ic: IC.apple };
-  if (/Windows/i.test(ua)) return { name: 'Комп\u2019ютер (Windows)', ic: IC.windows };
-  if (/Linux/i.test(ua)) return { name: 'Комп\u2019ютер (Linux)', ic: IC.linux };
-  return ANDROID ? { name: 'Телефон (Android)', ic: IC.android } : { name: 'Комп\u2019ютер (Windows)', ic: IC.windows };
+  if (/iPhone|iPod/i.test(ua)) return { name: 'Телефон (iPhone)', ic: GL.apple, tile: TL.iphone };
+  if (/iPad/i.test(ua) || (/Macintosh/.test(ua) && touch)) return { name: 'Планшет (iPadOS)', ic: GL.apple, tile: TL.iphone };
+  if (/Android/i.test(ua)) return { name: 'Телефон (Android)', ic: GL.android, tile: TL.android };
+  if (/Macintosh|Mac OS X/i.test(ua)) return { name: 'Комп\u2019ютер (macOS)', ic: GL.apple, tile: TL.macos };
+  if (/Windows/i.test(ua)) return { name: 'Комп\u2019ютер (Windows)', ic: GL.win11, tile: TL.windows };
+  if (/Linux/i.test(ua)) return { name: 'Комп\u2019ютер (Linux)', ic: GL.linux, tile: TL.linux };
+  return ANDROID ? { name: 'Телефон (Android)', ic: GL.android, tile: TL.android } : { name: 'Комп\u2019ютер (Windows)', ic: GL.win11, tile: TL.windows };
 }
 // ---------- пристрій у базі (2.9.0: таблиця device — WRITE-ONLY) ----------
 // КОЖЕН запуск програми пише рядок про цей пристрій: id, ВЛАСНИК (Firebase UID
@@ -3040,6 +3120,9 @@ function confirmAccountGone() {
   }, 3000);
 }
 function authLogout() {
+  /* 3.5.20: вихід з акаунта — дія, якій потрібен сервер: без мережі
+     показуємо закривне віконце (просив власник) */
+  if (fhOfflineNow()) { showOffl(); return; }
   paccSave();   // 3.4.5: знімок налаштувань ЦЬОГО аккаунта в кеш (до стирання)
   ACC.user = null; ACC.role = 'user';
   syncWatchStop();   // 2.8.6: годинник синку зупиняємо одразу
@@ -3082,6 +3165,8 @@ function authLogout() {
    - ОДРАЗУ відкривається обов'язковий майстер вибору груп, як після
      першої реєстрації. Вихід з акаунта НЕ відбувається. */
 function resetAccountSettings() {
+  /* 3.5.20: скидання налаштувань аккаунта теж потребує мережі */
+  if (fhOfflineNow()) { showOffl(); return; }
   if (!ACC.user) return;
   const k = userKey(ACC.user);
   if (!k) { toast('Акаунт ще синхронізується — спробуй за кілька секунд'); return; }
@@ -3255,9 +3340,12 @@ function refreshAccUI() {
     const abv = byId('acBeta');
     if (abv && showB) { abv.checked = !!BETA.on; }   // 3.4.12: значення з бази (синхронізоване)
   }
+  /* 3.5.20: бета-режим сайту: клас body.fh-beta вмикає нові елементи
+     (.beta-only, картку «Запуск Zoom» на Mac) для бета-адмінів */
+  try { document.body.classList.toggle('fh-beta', FH_BETA()); } catch (eFB) {}
   // 3.4.0: живі плитки профілю (остання синхронізація / пристрій / версія)
   const sV = byId('acStVer'); if (sV) sV.textContent = verLabel();
-  const sD = byId('acStDev'); if (sD) { try { const dl = deviceLabel(); sD.textContent = dl.name; const di = byId('acDevIc'); if (di) di.innerHTML = dl.ic; } catch (eAc) { sD.textContent = '\u2014'; } }
+  const sD = byId('acStDev'); if (sD) { try { const dl = deviceLabel(); sD.textContent = dl.name; const di = byId('acDevIc'); if (di) { di.innerHTML = dl.ic; di.style.background = dl.tile || ''; } } catch (eAc) { sD.textContent = '\u2014'; } }
   const sS = byId('acStSync');
   if (sS) {
     if (!syncLastTs) sS.textContent = 'ще не було';
@@ -4480,11 +4568,8 @@ function admBind() {
       if (t) admSetTab(parseInt(t.getAttribute('data-t'), 10) || 0);
     });
   }
-  const bk = byId('admBack');
-  if (bk && !bk.__adm) {
-    bk.__adm = 1;
-    bk.addEventListener('click', function () { if (typeof showMain === 'function') showMain(); });
-  }
+  const bk3 = byId('admBack');   // 3.5.20: кнопки «До розкладу» більше нема — прибираємо, якщо хтось із старої розмітки лишився
+  if (bk3 && bk3.parentNode) bk3.parentNode.removeChild(bk3);
   const body = byId('admBody');
   if (body && !body.__adm) {
     body.__adm = 1;
@@ -4660,9 +4745,11 @@ function init() {
   const abL = byId('abLogo'); if (abL) abL.innerHTML = logoMark(44);
   const abV = byId('abVer'); if (abV) abV.textContent = 'версія ' + verLabel();
   // (рядок «Версія» тепер живе в рамочці внизу налаштувань)
-  byId('neLogo').innerHTML = logoMark(74);
+  /* 3.5.20: neLogo жив у знесеному екрані #neterr — більше не ставимо */
   byId('upLogo').innerHTML = logoMark(74);
-  byId('neRetry').onclick = function () { netProbe(true); };
+  /* 3.5.20: neRetry більше не існує (екран знесено) — охоронець чіпляємо до нового вікна */
+  const ooK = byId('offlOk'); if (ooK) ooK.onclick = hideOffl;
+  const ooB = byId('offlBack'); if (ooB) ooB.onclick = hideOffl;
   // 3.5.1: «Що нового» — закриття (кнопка і тло)
   try {
     byId('wnOk').onclick = wnClose;
@@ -4675,7 +4762,7 @@ function init() {
   const umn5 = byId('updMan'); if (umn5) umn5.onclick = function () { try { toast('Відкриваю сайт — файл завантажиться сам'); } catch (e5) {} openL(updManUrl()); };
 
   byId('bCfg').onclick = function () { showSetup(); };
-  byId('bBack').onclick = function () { showMain(); };
+  /* 3.5.20: bBack прибрано — кнопки «До розкладу» більше нема (нижня панель завжди під рукою) */
   byId('burger').onclick = function () { if (drawerOpen()) closeDrawer(); else openDrawer(); };
   byId('dback').onclick = closeDrawer;
   byId('dwSched').onclick = function () { closeDrawer(); showMain(); render(); };
@@ -4698,8 +4785,8 @@ function init() {
     try { AndroidHost.requestNotifPerm(); pollNotifPerm(); } catch (e) {}
     setTimeout(refreshPhoneSec, 1600);
   };
-  const bUN = byId('bUpdNow'); if (bUN) bUN.onclick = manualUpdCheck;
-  const rU = byId('rowUpd'); if (rU) rU.onclick = function (ev) { if (ev.target && ev.target.closest && ev.target.closest('#bUpdNow')) return; manualUpdCheck(); };
+  const bUN = byId('bUpdNow'); if (bUN) bUN.onclick = function () { needOnline(manualUpdCheck); };
+  const rU = byId('rowUpd'); if (rU) rU.onclick = function (ev) { if (ev.target && ev.target.closest && ev.target.closest('#bUpdNow')) return; needOnline(manualUpdCheck); };
   // 2.3.7: перемикач синхронізації
   refreshPhoneSec();
   byId('gSave').onclick = saveSettings;
@@ -4779,8 +4866,7 @@ function init() {
   // 2.3.9: 5-тапний режим розробника прибрано повністю — рамки «Про програму» більше немає,
   // вкладка «Адмін» відкривається лише за роллю.
   devicePing();   // 2.9.0: запис пристрою в базу при кожному запуску
-  // 2.7.2: акаунт/синхронізація
-  const abk = byId('accBack'); if (abk) abk.onclick = function () { showMain(); render(); };
+  // 2.7.2: акаунт/синхронізація (3.5.20: accBack прибрано разом із кнопкою)
   /* 3.4.5: перемикач «Скачувати бета-версії» (вкладка Акаунт, тільки адміни) */
   const abt = byId('acBeta');
   if (abt) abt.onchange = function () {
@@ -4918,7 +5004,7 @@ function init() {
   if (tr) {
     const tiles = tr.querySelectorAll('.theme-tile');
     for (let i = 0; i < tiles.length; ++i) {
-      tiles[i].onclick = function () { applyTheme(tiles[i].getAttribute('data-t') || 'standard', true); };
+      tiles[i].onclick = function () { needOnline(function () { applyTheme(tiles[i].getAttribute('data-t') || 'standard', true); }); };
     }
   }
   document.querySelectorAll('[data-verchip]').forEach(function (e) { e.textContent = 'версія ' + APP_VER; });
