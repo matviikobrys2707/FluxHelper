@@ -155,7 +155,7 @@ main::-webkit-scrollbar{width:0;height:0;display:none}
 .empty{display:flex;flex-direction:column;align-items:center;gap:10px;padding:60px 0;color:#8b8fa3;font-size:13px}
 .empty svg{opacity:.5}
 
-.card{position:relative;display:grid;grid-template-columns:46px minmax(0,1fr) auto;gap:13px;align-items:center;min-height:76px;
+.card{position:relative;display:grid;grid-template-columns:46px minmax(0,1fr) auto;gap:13px;align-items:center;height:108px;
   padding:13px 15px;border-radius:18px;margin-bottom:10px;cursor:pointer;overflow:hidden;
   /* 3.5.23 (власник: «сделай, чтобы все рамки были темнее» + «все рамки
      одного размера»): ОДНАКОВА темніша рамка в усіх карток і ОДНАКОВА
@@ -231,6 +231,9 @@ main.still .card{animation:none!important}
    шторка знизу). */
 #vSetup{display:block;overflow-y:auto;padding:18px 24px 24px}
 #vSetup::-webkit-scrollbar{width:0;height:0;display:none}
+.sw-duo{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:stretch}
+.sw-duo .sw-card{margin-bottom:10px}
+body.mob .sw-duo{grid-template-columns:1fr}
 .sw-wrap{width:100%;max-width:780px;margin:0 auto}
 .sw-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:16px}
 .sw-title-row{display:flex;align-items:center;gap:10px}

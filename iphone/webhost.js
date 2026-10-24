@@ -67,8 +67,9 @@ try {
   st.textContent =
     '#neterr{display:none!important}' +
     '#bMin,#bClose,#btMin,#btClose{display:none!important}' +
-    '#bnav{bottom:calc(17px + env(safe-area-inset-bottom, 0px))!important}' +
+    '#bnav{bottom:calc(12px + var(--fh-sab, env(safe-area-inset-bottom, 0px)))!important}' +   /* 3.5.26: динамічно, як у застосунку */
     '#secNotif,#nban,#bPerm,#bTestN,#rowNotif{display:none!important}' +
+    '#secUpd{display:none!important}' +   /* 3.5.26: рамку «Оновлення» знесено з САЙТУ (потрібна лише застосункам) */
     'body:not(.fh-beta) .beta-only{display:none!important}';
   /* 3.5.23: правило, що ховало кнопку «Приєднатися» на картці (.b-join),
      ЗНЯТО — власник повертає кнопку на сайт («почему убрала? Я не говорил
@@ -618,8 +619,19 @@ window.AndroidHost = {
    ============================================================ */
 (function () {
   var TABS = { schedule: 1, settings: 1, account: 1, admin: 1 };
+  /* 3.5.26: знімок вкладки НА СТАРТІ — якщо живий хеш десь затерся,
+     відновлення іде за ним (фікс «перезавантаження скидає на Розклад») */
+  var BOOT_TAB = (function () {
+    try { var h0 = String(location.hash || '').replace(/^#/, ''); return TABS[h0] ? h0 : ''; }
+    catch (e0) { return ''; }
+  })();
   function setHash(name) {
     try {
+      /* 3.5.26: під час бута хеш НЕ перезаписуємо — інакше стартовий
+         showMain() затирає #settings до __fhHashApply, і після
+         перезавантаження користувача викидає на Розклад */
+      var b0 = (window.__fh && window.__fh.boot) ? window.__fh.boot() : null;
+      if (b0 && !b0.revealed) return;
       if (TABS[name] && location.hash !== '#' + name) {
         history.replaceState(null, '', location.pathname + location.search + '#' + name);
       }
@@ -637,6 +649,7 @@ window.AndroidHost = {
   function applyHash() {
     try {
       var h = String(location.hash || '').replace(/^#/, '');
+      if (!TABS[h]) h = BOOT_TAB;   /* 3.5.26: живий хеш затерто — беремо стартовий */
       if (!TABS[h]) return;
       if (h === 'schedule' && typeof window.showMain === 'function') window.showMain();
       else if (h === 'settings' && typeof window.showSetup === 'function') window.showSetup();

@@ -136,7 +136,7 @@ main.still .card{animation:none!important}
 .card h3{display:flex;align-items:center;min-width:0;font-size:15px;font-weight:700;line-height:1.25;color:#f4f4f8}
 /* 3.5.13: назва уроку більше НЕ скорочується (просив власник) —
    чесний перенос на другий рядок, як на сайті */
-.card h3 .ln{flex:0 1 auto;min-width:0;overflow-wrap:break-word;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card h3 .ln{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap} /* 3.5.26: назва — ЗАВЖДИ один рядок (просив власник), довга — акуратні крапки */
 .now-chip,.next-chip{flex:none}
 /* 3.5.14: КАРТКА УРОКУ — СТАРИЙ ДИЗАЙН 3.5.0 (просив власник: «верни
    старый дизайн… иконка, название урока; второй рядок — время и имя
@@ -656,7 +656,7 @@ body.mob .su-perm{margin-left:0}
    настройках, аккаунте — скролл в самый низ, чтобы панель не налазила на
    текст»). 3.5.19: резерви УСІХ вкладок — спільна змінна --fh-navres,
    щоб відстань до панелі була ОДНАКОВА (Розклад/Налаштування/Аккаунт/Адмін). */
-html body.android #vSetup{padding-bottom:calc(var(--fh-navres, 84px) + var(--fh-sab, env(safe-area-inset-bottom, 0px)))}
+html body.android #vSetup{padding-bottom:var(--fh-navres, 85px)}
 body.mob #vSetup{padding:12px 13px 20px}
 body.mob .g-rows{max-height:52vh}
 body.mob .g-foot{flex-wrap:wrap}
@@ -1136,7 +1136,7 @@ body[data-theme="light"] .m-x,body[data-theme="light"] .bn-x {color:#4b5069}
 /* ===== 2.8.3: ПРОФІЛЬ (телефон) — повністю перероблений дизайн ===== */
 #vAcc{display:block;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:10px 16px 30px}
 /* 3.5.19: резерв Аккаунту — спільна змінна (як у Розкладі/Налаштуваннях) */
-html body.android #vAcc{padding-bottom:calc(var(--fh-navres, 84px) + var(--fh-sab, env(safe-area-inset-bottom, 0px)))}
+html body.android #vAcc{padding-bottom:var(--fh-navres, 85px)}
 body.mob #vAcc{padding:8px 13px 26px}
 .back-btn{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:12px;
   border:1px solid rgba(148,163,184,.2);background:rgba(148,163,184,.07);color:#c9cddb;cursor:pointer;margin:2px 0 10px;
@@ -1258,7 +1258,7 @@ body.gate-on #agate{display:flex}
 /* ================= 3.0.0 — АДМІН-ПАНЕЛЬ ================= */
 #vAdmin{display:block;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:10px 13px 30px}
 /* 3.5.17: адмінка тож скролиться до кінця над панеллю; 3.5.19 — спільна змінна */
-html body.android #vAdmin{padding-bottom:calc(var(--fh-navres, 84px) + var(--fh-sab, env(safe-area-inset-bottom, 0px)))}
+html body.android #vAdmin{padding-bottom:var(--fh-navres, 85px)}
 #vAdmin{padding:14px 14px 40px}
 /* 3.3.2: базові класи заголовка картки (в ПК-версії вони живуть у стилях
    «Налаштувань», у мобільному css їх не було — адмінка тепер теж їх малює) */
@@ -1646,9 +1646,13 @@ body.mob .card,body.android .card{background:rgba(255,255,255,.05);border-color:
    3.5.21: ПОДНЯТА ЕЩЁ ВЫШЕ (просил владелец: «расстояние между самым
    низом и началом панели — где-то 0.5 см, 0.5 или 0.4 см») —
    8px -> 17px ≈ 0.45 см на любом-density CSS-пикселях.
-   3.5.25: ПІДНЯТА ЩЕ ВИЩЕ (просив власник: «подними ещё где-то в полтора
-   раза от текущего отступа») — 17px -> 26px ≈ 0.7 см від краю. */
-#bnav{position:fixed;left:50%;transform:translateX(-50%);bottom:26px;z-index:60;display:none;
+   3.5.25: ПІДНЯТА ЩЕ ВИЩЕ — 17px -> 26px ≈ 0.7 см від краю.
+   3.5.26: ДИНАМІЧНИЙ ВІДСТУП (просив власник): з кнопковою навігацією
+   (квадрат-кружок-трикутник) панель САМА піднімається над системними
+   кнопками (--fh-sab = реальний інсет від нативного мосту, div на
+   devicePixelRatio), з жестами — опускається до краю; знизу завжди
+   12px повітря, панель НІКОЛИ не заїжджає на системну панель. */
+#bnav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(12px + var(--fh-sab, env(safe-area-inset-bottom, 0px)));z-index:60;display:none;
   flex-direction:row;align-items:stretch;gap:3px;padding:6px 7px;border-radius:24px;width:max-content;max-width:calc(100vw - 16px);
   /* 3.5.13: темна тема — панель ПОТЕМНІША (просив власник: «немножечко
      потемнее, реально как будто тёмная тема»); колишній фіолетовий колір
@@ -1718,9 +1722,9 @@ body.android #burger,body.android #drawer,body.android #dback{display:none!impor
    Панель ≈63px + bottom 8px + повітря ~13px = 84px. Поле останньої
    картки і нижній відступ .view прибрано — відстань «остання штука ->
    панель» ОДНАКОВА в Розкладі, Налаштуваннях, Аккаунті й Адмінці. */
-:root{--fh-navres:93px}
+:root{--fh-navres:calc(85px + var(--fh-sab, env(safe-area-inset-bottom, 0px)))}
 body.android #vMain{padding-bottom:0}
-body.android main#list{padding-bottom:calc(var(--fh-navres) + var(--fh-sab, env(safe-area-inset-bottom, 0px)))}
+body.android main#list{padding-bottom:var(--fh-navres)}
 body.android main#list > :last-child{margin-bottom:0!important}
 body.android #vAcc .ac-note{padding-bottom:0}
 body.android #vSetup > :last-child,body.android #vAcc > :last-child,body.android #vAdmin > :last-child{margin-bottom:0!important}

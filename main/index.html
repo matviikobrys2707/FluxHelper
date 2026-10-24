@@ -52,6 +52,7 @@
 
   var base = null;
   try { base = pickBase(); } catch (e) { base = PC; }
+  var loaded = false;   /* 3.5.26: контент успішно підтягнуто — сторож більше НЕ спрацьовує */
 
   /* 3.5.23: ЗАХИСТ ВІД ЦИКЛУ ПЕРЕАДРЕСАЦІЙ (власник: «страничка сама
      перезагружается раз за разом»). Раніше було так: /main не зміг
@@ -81,13 +82,14 @@
   }
 
   /* страховка: якщо підтягування не вдалося за 12 с — одна переадресація */
-  setTimeout(kick, 12000);
+  setTimeout(function () { if (!loaded) kick(); }, 12000);   /* 3.5.26: сторож живий ЛИШЕ поки контент не завантажився */
 
   function tryLoad(attempt) {
     try {
       fetch(base + 'index.html', { cache: 'no-store' })
         .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.text(); })
         .then(function (html) {
+          loaded = true;
           /* <base> має стояти ПЕРШИМ у <head> — тоді webhost.js/ui.css/ui.js
              і всі відносні запити підвантажаться з правильної версії */
           html = String(html).replace(/<head([^>]*)>/i, '<head$1><base href="' + base + '">');
