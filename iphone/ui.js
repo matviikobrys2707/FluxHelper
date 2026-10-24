@@ -158,10 +158,10 @@ const BUILTIN = {
     'геометрія':               { icon: 'shape',    link: 'https://us04web.zoom.us/j/74715960561?pwd=lzq3MwKhbj9g29rudFrXzaahMwqMkK.1' },
     'зарубіжна література':    { icon: 'bookopen', link: 'https://us05web.zoom.us/j/3362996170?pwd=UDFMbkRaU3BRaDF5UUxhcWY1NTIxUT09' },
     'основи медіаграмотності': { icon: 'film',     link: 'https://us04web.zoom.us/j/3087220547?pwd=OHFkb3RuZHFEc2hFbUdpQ09UazFydz09' },
-    'англійська мова':         { icon: 'english',   links: { '1': 'https://us04web.zoom.us/j/78501670655?pwd=jvkDLg5Zr0yftjC45RshgmVk1DI71b.1', '2': 'https://us04web.zoom.us/j/2789884374?pwd=40c3JMgJgB7Af9fO3iMAab1yKsDD1Q.1' } },
-    'німецька мова':           { icon: 'german',    links: { '1': 'https://us05web.zoom.us/j/3362996170?pwd=UDFMbkRaU3BRaDF5UUxhcWY1NTIxUT09', '2': 'https://us04web.zoom.us/j/7383966360?pwd=aTVZcUdMNW15R3pOa09YVnZXY1h4QT09' } },
-    'українська мова':         { icon: 'ukr_lang',  links: { '1': 'https://us05web.zoom.us/j/7865109402?pwd=Z2NSY0g4eGtYUGpEM1Y3OUF6c3o2QT09', '2': 'https://us05web.zoom.us/j/8988356507?pwd=OXFEU1lucjBHcEhYNXdZL1p0UThMUT09' } },
-    'українська література':   { icon: 'ukr_lit',   link: 'https://us05web.zoom.us/j/7865109402?pwd=Z2NSY0g4eGtYUGpEM1Y3OUF6c3o2QT09' },
+    'англійська мова':         { icon: 'msg',       links: { '1': 'https://us04web.zoom.us/j/78501670655?pwd=jvkDLg5Zr0yftjC45RshgmVk1DI71b.1', '2': 'https://us04web.zoom.us/j/2789884374?pwd=40c3JMgJgB7Af9fO3iMAab1yKsDD1Q.1' } },
+    'німецька мова':           { icon: 'globe',     links: { '1': 'https://us05web.zoom.us/j/3362996170?pwd=UDFMbkRaU3BRaDF5UUxhcWY1NTIxUT09', '2': 'https://us04web.zoom.us/j/7383966360?pwd=aTVZcUdMNW15R3pOa09YVnZXY1h4QT09' } },
+    'українська мова':         { icon: 'book',      links: { '1': 'https://us05web.zoom.us/j/7865109402?pwd=Z2NSY0g4eGtYUGpEM1Y3OUF6c3o2QT09', '2': 'https://us05web.zoom.us/j/8988356507?pwd=OXFEU1lucjBHcEhYNXdZL1p0UThMUT09' } },
+    'українська література':   { icon: 'bookopen',  link: 'https://us05web.zoom.us/j/7865109402?pwd=Z2NSY0g4eGtYUGpEM1Y3OUF6c3o2QT09' },
     'історія україни':         { icon: 'landmark', link: 'https://us05web.zoom.us/j/3749252625?pwd=n9BlQwCIZnBHwKabIs7EtF9EKaSdbk.1' },
     'фізика':                  { icon: 'atom',     link: 'https://us05web.zoom.us/j/2891383331?pwd=F0jxnmfiTOxydHzcOLugDXOPsR7AN9.1' },
     'фізична культура':        { icon: 'ball',     link: 'https://us04web.zoom.us/j/7328694112?pwd=T2NucVJwS21UbHhubE9yL3BpcytyUT09' },
@@ -262,7 +262,7 @@ function validS(x) {
 // вічно вважав себе старішим. Тепер версію підставляє build.sh з манифеста
 // (2.4.1 -> versionName), а ПІСЛЯ завантаження Java-міст AndroidHost.ver()
 // віддає СПРАВЖНЮ версію встановленого пакета (PackageManager) — найнадійніше.
-let APP_VER = '3.5.23';              // X.Y.Z — підставляється при збірці з манифеста
+let APP_VER = '3.5.24';              // X.Y.Z — підставляється при збірці з манифеста
 try {
   if (window.AndroidHost && AndroidHost.ver) {
     const jv = AndroidHost.ver();
@@ -1698,9 +1698,11 @@ function pollSchedule() {
       if (!j || typeof j !== 'object') return;
       const s = JSON.stringify(j);
       if (s !== schedLast) {
-        const first = (schedLast === '');
+        /* 3.5.24: ПЕРШИЙ фетч теж застосовується — раніше перший результат
+           викидався (if (!first)), тож свіжий розклад доїжджав лише з другої
+           хвилі; applyDb і так не перемальовує, якщо нічого не змінилось */
         schedLast = s;
-        if (!first) { applyDb({ schedule: j }); dbOnline = true; }
+        applyDb({ schedule: j }); dbOnline = true;
       }
     });
   clearTimeout(poolSchedT);
@@ -1716,17 +1718,21 @@ function pollSubjects() {
     if (sj && typeof sj === 'object') {
       const s = JSON.stringify(sj);
       if (s !== subLast) {
-        const first = (subLast === '');
+        /* 3.5.24: ФІКС «СТАРІ ІКОНКИ НА САЙТІ» — перший фетч предметів більше
+           НЕ викидається. Раніше перший результат pollSubjects ігнорувався
+           (if (!first)), а doFetch (повна /.json — важкий) на телефоні часто
+           не встигав/падав -> предмети лишалися вбудовані/кешовані тижнями
+           (іконки «EN/UA/DE», bookf/filmf), хоча в адмінці вже давно нові */
         subLast = s;
-        if (!first) applyDb({ subjects: sj });
+        applyDb({ subjects: sj });
       }
     }
     if (tj && typeof tj === 'object') {
       const s2 = JSON.stringify(tj);
       if (s2 !== tchLast) {
-        const first2 = (tchLast === '');
+        /* 3.5.24: перший фетч вчителів теж застосовується */
         tchLast = s2;
-        if (!first2) applyDb({ teachers: tj });
+        applyDb({ teachers: tj });
       }
     }
   });
@@ -1779,6 +1785,13 @@ function parseNotes(txt) {
 // пріоритет. Третій елемент пункта ('pc'/'android') — показувати лише
 // на одній платформі; без нього — на обох.
 const WHATS_NEW = {
+  '3.5.24': [
+    ['/', 'Фікс «поганих іконок» на сайті: свіжі предмети (і іконки) тепер малюються ОДРАЗУ з першого запиту — більше не живуть тижнями старі EN/UA/DE та інші'],
+    ['/', 'Іконки мов у вбудованому розкладі тепер як в адмінці: англійська — бульбашка, українська — книжка, німецька — глобус; на ПК — ті самі тонкі лінійні, без «жирних»'],
+    ['/', 'Телефон: плавність — «скло» (блюр) вимкнено на телефонах повністю, фіксований фон більше не гальмує скрол; вигляд тем не змінився'],
+    ['+', 'Android: вхід через Google тепер відкриває надійну сторінку входу в браузері, якщо рідний вибір акаунта не спрацював — «Доступ заблоковано» більше не з’явиться', 'android'],
+    ['+', 'Windows: авто-вхід у Zoom пише лог з перших мілісекунд і сам виправляє кодування скрипта (більше не буває «мовчить»)', 'windows']
+  ],
   '3.5.23': [
     ['/', 'Кнопка «Приєднатися» повернена на сайт — мала бути завжди, прибрали помилково'],
     ['/', 'Віконце «Немає підключення до інтернету» знесено ПОВНІСТЮ з усіх версій — більше ніде не з’являється'],
@@ -5130,7 +5143,17 @@ function init() {
      Тепер кеш читається першим і перший кадр уже з актуальними іконками. */
   try {
     const c = JSON.parse(localStorage.getItem('fh_cache') || 'null');
-    if (c && c.data) { cacheTs = c.ts || 0; applyDb(c.data, true); }
+    if (c && c.data) {
+      cacheTs = c.ts || 0;
+      /* 3.5.24: КЕШ СТАРШИЙ ЗА 24 ГОДИНИ — предмети/вчителі з нього БІЛЬШЕ
+         НЕ малюються. Раніше «протухлий» кеш міг тижнями показувати старі
+         іконки (bookf/filmf/EN-UA-DE), якщо свіжий фетч не встигав;
+         розклад/тижні/канал залишається — вони мають офлайн-цінність,
+         а свіжі предмети доїжджають за частку секунди (pollSubjects) */
+      const stale = !c.ts || (Date.now() - c.ts) > 86400000;
+      if (stale) applyDb({ schedule: c.data.schedule, weeks: c.data.weeks, app: c.data.app }, true);
+      else applyDb(c.data, true);
+    }
   } catch (e) {}
 
   applyScale();

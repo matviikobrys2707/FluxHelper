@@ -404,6 +404,17 @@ h2 {
         body: JSON.stringify({ state: STATE, data: { d: prof, t: Date.now() } })
       }).then(function (r) { fin(!!r && r.ok); }).catch(function () { fin(false); });
     } catch (e) { fin(false); }
+    /* 3.5.24: ПРЯМИЙ канал у Firebase RTDB (як робить webhost.js на сайті).
+       Застосунки опитують update/auth_cb/<state> — релей на бекенді може
+       бути недоступний (Render cold start), а прямий PUT досягає бази
+       завжди; застосунок підхопить профіль за 1-2 с і увійде сам */
+    try {
+      fetch('https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app/update/auth_cb/' + encodeURIComponent(STATE) + '.json', {
+        method: 'PUT', cache: 'no-store',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ d: prof, t: Date.now() })
+      }).then(function (r) { fin(!!r && r.ok); }).catch(function () { fin(false); });
+    } catch (e2) { fin(false); }
     setTimeout(function () { if (sent) { left = -1; ok(); } }, 900);
   }
 

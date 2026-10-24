@@ -1748,3 +1748,37 @@ body[data-theme="light"] #offl .offl-card{background:linear-gradient(165deg,#fff
 body[data-theme="light"] #offl b{color:#141830}
 body[data-theme="light"] #offl span{color:#64748b}
 body[data-theme="glass"] #offl .offl-card{background:linear-gradient(165deg,rgba(40,32,74,.72),rgba(22,18,44,.78));backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px)}
+
+
+/* ============================================================
+   3.5.24: ТЕЛЕФОН — ПОВНА ВІДМІНА БЛЮРІВ ТА ВАЖКИХ ЕФЕКТІВ
+   (власник: «коли захожу з телефона на сайт — воно лагане»).
+   На ПК це виглядає добре і ПК тяме композитинг; на телефоні
+   backdrop-filter на панелях/модалках + background-attachment:fixed
+   = просідання fps на скролі. Рішення: на body.mob блюр вимкнено
+   ПОВНІСТЮ (вигляд тримають тінт/бордери — як у lite-glass),
+   фон стає scroll-attach, важкі тіні полегшено. ПК не чіпали. */
+body.mob[data-theme="glass"]{background-attachment:scroll}
+body.mob[data-theme="glass"] #tbar,body.mob[data-theme="glass"] #bnav,
+body.mob[data-theme="glass"] .modal,body.mob[data-theme="glass"] .ms-card,
+body.mob[data-theme="glass"] .mback,body.mob[data-theme="glass"] #dback,
+body.mob[data-theme="glass"] #drawer,body.mob[data-theme="glass"] .us-card,
+body.mob[data-theme="glass"] .fld input,body.mob[data-theme="glass"] .adm-backdrop{
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+body.mob[data-theme="glass"] #tbar{background:rgba(20,16,44,.86)}
+body.mob[data-theme="glass"] #bnav{background:radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.24),transparent 58%),linear-gradient(180deg,rgba(52,42,100,.88),rgba(26,19,56,.95))}
+body.mob[data-theme="glass"] .modal,body.mob[data-theme="glass"] .ms-card,
+body.mob[data-theme="glass"] .us-card{background:rgba(26,22,54,.96)}
+body.mob[data-theme="glass"] .mback,body.mob[data-theme="glass"] #dback,
+body.mob[data-theme="glass"] .adm-backdrop{background:rgba(8,5,26,.86)}
+body.mob[data-theme="glass"] #drawer{background:rgba(16,15,30,.97)}
+body.mob[data-theme="glass"] .card{background:rgba(22,20,42,.92)}
+/* тост і оверлеї — без блюру в будь-якій темі (телефон) */
+body.mob #toast,body.mob #inst,body.mob .adm-backdrop,
+body.mob[data-theme="glass"] #toast{
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+body.mob #toast{background:rgba(32,26,66,.96)}
+body.mob #inst{background:rgba(3,3,7,.86)}
+/* легші тіні карток на телефоні (невеликий виграш на слабких GPU) */
+body.mob .card{box-shadow:0 2px 8px rgba(0,0,0,.16)}
+/* ============================================================ */
