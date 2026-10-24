@@ -236,7 +236,7 @@ function validS(x) {
 })();
 
 // ---------------- версія + перший запуск ----------------
-const APP_VER = '3.5.20';                  // версія X.Y.Z — з version.h (див. main.cpp)
+const APP_VER = '3.5.21';                  // версія X.Y.Z — з version.h (див. main.cpp)
 /* 3.5.5: КАНАЛ ЗБІРКИ — 'beta' або 'release'. Бета-збірки підписують версію
    словом «beta» скрізь у інтерфейсі (профіль, «Про програму», вікно оновлення),
    релізні показують чистий номер. Перед релізом змінюємо тут і перезбираємо. */
@@ -653,6 +653,12 @@ function fallbackCopy(txt) {
   ta.remove();
   toast(ok ? 'Посилання скопійовано ✓' : 'Не вдалося скопіювати');
 }
+/* 3.5.21: КОПІЮВАННЯ ПОСИЛАННЯ НА УРОК — перемикач функції «ПКМ по уроку
+   (або затиснути на тач-екрані) → посилання в буфері обміну». Налаштування
+   локне (не синхронізується), за замовчуванням — УВІМКНЕНО. */
+function cplOn() {
+  try { return localStorage.getItem('fh_copylink') !== '0'; } catch (e) { return true; }
+}
 function copyText(txt) {
   if (ANDROID) {
     try { AndroidHost.copy(txt); toast('Посилання скопійовано ✓'); return; } catch (e) {}
@@ -980,6 +986,7 @@ function render(anim) {
     card.addEventListener('contextmenu', function (ev) {
       ev.preventDefault();
       if (lpFired) { lpFired = false; return; }
+      if (!cplOn()) return;               // 3.5.21: функцію вимкнено в налаштуваннях
       if (l.split) openModal(l);
       else copyText(fmtCopy(l, -1));       // одна група -> копіюємо одразу
     });
@@ -1030,6 +1037,7 @@ function bindLongPress(card, l) {
     sx = e.clientX; sy = e.clientY; lpFired = false;
     t = setTimeout(function () {
       t = null; lpFired = true;
+      if (!cplOn()) return;               // 3.5.21: функцію вимкнено — нічого не робимо
       if (l.split) openModal(l);
       else copyText(fmtCopy(l, -1));
     }, 480);
@@ -2470,6 +2478,13 @@ function updOpen() { return UPD.avail; }
 // пріоритет. Третій елемент пункта ('pc'/'android') — показувати лише
 // на одній платформі; без нього — на обох.
 const WHATS_NEW = {
+  '3.5.21': [
+    ['/', 'Скролбари приховано візуально на всіх платформах — скрол коліщатком/тачем працює, смуг на екрані нема'],
+    ['/', '«Пристрой» — лише ім\u2019я пристрою без іконки: Телефон (Android), Комп\u2019ютер (Windows) тощо'],
+    ['+', 'Налаштування: рамка «Копіювання посилання на урок» з перемикачем — ПКМ по уроку в розкладі, на телефоні — затиснути'],
+    ['+', 'Головна веб-версія для ВСІХ пристроїв: fluxhelper.pages.dev/main — один вхід для Android, iPhone, Windows і Mac; вкладки в URL англійською (#schedule, #settings, #account, #admin)'],
+    ['✦', 'Сайт більше не висить на 88% без акаунта — завантаження миттєве, коли завантажувати нічого']
+  ],
   '3.5.20': [
     ['✦', 'Сповіщення Windows більше не губляться — приходять рівно за обраний час', 'windows'],
     ['/', 'Сповіщення — картка-«розмова» як у Telegram: розгорнув — кнопки «Зайти на урок» і «Нагадати за 1 хв»', 'android'],
@@ -2539,7 +2554,7 @@ const WN_PLAT = (function () {
   var macPage = /\/mac(\/|$)/.test(String(location.pathname || ''));
   return macPage ? 'mac' : 'iphone';
 })();
-const WN_SITE_BETA_ONLY = { '3.5.20': 1 };   // на сайті цю версію анонсуємо лише бета-адмінам
+const WN_SITE_BETA_ONLY = { '3.5.20': 1, '3.5.21': 1 };   // на сайті цю версію анонсуємо лише бета-адмінам
 function wnShowItem(tag) {
   if (!tag) return true;
   if (tag === 'phone') return (WN_PLAT === 'android' || WN_PLAT === 'iphone');
@@ -3907,9 +3922,25 @@ function accBoot() {
       });
     });
   } else {
+    /* 3.5.21: ФІКС «ЗАВИСАННЯ НА 88%» БЕЗ АКАУНТА (просив власник: «если я
+       вышел с аккаунта и из данных загружать нечего — почему загрузка минуту
+       висит на 88%?»). Раніше bootReady ставився лише коли приходили дані
+       з бази (updFromDb -> revealNow): повільне/заблоковане дзеркало = екран
+       завантаження висів ~хвилину. Акаунта нема -> перевіряти нічого ->
+       reveal ОДРАЗУ, гейт входу показуємо під ним. */
+    bootReady = true;
     gateStart();
   }
 }
+/* 3.5.21: СТРАХОВОЧНИЙ СТОРОЖ старту: через 9.5 с відпускаємо екран
+   завантаження, якщо reveal досі не стався. Живий акаунт ще не перевірений
+   -> НЕ мішаємось: у settleSync власний дедлайн 9 с. Остання лінія оборони
+   від «висить на 88%» у будь-якій ситуації. */
+setTimeout(function () {
+  try {
+    if (!bootReady && !(ACC.user && !dataVerified)) bootReady = true;
+  } catch (eWD) {}
+}, 9500);
 /* 3.4.6: ЄДИНА ТОЧКА РІШЕННЯ «розклад чи майстер груп» для старту з живою
    сесією. Викликається ТІЛЬКИ колбеком settleSync — тобто ПІСЛЯ відповіді
    бази (або дедлайну). Майстер відкривається один раз і лише якщо база
@@ -4728,6 +4759,15 @@ function init() {
   if (cT) {
     cT.checked = CONFIRM.on;
     cT.onchange = function () { CONFIRM.on = cT.checked; saveConfirm(); syncUp(); toast(CONFIRM.on ? 'Підтвердження увімкнено ✓' : 'Підтвердження вимкнено'); };   // 3.4.12: зберігається в базі
+  }
+  /* 3.5.21: перемикач «Копіювання посилання на урок» (локне налаштування) */
+  const cplT = byId('cplOn');
+  if (cplT) {
+    try { cplT.checked = cplOn(); } catch (eCP) { cplT.checked = true; }
+    cplT.onchange = function () {
+      try { localStorage.setItem('fh_copylink', cplT.checked ? '1' : '0'); } catch (eCP2) {}
+      toast(cplT.checked ? 'Посилання копіюється ПКМ по уроку' : 'Копіювання посилання вимкнено');
+    };
   }
   const cY = byId('cYes'); if (cY) cY.onclick = confirmYes;
   const cN = byId('cNo'); if (cN) cN.onclick = closeConfirm;

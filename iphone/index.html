@@ -28,6 +28,10 @@
 (function () {
   try {
     if (/[?&]demo/.test(location.search)) return;
+    /* 3.5.21: перепустка з /main (універсальний вхід веб-версії для всіх
+       пристроїв): /main сам перевірив пристрій і переадресував сюди —
+       блокуюче вікно не показуємо, URL лишається чистим без ?demo */
+    try { if (sessionStorage.getItem('fh_main_ok') === '/iphone/') return; } catch (eM1) {}
     var ua = navigator.userAgent || '';
     var macPage = false;
     var iOS = /iPhone|iPod|iPad/i.test(ua);
@@ -184,6 +188,21 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass','ocea
       </div>
     </div>
 
+    <!-- 3.5.21: КОПІЮВАННЯ ПОСИЛАННЯ НА УРОК — перемикач функції:
+         затиснути урок у розкладі = посилання в буфері обміну -->
+    <div class="ms-sec" id="secCpl">
+      <div class="ms-lbl"><span>Розклад</span></div>
+      <div class="ms-card">
+        <div class="ms-row">
+          <span class="ms-tile sm" style="background:linear-gradient(135deg,#22d3ee,#0284c7)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          </span>
+          <span class="ms-body"><b>Копіювання посилання на урок</b><span>затисни урок у розкладі — посилання одразу в буфері обміну</span></span>
+          <span class="ms-tog"><label class="sw"><input type="checkbox" id="cplOn"><i></i></label></span>
+        </div>
+      </div>
+    </div>
+
         <!-- 3.5.19: id="secNotif" — на сайті секцію ховає webhost.js
              (сповіщення — лише в застосунках Android/Windows) -->
         <div class="ms-sec" id="secNotif">
@@ -304,9 +323,9 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass','ocea
   </div>
     <div class="acc-stats">
       <div class="acc-stat"><b id="acStSync">—</b><span>синхронізація</span></div>
-      <!-- 3.5.19: рамка «Пристрой» — ім'я пристрою з ОС + іконка платформи
-           (Android/iPhone/Windows/macOS) -->
-      <div class="acc-stat acc-dev"><span class="ac-devic" id="acDevIc"></span><b id="acStDev">—</b><span>пристрій</span></div>
+      <!-- 3.5.21: «Пристрой» — лише ім'я пристрою (Телефон (Android) тощо),
+           без іконки платформи — іконку знесено за проханням власника -->
+      <div class="acc-stat acc-dev"><b id="acStDev">—</b><span>пристрій</span></div>
       <div class="acc-stat"><b id="acStVer">—</b><span>версія</span></div>
     </div>
   <div class="ms-sec">

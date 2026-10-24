@@ -4,8 +4,11 @@
 Вхід захищає Google.
 
 - **Сайт**: [fluxhelper.pages.dev](https://fluxhelper.pages.dev)
-  - Версія для iPhone: [fluxhelper.pages.dev/iphone/](https://fluxhelper.pages.dev/iphone/)
-  - Версія для Mac: [fluxhelper.pages.dev/mac/](https://fluxhelper.pages.dev/mac/)
+  - Веб-версія для ВСІХ пристроїв (головна): [fluxhelper.pages.dev/main](https://fluxhelper.pages.dev/main)
+    — сам визначає пристрій: телефон -> мобільна версія, комп'ютер -> десктопна;
+    вкладки в URL англійською (`#schedule`, `#settings`, `#account`, `#admin`)
+  - Версія для iPhone (лише iPhone): [fluxhelper.pages.dev/iphone/](https://fluxhelper.pages.dev/iphone/)
+  - Версія для Mac (лише Mac): [fluxhelper.pages.dev/mac/](https://fluxhelper.pages.dev/mac/)
 - **Windows**: [FluxHelper.exe](https://fluxhelper.pages.dev/FluxHelper.exe)
 - **Android**: [FluxHelper.apk](https://fluxhelper.pages.dev/FluxHelper.apk)
 

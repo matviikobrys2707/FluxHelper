@@ -3,10 +3,14 @@
    (текст у полях, що редагуються, за потреби все одно вводиться) */
 ::selection{background:transparent}
 ::-moz-selection{background:transparent}
-/* гарний скролбар скрізь (тонкий, округлий, у тоні градієнта) */
-::-webkit-scrollbar{width:9px;height:9px}
-::-webkit-scrollbar-thumb{background:rgba(139,92,246,.35);border-radius:99px}
-::-webkit-scrollbar-thumb:hover{background:rgba(139,92,246,.6)}
+/* 3.5.21: СКРОЛБАРИ ПРИХОВАНО ВІЗУАЛЬНО (просив власник: «физически оно
+   должно быть, чтобы можно было скроллить колёсиком, а визуально — нет»).
+   Скрол працює як і раніше: коліщатко, тачпад, тач, клавіатура. Смуги
+   немає ні в темній, ні у світлій темі, ні в Liquid Glass. */
+*{scrollbar-width:none;-ms-overflow-style:none}
+::-webkit-scrollbar{width:0;height:0;display:none}
+::-webkit-scrollbar-thumb{background:transparent;border-radius:99px}
+::-webkit-scrollbar-thumb:hover{background:transparent}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-corner{background:transparent}
 html,body{height:100%;overflow:hidden}
@@ -145,10 +149,8 @@ nav{display:flex;gap:8px;margin-bottom:11px}
 .tab.td .tdot{display:block}
 
 main{flex:1;min-height:0;overflow-y:auto;padding-right:2px}
-main::-webkit-scrollbar{width:8px}
-main::-webkit-scrollbar-thumb{background:rgba(124,58,237,.35);border-radius:8px}
-main::-webkit-scrollbar-thumb:hover{background:rgba(124,58,237,.55)}
-main::-webkit-scrollbar-track{background:transparent}
+/* 3.5.21: смуг скролу не видно — коліщатко працює */
+main::-webkit-scrollbar{width:0;height:0;display:none}
 
 .empty{display:flex;flex-direction:column;align-items:center;gap:10px;padding:60px 0;color:#8b8fa3;font-size:13px}
 .empty svg{opacity:.5}
@@ -221,9 +223,7 @@ main.still .card{animation:none!important}
    Це НЕ той самий дизайн, що на телефоні (там — великий список і
    шторка знизу). */
 #vSetup{display:block;overflow-y:auto;padding:18px 24px 24px}
-#vSetup::-webkit-scrollbar{width:8px}
-#vSetup::-webkit-scrollbar-thumb{background:rgba(124,58,237,.35);border-radius:8px}
-#vSetup::-webkit-scrollbar-track{background:transparent}
+#vSetup::-webkit-scrollbar{width:0;height:0;display:none}
 .sw-wrap{width:100%;max-width:780px;margin:0 auto}
 .sw-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:16px}
 .sw-title-row{display:flex;align-items:center;gap:10px}
@@ -397,9 +397,7 @@ input[type=range]#nMin::-moz-range-thumb{width:16px;height:16px;border-radius:50
 #gwrap{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:20px}
 .gmodal{width:min(524px,100%)}
 .g-rows{max-height:min(56vh,470px);overflow-y:auto;margin:0 -3px;padding:0 3px}
-.g-rows::-webkit-scrollbar{width:7px}
-.g-rows::-webkit-scrollbar-thumb{background:rgba(124,58,237,.4);border-radius:8px}
-.g-rows::-webkit-scrollbar-track{background:transparent}
+.g-rows::-webkit-scrollbar{width:0;height:0;display:none}
 .g-foot{display:flex;align-items:center;gap:9px;margin-top:13px}
 
 /* 3.5.1: «ЩО НОВОГО» — віконце змін після оновлення. Пункти у гарних
@@ -413,8 +411,7 @@ input[type=range]#nMin::-moz-range-thumb{width:16px;height:16px;border-radius:50
   color:#e9d5ff;background:rgba(139,92,246,.16);border:1px solid rgba(139,92,246,.35);letter-spacing:.4px}
 .wn-list{display:flex;flex-direction:column;gap:8px;margin:2px 0 14px;max-height:min(46vh,380px);
   overflow-y:auto;-webkit-overflow-scrolling:touch;padding:2px}
-.wn-list::-webkit-scrollbar{width:6px}
-.wn-list::-webkit-scrollbar-thumb{background:rgba(124,58,237,.4);border-radius:8px}
+.wn-list::-webkit-scrollbar{width:0;height:0;display:none}
 .wn-row{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:14px;
   border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.035)}
 .wn-mark{flex:none;width:26px;height:26px;border-radius:9px;display:grid;place-items:center;
@@ -722,7 +719,6 @@ body[data-theme="light"] .b-mini{background:rgba(124,58,237,.1);border:1.5px sol
 body[data-theme="light"] .c-info{background:rgba(124,58,237,.08);border:1.5px solid rgba(124,58,237,.26);border-radius:14px}
 body[data-theme="light"] .c-info .ci-t b{color:#0f172a;font-weight:800}
 body[data-theme="light"] .c-info .ci-t span{color:#334155;font-weight:600}
-body[data-theme="light"] ::-webkit-scrollbar-thumb{background:rgba(139,92,246,.45)}
 body[data-theme="light"] .sw i{background:#e2e8f0;border:1.5px solid rgba(139,92,246,.3);box-shadow:inset 0 1px 3px rgba(15,23,42,.08)}
 body[data-theme="light"] .sw i::after{background:#ffffff;box-shadow:0 2px 6px rgba(15,23,42,.25)}
 body[data-theme="light"] .sw input:checked + i{background:linear-gradient(135deg,#7c3aed,#6366f1);border-color:transparent;box-shadow:0 4px 14px rgba(124,58,237,.4)}
@@ -796,7 +792,6 @@ body[data-theme="glass"] .m-item:hover{background:linear-gradient(135deg,rgba(13
 body[data-theme="glass"] .us-card{background:rgba(26,22,54,.76);backdrop-filter:blur(16px) saturate(1.7);
   -webkit-backdrop-filter:blur(16px) saturate(1.7);border:1px solid rgba(255,255,255,.22)}
 /* 2.8.6: glass-тост тепер через --toast-* (прозоріше скло + blur) */
-body[data-theme="glass"] ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.28)}
 /* --- 2.8.5: lite-glass — на слабких GPU знімає блюр модалок/тостів --- */
 body.lite-glass[data-theme="glass"] .modal,body.lite-glass[data-theme="glass"] .mback,
 body.lite-glass[data-theme="glass"] .us-card{backdrop-filter:none;-webkit-backdrop-filter:none}
@@ -1321,12 +1316,9 @@ body[data-theme="light"] .adm-ib.set:hover{color:#fff;background:#6366f1;border-
    (ставить JS: deviceLabel().tile) + білий гліф — точь-в-точь як плитки
    іконок уроків; внутрішнє кільце + м'яка тінь */
 .acc-stat.acc-dev b{font-size:11.5px;letter-spacing:-.15px}
-.ac-devic{display:inline-flex;align-items:center;justify-content:center;width:27px;height:27px;border-radius:9px;margin-bottom:5px;
-  background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.28),0 5px 14px rgba(0,0,0,.38)}
-.ac-devic svg{display:block;filter:drop-shadow(0 1px 1px rgba(0,0,0,.22))}
-body[data-theme="light"] .ac-devic{box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),0 5px 14px rgba(76,29,149,.25)}
-body[data-theme="glass"] .ac-devic{box-shadow:inset 0 0 0 1px rgba(255,255,255,.30),0 5px 14px rgba(0,0,0,.30)}
+/* 3.5.21: іконку платформи в «Пристрой» ЗНЕСЕНО (просил владелец:
+   «иконку убери, она некрасивая» і взагалі «говно полное») — лишилось
+   лише ім'я: Телефон (Android) / Комп'ютер (Windows) тощо */
 body[data-theme="light"] .acc-stat{background:rgba(20,24,46,.04);border-color:rgba(20,24,46,.1)}
 body[data-theme="light"] .acc-stat b{color:#1c1f33}
 body[data-theme="light"] .acc-stat span{color:#6a7089}
@@ -1500,8 +1492,6 @@ body[data-theme="light"] .bn-t b{color:#0f172a}
 body[data-theme="light"] .bn-t span{color:#475569}
 body[data-theme="light"] .bn-x{border-color:rgba(20,24,46,.12);background:rgba(20,24,46,.05);color:#475569}
 body[data-theme="light"] .bn-x:hover{background:rgba(124,58,237,.12);color:#5b21b6}
-body[data-theme="light"] .g-rows::-webkit-scrollbar-thumb,
-body[data-theme="light"] .wn-list::-webkit-scrollbar-thumb{background:rgba(124,58,237,.35)}
 
 /* ===== 3.5.20: спокійне закривне вікно «немає інтернету» (замість повного екрана помилки) ===== */
 #offl{position:fixed;inset:0;z-index:340;display:flex;align-items:center;justify-content:center;padding:22px}

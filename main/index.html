@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FluxHelper — веб-версія для всіх пристроїв</title>
+<meta name="robots" content="noindex">
+<meta name="description" content="FluxHelper — веб-версія для всіх пристроїв: Android, iPhone, Windows, Mac. Розклад уроків 8-Б з посиланнями на Zoom. Вхід захищає Google.">
+<link rel="icon" href="/favicon.svg?v=3521" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3521">
+<meta name="theme-color" content="#050508">
+<script>
+/* ============================================================
+   FluxHelper /main — ГОЛОВНА СТОРІНКА ВЕБ-ВЕРСІЇ ДЛЯ ВСІХ ПРИСТРОЇВ
+   (3.5.21, просив власник: «хочу, щоб у програми була веб-версія
+   для всіх пристроїв: Android, Windows, iOS і Mac»).
+
+   Як це працює:
+   1) /main визначає пристрій (телефон чи комп'ютер);
+   2) ставить одноразовий перепустковий прапорець fh_main_ok
+      (те саме, що ?demo, але без параметра в адресі — URL чистий);
+   3) переадресовує на правильну версію і зберігає хеш вкладки:
+        /main#settings  ->  /iphone/#settings   (телефон)
+        /main#settings  ->  /mac/#settings      (комп'ютер)
+   Вкладки в URL — АНГЛІЙСЬКОЮ: #schedule #settings #account #admin.
+
+   Сторінки перевірки пристрою (/iphone/ лише для iPhone, /mac/ лише
+   для Mac) залишаються СУВОРИМИ для прямих посилань — як і було
+   (3.5.20). /main — єдиний універсальний вхід для всіх пристроїв.
+   ============================================================ */
+(function () {
+  var go = function (dest) {
+    try { sessionStorage.setItem('fh_main_ok', dest); } catch (e) {}
+    location.replace(dest + (location.hash || ''));
+  };
+  try {
+    var ua = navigator.userAgent || '';
+    var touch = (navigator.maxTouchPoints || 0) > 1;
+    var iPhone = /iPhone|iPod/i.test(ua);
+    var iPad = /iPad/i.test(ua) || (/Macintosh/i.test(ua) && touch);
+    var androidPhone = /Android/i.test(ua) && (/Mobile/i.test(ua) || touch);
+    var androidTab = /Android/i.test(ua) && !(/Mobile/i.test(ua));
+    if (iPhone || iPad || androidPhone || androidTab) go('/iphone/');   /* телефон/планшет -> мобільна версія */
+    else go('/mac/');                                                    /* Windows / Mac / Linux -> комп'ютерна */
+  } catch (e) {
+    go('/iphone/');
+  }
+})();
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100vh}
+body{display:flex;align-items:center;justify-content:center;padding:24px;background:#050508;color:#f4f4f8;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;text-align:center;
+  background-image:radial-gradient(560px 380px at 12% -6%,rgba(124,58,237,.22),transparent 65%),
+                   radial-gradient(620px 420px at 90% 110%,rgba(79,70,229,.18),transparent 66%)}
+.c{max-width:430px}
+img{width:76px;height:76px;border-radius:21px;box-shadow:0 18px 44px rgba(99,102,241,.4)}
+h1{font-size:21px;font-weight:800;margin:16px 0 6px}
+p{font-size:13px;color:#9aa0b4;line-height:1.7;margin-bottom:20px}
+a{display:block;padding:14px 18px;margin-top:10px;border-radius:14px;text-decoration:none;font-size:14px;font-weight:800;color:#fff;
+  background:linear-gradient(135deg,#8b5cf6,#6366f1);box-shadow:0 14px 34px rgba(99,102,241,.42)}
+a.g{background:linear-gradient(135deg,#22c55e,#10b981);box-shadow:0 14px 34px rgba(16,185,129,.35)}
+small{display:block;margin-top:18px;font-size:11px;color:#6b7086}
+</style>
+</head>
+<body>
+<div class="c">
+  <img src="/icon-192.png?v=3521" alt="FluxHelper">
+  <h1>FluxHelper</h1>
+  <p>Веб-версія відкривається для всіх пристроїв. Якщо тебе не переадресувало автоматично — обери версію вручну:</p>
+  <a href="/iphone/">Версія для телефона (Android / iPhone)</a>
+  <a class="g" href="/mac/">Версія для компьютера (Windows / Mac)</a>
+  <small>FluxHelper · розклад 8-Б класу · вхід захищає Google</small>
+</div>
+</body>
+</html>

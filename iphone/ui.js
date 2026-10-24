@@ -262,7 +262,7 @@ function validS(x) {
 // вічно вважав себе старішим. Тепер версію підставляє build.sh з манифеста
 // (2.4.1 -> versionName), а ПІСЛЯ завантаження Java-міст AndroidHost.ver()
 // віддає СПРАВЖНЮ версію встановленого пакета (PackageManager) — найнадійніше.
-let APP_VER = '3.5.20';              // X.Y.Z — підставляється при збірці з манифеста
+let APP_VER = '3.5.21';              // X.Y.Z — підставляється при збірці з манифеста
 try {
   if (window.AndroidHost && AndroidHost.ver) {
     const jv = AndroidHost.ver();
@@ -684,6 +684,12 @@ function fallbackCopy(txt) {
   ta.remove();
   toast(ok ? 'Посилання скопійовано ✓' : 'Не вдалося скопіювати');
 }
+/* 3.5.21: КОПІЮВАННЯ ПОСИЛАННЯ НА УРОК — перемикач функції «затиснути урок
+   у розкладі (або ПКМ на ПК) → посилання в буфері обміну». Налаштування
+   локне (не синхронізується), за замовчуванням — УВІМКНЕНО. */
+function cplOn() {
+  try { return localStorage.getItem('fh_copylink') !== '0'; } catch (e) { return true; }
+}
 function copyText(txt) {
   if (ANDROID) {
     try { AndroidHost.copy(txt); toast('Посилання скопійовано ✓'); return; } catch (e) {}
@@ -1012,6 +1018,7 @@ function render(anim) {
       lpUntil = Date.now() + 1600;
       if (card.__lpDone) return;          // дію вже зробив JS-таймер — не дублюємо
       card.__lpDone = true;
+      if (!cplOn()) return;               // 3.5.21: функцію вимкнено в налаштуваннях
       if (l.split) openModal(l);
       else copyText(fmtCopy(l, -1));       // одна група -> копіюємо одразу
     });
@@ -1084,6 +1091,7 @@ function bindLongPress(card, l) {
       if (card.__lpDone) return;          // contextmenu вже обробив це натискання
       card.__lpDone = true;
       lpUntil = Date.now() + 1600;
+      if (!cplOn()) return;               // 3.5.21: функцію вимкнено — без вібрації і копіювання
       try { if (navigator.vibrate) navigator.vibrate(18); } catch (e) {}   // легкий тактильний відгук
       if (l.split) openModal(l);
       else copyText(fmtCopy(l, -1));
@@ -1739,6 +1747,14 @@ function parseNotes(txt) {
 // пріоритет. Третій елемент пункта ('pc'/'android') — показувати лише
 // на одній платформі; без нього — на обох.
 const WHATS_NEW = {
+  '3.5.21': [
+    ['/', 'Скролбари приховано візуально на всіх платформах — скрол коліщатком/тачем працює, смуг на екрані нема'],
+    ['/', 'Нижня панель на телефоні піднята ще трохи вище від краю — ~0.45 см', 'phone'],
+    ['/', '«Пристрой» — лише ім\u2019я пристрою без іконки: Телефон (Android), Комп\u2019ютер (Windows) тощо'],
+    ['+', 'Налаштування: рамка «Копіювання посилання на урок» з перемикачем — затисни урок у розкладі, на ПК — ПКМ'],
+    ['+', 'Головна веб-версія для ВСІХ пристроїв: fluxhelper.pages.dev/main — один вхід для Android, iPhone, Windows і Mac; вкладки в URL англійською (#schedule, #settings, #account, #admin)'],
+    ['✦', 'Сайт більше не висить на 88% без акаунта — завантаження миттєве, коли завантажувати нічого']
+  ],
   '3.5.20': [
     ['✦', 'Сповіщення Windows більше не губляться — приходять рівно за обраний час', 'windows'],
     ['/', 'Сповіщення — картка-«розмова» як у Telegram: розгорнув — кнопки «Зайти на урок» і «Нагадати за 1 хв»', 'android'],
@@ -1827,7 +1843,7 @@ const WN_PLAT = (function () {
   var macPage = /\/mac(\/|$)/.test(String(location.pathname || ''));
   return macPage ? 'mac' : 'iphone';
 })();
-const WN_SITE_BETA_ONLY = { '3.5.20': 1 };   // на сайті цю версію анонсуємо лише бета-адмінам
+const WN_SITE_BETA_ONLY = { '3.5.20': 1, '3.5.21': 1 };   // на сайті цю версію анонсуємо лише бета-адмінам
 function wnShowItem(tag) {
   if (!tag) return true;
   if (tag === 'phone') return (WN_PLAT === 'android' || WN_PLAT === 'iphone');
@@ -3296,8 +3312,27 @@ function accBoot() {
         }
       });
     });
+  } else {
+    /* 3.5.21: ФІКС «ЗАВИСАННЯ НА 88%» БЕЗ АКАУНТА (просив власник: «если я
+       вышел с аккаунта и из данных загружать нечего — почему загрузка минуту
+       висит на 88%?»). Раніше bootReady ставився ЛИШЕ коли приходили дані з
+       бази (updFromDb -> revealNow): якщо Firebase-дзеркало повільне/заблоковане
+       (шкільний Wi-Fi), екран завантаження висів ~хвилину, хоча завантажувати
+       було нічого. Тепер: акаунта нема -> перевіряти на сервері нічого ->
+       reveal ОДРАЗУ (розклад і так летить фоном і домалюється сам). */
+    bootReady = true;
   }
 }
+/* 3.5.21: СТРАХОВОЧНИЙ СТОРОЖ старту: якщо через 9.5 с reveal досі не стався
+   (мертва мережа при живому акаунті, заядла гонка) — відпускаємо екран
+   завантаження примусово. Живий акаунт ще не перевірений -> НЕ мішаємось:
+   settleSync сам має дедлайн 9 с. Це остання лінія оборони від «висить
+   на 88%» у БУДЬ-ЯКІЙ ситуації. */
+setTimeout(function () {
+  try {
+    if (!bootReady && !(ACC.user && !dataVerified)) bootReady = true;
+  } catch (eWD) {}
+}, 9500);
 
 // ---------- акаунт: UI ----------
 function avaHtml(u) {
@@ -4949,6 +4984,15 @@ function init() {
   if (cT) {
     cT.checked = CONFIRM.on;
     cT.onchange = function () { CONFIRM.on = cT.checked; saveConfirm(); syncUp(); toast(CONFIRM.on ? 'Підтвердження увімкнено ✓' : 'Підтвердження вимкнено'); };   // 3.4.12: зберігається в базі
+  }
+  /* 3.5.21: перемикач «Копіювання посилання на урок» (локне налаштування) */
+  const cplT = byId('cplOn');
+  if (cplT) {
+    try { cplT.checked = cplOn(); } catch (eCP) { cplT.checked = true; }
+    cplT.onchange = function () {
+      try { localStorage.setItem('fh_copylink', cplT.checked ? '1' : '0'); } catch (eCP2) {}
+      toast(cplT.checked ? 'Посилання копіюється затисканням уроку' : 'Копіювання посилання вимкнено');
+    };
   }
   const cY = byId('cYes'); if (cY) cY.onclick = confirmYes;
   const cN = byId('cNo'); if (cN) cN.onclick = closeConfirm;

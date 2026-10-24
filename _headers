@@ -33,3 +33,7 @@
   Cache-Control: no-cache
 /mac/*
   Cache-Control: no-cache
+/main
+  Cache-Control: no-cache
+/main/*
+  Cache-Control: no-cache

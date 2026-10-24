@@ -33,7 +33,7 @@
    ============================================================ */
 (function () {
 'use strict';
-var VER = '3.5.20';
+var VER = '3.5.21';
 var BACKEND = 'https://fluxhelper-backend.onrender.com';
 var ORIGIN = 'https://fluxhelper.pages.dev';
 var DB_URL = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app';
@@ -62,7 +62,7 @@ try {
   st.textContent =
     '#neterr{display:none!important}' +
     '#bMin,#bClose,#btMin,#btClose{display:none!important}' +
-    '#bnav{bottom:calc(10px + env(safe-area-inset-bottom, 0px))!important}' +
+    '#bnav{bottom:calc(17px + env(safe-area-inset-bottom, 0px))!important}' +
     '#secNotif,#nban,#bPerm,#bTestN,#rowNotif{display:none!important}' +
     'body:not(.fh-beta) .beta-only{display:none!important}' +
     (FH_IS_MAC ? 'body:not(.fh-beta) #secZoom{display:none!important}'
@@ -587,4 +587,68 @@ window.AndroidHost = {
   },
   theme: function () {}
 };
+})();
+
+/* ============================================================
+   3.5.21: URL-ХЕШІ ВКЛАДОК АНГЛІЙСЬКОЮ (просив власник: «в URL
+   название вкладки, например, розклад, налаштування, пиши на
+   английском, чтобы оно всё менялось»).
+   Перемикання вкладок оновлює адресу:
+     Розклад      -> #schedule
+     Налаштування -> #settings
+     Профіль      -> #account
+     Адмін        -> #admin
+   А на старті хеш із посилання відкриває потрібну вкладку одразу
+   (наприклад, fluxhelper.pages.dev/main#settings -> Налаштування).
+   ТІЛЬКИ САЙТ: у застосунках (APK/EXE) webhost.js відсутній,
+   там адреси нема і нічого не змінюється.
+   ============================================================ */
+(function () {
+  var TABS = { schedule: 1, settings: 1, account: 1, admin: 1 };
+  function setHash(name) {
+    try {
+      if (TABS[name] && location.hash !== '#' + name) {
+        history.replaceState(null, '', location.pathname + location.search + '#' + name);
+      }
+    } catch (e) {}
+  }
+  function wrap(fname, hname) {
+    try {
+      var f = window[fname];
+      if (typeof f !== 'function' || f.__fhHash) return;
+      var g = function () { var r = f.apply(this, arguments); setHash(hname); return r; };
+      g.__fhHash = true;
+      window[fname] = g;
+    } catch (e) {}
+  }
+  function applyHash() {
+    try {
+      var h = String(location.hash || '').replace(/^#/, '');
+      if (!TABS[h]) return;
+      if (h === 'schedule' && typeof window.showMain === 'function') window.showMain();
+      else if (h === 'settings' && typeof window.showSetup === 'function') window.showSetup();
+      else if (h === 'account' && typeof window.showAcc === 'function') {
+        var acc = null;
+        try { acc = (typeof ACC !== 'undefined') ? ACC : null; } catch (eA) {}
+        if (acc && acc.user) window.showAcc();
+      }
+      else if (h === 'admin' && typeof window.admShow === 'function') window.admShow();
+    } catch (e) {}
+  }
+  window.addEventListener('load', function () {
+    wrap('showMain', 'schedule');
+    wrap('showSetup', 'settings');
+    wrap('showAcc', 'account');
+    wrap('admShow', 'admin');
+    /* відкриваємо вкладку з посилання, щойно стартовий екран зник */
+    var t = 0, tries = 0;
+    var tick = setInterval(function () {
+      ++tries;
+      try {
+        var b = (window.__fh && window.__fh.boot) ? window.__fh.boot() : null;
+        if ((b && (b.revealed || b.p >= 100)) || tries > 12) { clearInterval(tick); applyHash(); }
+      } catch (e) { clearInterval(tick); }
+    }, 350);
+    setTimeout(function () { clearInterval(tick); applyHash(); }, 4500);   /* гарантія */
+  });
 })();
