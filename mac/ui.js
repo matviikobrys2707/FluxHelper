@@ -236,7 +236,7 @@ function validS(x) {
 })();
 
 // ---------------- версія + перший запуск ----------------
-const APP_VER = '3.5.28';                  // версія X.Y.Z — з version.h (див. main.cpp)
+const APP_VER = '3.5.29';                  // версія X.Y.Z — з version.h (див. main.cpp)
 /* 3.5.5: КАНАЛ ЗБІРКИ — 'beta' або 'release'. Бета-збірки підписують версію
    словом «beta» скрізь у інтерфейсі (профіль, «Про програму», вікно оновлення),
    релізні показують чистий номер. Перед релізом змінюємо тут і перезбираємо. */
@@ -659,61 +659,11 @@ function fallbackCopy(txt) {
 function cplOn() {
   try { return localStorage.getItem('fh_copylink') !== '0'; } catch (e) { return true; }
 }
-/* ============================================================
-   3.5.21: АВТОМАТИЧНИЙ ВХІД У ZOOM (ТЕСТОВА ФУНКЦІЯ, ТІЛЬКИ WINDOWS)
-   Просив власник: «за 3 минуты до урока оно само открывало ссылку
-   на следующий урок Zoom... само закрывало окно Zoom Workplace...
-   автоматически выключало камеру, звук и нажимало подключиться».
-
-   Розклад/стан — тут (JS), виконання — нативне: host('fh:zautojoin|<url>')
-   у main.cpp пише PowerShell-скрипт (UI Automation) в %TEMP% і запускає
-   його приховано. Скрипт: відкриває zoommtg:// -> чекає вікно підключення
-   -> зачиняє Zoom Workplace -> вимикає звук/камеру, ЯКЩО увімкнені ->
-   тисне «Увійти». Тест — кнопка в налаштуваннях (своє посилання власника).
-   ============================================================ */
-const ZAUTO_TEST_URL = 'https://us05web.zoom.us/j/5180727157?pwd=ME9vYTFTYXpxZUo1dENGeGxNUk96QT09';
-function zautoOn() {
-  /* 3.5.26: АВТОМАТИЧНИЙ ВХІД У ZOOM ПРИБРАНО (просив власник: «убери
-     его нафиг из программы, он нифига не работает») — функція вимкнена
-     ПОВНІСТЮ: ніколи не спрацьовує, навіть якщо перемикач був увімкнений. */
-  return false;
-}
-function zautoFire(url, label) {
-  try {
-    if (fhOfflineNow && fhOfflineNow()) { showOffl(); return; }   /* без мережі — спокійне вікно (як у «зайти на урок») */
-  } catch (e) {}
-  try { host('fh:zautojoin|' + url); } catch (e2) {}
-  try { toast(label || ('Автоматичний вхід у Zoom (' + String(url).slice(0, 42) + '…)')); } catch (e3) {}
-}
-function zautoTick() {
-  if (window.FH_WEB) return;              /* на сайті функції нема — лише застосунок Windows */
-  if (!zautoOn()) return;
-  const d = new Date();
-  const dow = d.getDay();
-  if (dow < 1 || dow > 5) return;         /* Пн-Пт */
-  const day = RES[dow - 1];
-  if (!day || !day.length) return;
-  const m = d.getHours() * 60 + d.getMinutes();
-  for (let i = 0; i < day.length; i++) {
-    const l = day[i];
-    if (!l || !l.url || !l.t) continue;
-    const a = toMin(l.t);
-    if (!a) continue;
-    if (m >= a - 3 && m < a) {            /* вікно: за 3 хв до початку і до дзвінка */
-      const key = 'fh_zauto_fired_' + (d.getFullYear()) + '-' + (d.getMonth() + 1) + '-' + d.getDate() + '_' + l.key + '_' + l.t;
-      let fired = false;
-      try { fired = localStorage.getItem(key) === '1'; } catch (e) { fired = true; }
-      if (!fired) {
-        try { localStorage.setItem(key, '1'); } catch (e2) {}
-        try { localStorage.setItem('fh_zauto_last', String(Date.now())); } catch (e3) {}
-        zautoFire(l.url, 'Автоматичний вхід у Zoom: ' + (l.name || 'урок'));
-      }
-      break;                              /* найближчий урок оброблено */
-    }
-    if (a > m) break;                     /* далі уроки ще не за 3 хв */
-  }
-}
-setInterval(zautoTick, 5000);             /* працює і у згорнутому вікні (вікно 3 хв > тротлінг 1/хв) */
+/* 3.5.29: «Автоматичний вхід у Zoom» ВИДАЛЕНО З ПРОГРАМИ ПОВНІСТЮ
+   (просив власник: «эта функция не нужна, она не работает»).
+   Ні картки в налаштуваннях, ні таймера, ні моста fh:zautojoin —
+   функції більше не існує. */
+/* працює і у згорнутому вікні (вікно 3 хв > тротлінг 1/хв) */
 function copyText(txt) {
   if (ANDROID) {
     try { AndroidHost.copy(txt); toast('Посилання скопійовано ✓'); return; } catch (e) {}
@@ -2722,6 +2672,11 @@ function updOpen() { return UPD.avail; }
 // пріоритет. Третій елемент пункта ('pc'/'android') — показувати лише
 // на одній платформі; без нього — на обох.
 const WHATS_NEW = {
+  '3.5.29': [
+    ['/', 'Тему Liquid Glass повністю перероблено за зразком iOS 26: живе прозоре скло, спекулярні відблиски на гранях, світні капсульні кнопки — усі кнопки, картки й модалки тепер справжнє «рідке скло»', 'pc'],
+    ['✦', 'Функцію «Автоматичний вхід у Zoom» видалено з програми ПОВНІСТЮ — ні картки в налаштуваннях, ні фонового таймера; більше нічого не відкривається саме', 'pc'],
+    ['/', 'Нижня частина вікна і підписи стали акуратнішими; виправлено версію файлу у властивостях Windows — тепер завжди показує справжню', 'pc']
+  ],
   '3.5.28': [
     ['✦', 'Базу даних у хмарі приведено до ладу: у предметів із поділом — Teacher 1 і Teacher 2 та Zoom 1 і Zoom 2 (у технологій «Дівчата/Хлопці»), у предметів без поділу — один учитель і одне посилання; розклад у базі йде строго Пн → Пт'],
     ['✦', 'Вхід через Google став незламним: сторінка входу в браузері тепер показує КОД — якщо програма не підтягнула профіль сама, натисни «є код зі сайту?» і введи його; вхід завершиться за секунду'],
@@ -5136,19 +5091,7 @@ function init() {
       toast(cplT.checked ? 'Посилання копіюється ПКМ по уроку' : 'Копіювання посилання вимкнено');
     };
   }
-  /* 3.5.21: рамка «Автоматичний вхід у Zoom (тест)» — ЛИШЕ Windows-застосунок
-     (на сайті секцію ховає webhost.js, а міст fh:zautojoin існує лише в exe).
-     Перемикач живе в localStorage, виконання — нативне (PowerShell + UIA). */
-  const zaT = byId('zautoOn');
-  if (zaT) {
-    try { zaT.checked = zautoOn(); } catch (eZA) { zaT.checked = false; }
-    zaT.onchange = function () {
-      try { localStorage.setItem('fh_zauto', zaT.checked ? '1' : '0'); } catch (eZA2) {}
-      toast(zaT.checked ? 'Автоматичний вхід у Zoom увімкнено (тест)' : 'Автоматичний вхід у Zoom вимкнено');
-    };
-  }
-  const zaB = byId('zautoTest');
-  if (zaB) zaB.onclick = function () { zautoFire(ZAUTO_TEST_URL, 'ТЕСТ — автоматичний вхід у Zoom'); };
+  /* 3.5.29: прив'язки «Автоматичний вхід у Zoom» видалено разом із функцією */
   const cY = byId('cYes'); if (cY) cY.onclick = confirmYes;
   const cN = byId('cNo'); if (cN) cN.onclick = closeConfirm;
   const cB = byId('cback'); if (cB) cB.onclick = closeConfirm;

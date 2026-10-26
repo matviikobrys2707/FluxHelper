@@ -1542,3 +1542,137 @@ body[data-theme="glass"] .su-tile{box-shadow:inset 0 0 0 1px rgba(255,255,255,.2
 #agate .ag-code-in:focus{border-color:#8b5cf6}
 #agate .ag-code-go{padding:9px 16px;border-radius:11px;border:0;background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit}
 #agate .ag-code-go:disabled{opacity:.5}
+
+/* ============================================================
+   3.5.29 — LIQUID GLASS 2.0 — ПОВНИЙ РЕДИЗАЙН ТЕМИ (просив власник:
+   «повністю переробай тему Liquid Glass, подивись, як вона виглядає на
+   айфонах — щоб усі кнопки були прям як Liquid Glass»). Референс —
+   Liquid Glass з iOS 26 (WWDC 2025):
+   • живе напівпрозоре скло з підсиленою насиченістю (saturate 180%+);
+   • СПЕКУЛЯРНИЙ відблиск по верхній грані + світла «лінзова» окантовка;
+   • капсульні пілюлі для кнопок, великі радіуси, глибокі м'які тіні;
+   • внутрішнє світіння й легкий «мокрий» шар зверху карток;
+   • пружні тактильні реакції: hover = світіння, active = прогин.
+   Блок іде В КІНЕЦЬ файлу — перекриває попередні правила теми glass.
+   ============================================================ */
+/* ---- фон теми: глибша сцена, живіші відблиски під склом ---- */
+body[data-theme="glass"]{
+  background:
+    radial-gradient(820px 560px at 4% -12%, rgba(168,85,247,.55), transparent 60%),
+    radial-gradient(880px 600px at 98% 2%, rgba(56,189,248,.38), transparent 56%),
+    radial-gradient(700px 500px at 88% 92%, rgba(236,72,153,.34), transparent 60%),
+    radial-gradient(900px 640px at 42% 122%, rgba(99,102,241,.30), transparent 62%),
+    linear-gradient(160deg,#0b0820 0%,#120e30 46%,#180d2a 100%);
+}
+/* ---- шапка: невидима, кнопки вікна — скло-капсули ---- */
+body[data-theme="glass"] #tbar{background:transparent;border-bottom:0;backdrop-filter:none;-webkit-backdrop-filter:none}
+body[data-theme="glass"] .tb-wbtn{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.16);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.30),0 4px 14px rgba(0,0,0,.30);
+  transition:background .18s ease,transform .12s ease,box-shadow .18s ease}
+body[data-theme="glass"] .tb-wbtn:hover{background:rgba(255,255,255,.16);transform:translateY(-1px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.42),0 6px 18px rgba(0,0,0,.34)}
+body[data-theme="glass"] .tb-wbtn:active{transform:scale(.94)}
+/* ---- сегмент вкладок зверху: скляна капсула, активна — світна пілюля ---- */
+body[data-theme="glass"] .tb-seg{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 10px 30px rgba(5,3,24,.35);
+  backdrop-filter:blur(18px) saturate(180%);-webkit-backdrop-filter:blur(18px) saturate(180%)}
+body[data-theme="glass"] .tab{background:rgba(255,255,255,.06);border:1px solid transparent;
+  box-shadow:none;transition:background .22s ease,box-shadow .22s ease,border-color .22s ease,color .22s ease}
+body[data-theme="glass"] .tab:hover{background:rgba(255,255,255,.12);color:#fff}
+body[data-theme="glass"] .tab.on{background:linear-gradient(180deg,rgba(167,139,250,.92),rgba(129,140,248,.86));
+  border-color:rgba(255,255,255,.40);color:#fff;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -1px 0 rgba(255,255,255,.10),0 8px 24px rgba(124,93,250,.45)}
+/* ---- картки уроків: «мокре» скло з верхнім шаром-лінзою ---- */
+body[data-theme="glass"] .card{position:relative;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,.045) 38%,rgba(255,255,255,.02) 100%);
+  border:1px solid rgba(255,255,255,.18);
+  box-shadow:0 14px 40px rgba(6,3,28,.44),inset 0 1px 0 rgba(255,255,255,.34),inset 0 -1px 0 rgba(255,255,255,.06),inset 0 10px 26px rgba(255,255,255,.045);
+  transition:transform .18s ease,box-shadow .22s ease,border-color .22s ease}
+body[data-theme="glass"] .card:hover{transform:translateY(-2px);
+  border-color:rgba(221,214,254,.42);
+  box-shadow:0 20px 52px rgba(6,3,28,.52),inset 0 1px 0 rgba(255,255,255,.44),inset 0 12px 30px rgba(255,255,255,.06)}
+body[data-theme="glass"] .card.now{background:
+    linear-gradient(180deg,rgba(196,181,253,.30),rgba(139,92,246,.14) 44%,rgba(99,102,241,.10) 100%);
+  border-color:rgba(221,214,253,.55);
+  box-shadow:0 16px 46px rgba(109,76,246,.36),inset 0 1px 0 rgba(255,255,255,.42),inset 0 12px 30px rgba(255,255,255,.07)}
+/* ---- рамки-секції налаштувань: те саме скло ---- */
+body[data-theme="glass"] .sw-card{background:
+    linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.04) 42%,rgba(255,255,255,.015) 100%);
+  border:1px solid rgba(255,255,255,.19);
+  box-shadow:0 26px 76px rgba(4,2,20,.5),inset 0 1px 0 rgba(255,255,255,.32),inset 0 -1px 0 rgba(255,255,255,.05)}
+body[data-theme="glass"] .su-opt,body[data-theme="glass"] .m-item,body[data-theme="glass"] .ms-row,
+body[data-theme="glass"] .c-info{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.17);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.26)}
+body[data-theme="glass"] .m-item:hover{background:rgba(139,92,246,.28);border-color:rgba(196,181,253,.5)}
+body[data-theme="glass"] .su-opt.on{background:linear-gradient(180deg,rgba(167,139,250,.55),rgba(99,102,241,.42));
+  border-color:rgba(221,214,253,.62);box-shadow:inset 0 1px 0 rgba(255,255,255,.42),0 8px 22px rgba(124,93,250,.35)}
+/* ---- модалки/картка акаунта: справжнє глибоке скло ---- */
+body[data-theme="glass"] .modal{background:rgba(28,23,58,.62);
+  backdrop-filter:blur(28px) saturate(185%);-webkit-backdrop-filter:blur(28px) saturate(185%);
+  border:1px solid rgba(255,255,255,.24);border-radius:26px;
+  box-shadow:0 40px 110px rgba(4,2,20,.62),inset 0 1px 0 rgba(255,255,255,.36),inset 0 -1px 0 rgba(255,255,255,.07),inset 0 14px 34px rgba(255,255,255,.05)}
+body[data-theme="glass"] .us-card{background:rgba(28,23,58,.62);
+  backdrop-filter:blur(28px) saturate(185%);-webkit-backdrop-filter:blur(28px) saturate(185%);
+  border:1px solid rgba(255,255,255,.22);border-radius:24px;
+  box-shadow:0 34px 96px rgba(4,2,20,.58),inset 0 1px 0 rgba(255,255,255,.34),inset 0 12px 30px rgba(255,255,255,.05)}
+body[data-theme="glass"] .mback{background:rgba(8,4,28,.66)}
+/* ---- ПОЛЯ ВВОДУ: скляні, з внутрішнім світінням при фокусі ---- */
+body[data-theme="glass"] .fld input{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.20);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.20);transition:border-color .2s ease,box-shadow .2s ease,background .2s ease}
+body[data-theme="glass"] .fld input:focus{background:rgba(255,255,255,.12);border-color:rgba(196,181,253,.65);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.26),0 0 0 3px rgba(139,92,246,.22),0 0 18px rgba(139,92,246,.22);outline:none}
+/* ---- ГОЛОВНЕ: УСІ КНОПКИ — Liquid Glass капсули ---- */
+/* вторинні (.b-mini): скляна пілюля */
+body[data-theme="glass"] .b-mini{background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.05));
+  border:1px solid rgba(255,255,255,.24);border-radius:999px;color:#eceaf8;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.34),0 6px 18px rgba(4,2,20,.34);
+  backdrop-filter:blur(12px) saturate(170%);-webkit-backdrop-filter:blur(12px) saturate(170%);
+  transition:background .18s ease,transform .12s ease,box-shadow .2s ease,border-color .2s ease}
+body[data-theme="glass"] .b-mini:hover{background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.09));
+  border-color:rgba(255,255,255,.38);color:#fff;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.46),0 10px 26px rgba(4,2,20,.42)}
+body[data-theme="glass"] .b-mini:active{transform:scale(.955)}
+body[data-theme="glass"] .b-mini.danger{background:linear-gradient(180deg,rgba(251,113,133,.20),rgba(244,63,94,.08));
+  border-color:rgba(253,164,175,.45);color:#fecdd3;box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 6px 18px rgba(190,18,60,.25)}
+body[data-theme="glass"] .b-mini.danger:hover{background:linear-gradient(180deg,rgba(251,113,133,.30),rgba(244,63,94,.14));color:#fff}
+/* первинні (.b-save/.b-join/.b-groups/.us-btn/.bn-btn): світна скляна пілюля */
+body[data-theme="glass"] .b-save,body[data-theme="glass"] .b-join,body[data-theme="glass"] .b-groups,
+body[data-theme="glass"] .us-btn,body[data-theme="glass"] .bn-btn{border-radius:999px;
+  background:linear-gradient(180deg,rgba(196,181,253,.85),rgba(139,92,246,.72) 46%,rgba(109,88,246,.66));
+  border:1px solid rgba(255,255,255,.45);color:#fff;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -2px 6px rgba(76,29,149,.35),0 12px 30px rgba(109,76,246,.42);
+  text-shadow:0 1px 2px rgba(46,16,101,.35)}
+body[data-theme="glass"] .b-save:hover:not(:disabled),body[data-theme="glass"] .b-join:hover,
+body[data-theme="glass"] .b-groups:hover,body[data-theme="glass"] .us-btn:hover,body[data-theme="glass"] .bn-btn:hover{
+  filter:brightness(1.10) saturate(1.06);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.65),inset 0 -2px 6px rgba(76,29,149,.30),0 16px 40px rgba(124,93,250,.52)}
+body[data-theme="glass"] .b-save:active:not(:disabled),body[data-theme="glass"] .b-join:active,
+body[data-theme="glass"] .b-groups:active,body[data-theme="glass"] .us-btn:active,body[data-theme="glass"] .bn-btn:active{
+  transform:scale(.96);filter:brightness(.98)}
+/* сегмент-перемикачі й дрібні сегментні кнопки — теж скло */
+body[data-theme="glass"] .seg-z{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.22);border-radius:999px}
+body[data-theme="glass"] .seg-z-b{border-radius:999px}
+body[data-theme="glass"] .seg-z-b.on{background:linear-gradient(180deg,rgba(196,181,253,.80),rgba(124,100,246,.68));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.48),0 8px 22px rgba(124,93,250,.40)}
+body[data-theme="glass"] .acc-stat{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.17);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.24)}
+/* тост — скляна капсула з підсвіченою окантовкою */
+body[data-theme="glass"]{--toast-bg:rgba(30,26,58,.58);--toast-bd:rgba(196,181,250,.5);--toast-tx:#f3f0ff;--toast-sh:rgba(0,0,0,.5)}
+body[data-theme="glass"] #toast{border-radius:999px}
+body[data-theme="glass"] #boot .bt-wbtn{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18);
+  border-radius:999px;box-shadow:inset 0 1px 0 rgba(255,255,255,.28)}
+/* екран входу — скло */
+body[data-theme="glass"] #agate{background:
+    radial-gradient(700px 460px at 10% -8%, rgba(168,85,247,.5), transparent 60%),
+    radial-gradient(760px 520px at 94% 6%, rgba(56,189,248,.34), transparent 58%),
+    linear-gradient(160deg,#0b0820 0%,#120e30 48%,#180d2a 100%)}
+/* lite-glass: слабкі машини — блюр знімаємо, тінт трохи щільніший (вигляд лишається) */
+body.lite-glass[data-theme="glass"] .modal,body.lite-glass[data-theme="glass"] .us-card{
+  backdrop-filter:none;-webkit-backdrop-filter:none;background:rgba(30,25,62,.97)}
+body.lite-glass[data-theme="glass"] .b-mini{backdrop-filter:none;-webkit-backdrop-filter:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.08))}
+@media (prefers-reduced-motion:reduce){
+  body[data-theme="glass"] .card,body[data-theme="glass"] .b-mini,body[data-theme="glass"] .tab{transition:none}
+}

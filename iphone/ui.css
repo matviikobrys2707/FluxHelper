@@ -1410,8 +1410,8 @@ body.glass-scroll *{backdrop-filter:none!important;-webkit-backdrop-filter:none!
    додає щільності, щоб текст не просвічував. */
 body.lite-glass #bnav,body.glass-scroll #bnav,
 body.lite-glass #tbar,body.glass-scroll #tbar{
-  -webkit-backdrop-filter:blur(18px) saturate(165%)!important;backdrop-filter:blur(18px) saturate(165%)!important}
-body.lite-glass[data-theme="glass"] #bnav{background:radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.24),transparent 58%),linear-gradient(180deg,rgba(52,42,100,.86),rgba(26,19,56,.94))}
+  -webkit-backdrop-filter:blur(9px) saturate(160%)!important;backdrop-filter:blur(9px) saturate(160%)!important}
+body.lite-glass[data-theme="glass"] #bnav{background:radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.20),transparent 58%),linear-gradient(180deg,rgba(52,42,100,.70),rgba(26,19,56,.78))}
 body.lite-glass[data-theme="glass"] .card,
 body.glass-scroll[data-theme="glass"] .card{background:rgba(22,20,42,.92)}
 body.lite-glass[data-theme="glass"] #drawer,
@@ -1422,7 +1422,7 @@ body.lite-glass[data-theme="glass"] .adm-backdrop,
 body.glass-scroll[data-theme="glass"] .adm-backdrop{background:rgba(3,3,7,.86);backdrop-filter:none}
 @media (prefers-reduced-motion:reduce){
   body[data-theme="glass"] *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
-  body[data-theme="glass"] #bnav{backdrop-filter:blur(12px) saturate(150%)!important;-webkit-backdrop-filter:blur(12px) saturate(150%)!important}
+  body[data-theme="glass"] #bnav{backdrop-filter:blur(7px) saturate(155%)!important;-webkit-backdrop-filter:blur(7px) saturate(155%)!important}
   .now-chip i,.next-chip i{animation:none}
   .card .prog{transition:none}
 }
@@ -1657,11 +1657,12 @@ body.mob .card,body.android .card{background:rgba(255,255,255,.05);border-color:
   /* 3.5.13: темна тема — панель ПОТЕМНІША (просив власник: «немножечко
      потемнее, реально как будто тёмная тема»); колишній фіолетовий колір
      переїхав у Liquid Glass (body[data-theme="glass"] #bnav нижче) */
-  background:radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.14),transparent 58%),linear-gradient(180deg,rgba(24,20,46,.87),rgba(11,9,24,.93));
-  /* 3.5.15: блюр 18 -> 12px (просив власник: «уменьшить немножечко
-     размытие, чтобы было через панель чуть больше видно») */
-  -webkit-backdrop-filter:blur(12px) saturate(150%);
-  backdrop-filter:blur(12px) saturate(150%);
+  /* 3.5.29: панель ще ПРОЗОРИША (просив власник: «немножечко уменьши
+     размытие, чтобы немножечко было больше видно, что находится за ней»):
+     блюр 12 -> 7px, щільність тінту знижена — за склом реально видно картки */
+  background:radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.12),transparent 58%),linear-gradient(180deg,rgba(24,20,46,.72),rgba(11,9,24,.80));
+  -webkit-backdrop-filter:blur(7px) saturate(155%);
+  backdrop-filter:blur(7px) saturate(155%);
   border:1px solid rgba(139,92,246,.26);
   box-shadow:0 12px 34px rgba(0,0,0,.5),0 2px 10px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.07)}
 body.android #bnav{display:flex}
@@ -1678,8 +1679,62 @@ body.gate-on #bnav{display:none!important}
 .bn-b .bn-ava{width:23px;height:23px;border-radius:50%;object-fit:cover;display:block}
 /* 3.5.8: рамку навколо аватара профіля прибрано (просив власник — «фіолетова/біла
    рамка навколо іконки користувача зайва»). Без box-shadow, чиста аватарка. */
-.bn-b.on{color:#c9b8ff;background:rgba(139,92,246,.17);box-shadow:inset 0 0 0 1px rgba(139,92,246,.30)}
-body[data-theme="light"] #bnav{background:radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.12),transparent 58%),linear-gradient(180deg,rgba(255,255,255,.91),rgba(245,244,252,.95));
+/* 3.5.29: підсвітка активної вкладки тепер малюється ОКРЕМИМ елементом
+   #bnPill («пилюля»), яка ПЛАВНО ЇЗДИТЬ між кнопками (iOS-стиль). Самі
+   кнопки .on лишають тільки колір іконки/тексту — фон нею не дублюється. */
+.bn-b.on{color:#c9b8ff;background:transparent;box-shadow:none}
+body[data-theme="light"] .bn-b.on{color:#6d28d9;background:transparent;box-shadow:none}
+
+/* ============================================================
+   3.5.29 — НОВА НАВІГАЦІЯ (просив власник):
+   1) легке затемнення ПІД панеллю — картки під склом читаються краще;
+   2) «пилюля» #bnPill — активна вкладка не перемальовується, а ЇЗДИТЬ
+      від старої кнопки до нової з пружною iOS-кривою;
+   3) зажав вкладку — водиш пальцем, підсвітка їде за пальцем, відпустив
+      — вкладка активується (.bn-prev — прев'ю під пальцем);
+   4) ПЕРЕЛІТ між вкладками: стара вкладка плавно виїжджає в бік,
+      нова в'їжджає з боку, звідки натиснули кнопку (що далі вкладка,
+      то довший переліт). Керується з ui.js через --fh-navdir/--fh-navdur.
+   ============================================================ */
+/* — затемнення під панеллю (не заважає тапам, нижче панелі за z) — */
+#bnavshade{position:fixed;left:0;right:0;bottom:0;z-index:59;pointer-events:none;
+  height:calc(104px + var(--fh-sab, env(safe-area-inset-bottom, 0px)));
+  background:linear-gradient(180deg,rgba(0,0,0,0) 0%,rgba(0,0,0,.10) 46%,rgba(0,0,0,.22) 78%,rgba(0,0,0,.30) 100%)}
+body[data-theme="light"] #bnavshade{background:linear-gradient(180deg,rgba(15,23,42,0) 0%,rgba(15,23,42,.05) 50%,rgba(15,23,42,.13) 100%)}
+body[data-theme="glass"] #bnavshade{background:linear-gradient(180deg,rgba(5,3,14,0) 0%,rgba(5,3,14,.12) 50%,rgba(5,3,14,.26) 100%)}
+body.gate-on #bnavshade{display:none}
+
+/* — «пилюля» активної вкладки — */
+#bnPill{position:absolute;top:6px;left:0;height:calc(100% - 12px);width:64px;border-radius:19px;z-index:0;
+  background:rgba(139,92,246,.17);box-shadow:inset 0 0 0 1px rgba(139,92,246,.30),0 1px 6px rgba(91,60,196,.18);
+  transition:transform .5s cubic-bezier(.3,1.22,.34,1),width .5s cubic-bezier(.3,1.22,.34,1),opacity .22s ease;
+  pointer-events:none;opacity:0;will-change:transform,width}
+#bnPill.pon{opacity:1}
+body[data-theme="light"] #bnPill{background:rgba(139,92,246,.11);box-shadow:inset 0 0 0 1px rgba(139,92,246,.22)}
+body[data-theme="glass"] #bnPill{background:rgba(139,92,246,.20);box-shadow:inset 0 0 0 1px rgba(160,130,255,.38),0 0 14px rgba(139,92,246,.22)}
+/* кнопки над пилюлею */
+#bnav .bn-b{position:relative;z-index:1}
+/* прев'ю вкладки під пальцем (зажав і ведеш) */
+.bn-b.bn-prev{color:#c9b8ff;background:rgba(139,92,246,.12);transform:scale(.93)}
+body[data-theme="light"] .bn-b.bn-prev{color:#6d28d9;background:rgba(139,92,246,.09)}
+body[data-theme="glass"] .bn-b.bn-prev{color:#ddd2ff;background:rgba(139,92,246,.16)}
+
+/* — анімація ПЕРЕЛЬОТУ між вкладками — */
+/* нова вкладка в'їжджає з боку кнопки, яку натиснули */
+.view.vin{animation:viewFlyIn var(--fh-navdur,.34s) cubic-bezier(.22,1,.36,1) both}
+@keyframes viewFlyIn{from{opacity:0;transform:translateX(var(--fh-navdir,0px))}to{opacity:1;transform:none}}
+/* стара вкладка стає нерухомим шаром поверх і плавно виїжджає в протилежний бік */
+.view.vout{position:fixed;left:0;right:0;top:calc(44px + min(var(--fh-sat, env(safe-area-inset-top, 0px)), 38px));bottom:0;z-index:6;
+  display:flex!important;overflow:hidden;pointer-events:none;margin:0;
+  animation:viewFlyOut var(--fh-navout,.2s) cubic-bezier(.55,.06,.68,.19) both}
+@keyframes viewFlyOut{from{opacity:1;transform:none}to{opacity:0;transform:translateX(calc(var(--fh-navdir,0px) * -0.42))}}
+@media (prefers-reduced-motion:reduce){
+  .view.vin{animation:viewIn .32s ease both}
+  .view.vout{animation:none;opacity:0}
+  #bnPill{transition:opacity .22s ease}
+}
+/* 3.5.29: світла тема — панель теж прозоріша (7px блюр, нижча щільність) */
+body[data-theme="light"] #bnav{background:radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.10),transparent 58%),linear-gradient(180deg,rgba(255,255,255,.78),rgba(245,244,252,.84));
   border-color:rgba(124,58,237,.22);box-shadow:0 12px 30px rgba(15,23,42,.14),inset 0 1px 0 rgba(255,255,255,.9)}
 /* 3.5.13: Liquid Glass — «прикольний» фіолетовий колір панелі (перенесений
    з темної теми) + вища щільність: крізь скло видно лише відтінки карток */
@@ -1687,15 +1742,16 @@ body[data-theme="light"] #bnav{background:radial-gradient(120% 90% at 50% 0%,rgb
    ТЕМИ (просив власник: «оно, во-первых, было прозрачное, во-вторых, оно
    размывалось, так же как и во время тёмной темы»). Щільність .82/.90 —
    крізь скло видно лише відтінки карток, текст НЕ просвічує. */
-body[data-theme="glass"] #bnav{background:radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.24),transparent 58%),linear-gradient(180deg,rgba(52,42,100,.82),rgba(26,19,56,.90));
-  /* 3.5.15: блюр 18 -> 12px — так само, як у темній темі */
-  -webkit-backdrop-filter:blur(12px) saturate(150%);backdrop-filter:blur(12px) saturate(150%);
+/* 3.5.29: Liquid Glass — так само прозоріша (блюр 7px, тінт легший) */
+body[data-theme="glass"] #bnav{background:radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.20),transparent 58%),linear-gradient(180deg,rgba(52,42,100,.68),rgba(26,19,56,.76));
+  -webkit-backdrop-filter:blur(7px) saturate(160%);backdrop-filter:blur(7px) saturate(160%);
   border-color:rgba(139,92,246,.36);box-shadow:0 12px 34px rgba(0,0,0,.5),0 2px 10px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.14)}
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
   #bnav{background:linear-gradient(180deg,rgba(44,35,84,.90),rgba(20,15,42,.95))}
 }
 body[data-theme="light"] .bn-b{color:#64748b}
-body[data-theme="light"] .bn-b.on{color:#6d28d9;background:rgba(139,92,246,.11);box-shadow:inset 0 0 0 1px rgba(139,92,246,.22)}
+/* 3.5.29: фон активної кнопки малює «пилюля» #bnPill — фон кнопки знято */
+body[data-theme="light"] .bn-b.on{color:#6d28d9;background:transparent;box-shadow:none}
 /* шухляда більше не потрібна — вся навігація в нижній панелі */
 body.android #burger,body.android #drawer,body.android #dback{display:none!important}
 /* місце під нижню панель, щоб остання картка уроку не ховалась
@@ -1772,7 +1828,7 @@ body.mob[data-theme="glass"] #drawer,body.mob[data-theme="glass"] .us-card,
 body.mob[data-theme="glass"] .fld input,body.mob[data-theme="glass"] .adm-backdrop{
   backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 body.mob[data-theme="glass"] #tbar{background:rgba(20,16,44,.86)}
-body.mob[data-theme="glass"] #bnav{background:radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.24),transparent 58%),linear-gradient(180deg,rgba(52,42,100,.88),rgba(26,19,56,.95))}
+body.mob[data-theme="glass"] #bnav{background:radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.20),transparent 58%),linear-gradient(180deg,rgba(52,42,100,.72),rgba(26,19,56,.80))}
 body.mob[data-theme="glass"] .modal,body.mob[data-theme="glass"] .ms-card,
 body.mob[data-theme="glass"] .us-card{background:rgba(26,22,54,.96)}
 body.mob[data-theme="glass"] .mback,body.mob[data-theme="glass"] #dback,

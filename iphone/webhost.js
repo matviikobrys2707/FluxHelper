@@ -33,7 +33,7 @@
    ============================================================ */
 (function () {
 'use strict';
-var VER = '3.5.28';
+var VER = '3.5.29';
 var BACKEND = 'https://fluxhelper-backend.onrender.com';
 var ORIGIN = 'https://fluxhelper.pages.dev';
 var DB_URL = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app';
@@ -67,7 +67,8 @@ try {
   st.textContent =
     '#neterr{display:none!important}' +
     '#bMin,#bClose,#btMin,#btClose{display:none!important}' +
-    '#bnav{bottom:calc(12px + var(--fh-sab, env(safe-area-inset-bottom, 0px)))!important}' +   /* 3.5.26: динамічно, як у застосунку */
+    /* 3.5.29: правло bottom ЗНЯТО — відступ панелі тепер виставляє ui.js
+       (gapFix: з кнопковою навігацією щільніше до системних кнопок, з жестами — як було). */
     '#secNotif,#nban,#bPerm,#bTestN,#rowNotif{display:none!important}' +
     '#secUpd{display:none!important}' +   /* 3.5.26: рамку «Оновлення» знесено з САЙТУ (потрібна лише застосункам) */
     'body:not(.fh-beta) .beta-only{display:none!important}';

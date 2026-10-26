@@ -262,7 +262,7 @@ function validS(x) {
 // вічно вважав себе старішим. Тепер версію підставляє build.sh з манифеста
 // (2.4.1 -> versionName), а ПІСЛЯ завантаження Java-міст AndroidHost.ver()
 // віддає СПРАВЖНЮ версію встановленого пакета (PackageManager) — найнадійніше.
-let APP_VER = '3.5.28';              // X.Y.Z — підставляється при збірці з манифеста
+let APP_VER = '3.5.29';              // X.Y.Z — підставляється при збірці з манифеста
 try {
   if (window.AndroidHost && AndroidHost.ver) {
     const jv = AndroidHost.ver();
@@ -1936,6 +1936,13 @@ function parseNotes(txt) {
 // пріоритет. Третій елемент пункта ('pc'/'android') — показувати лише
 // на одній платформі; без нього — на обох.
 const WHATS_NEW = {
+  '3.5.29': [
+    ['/', 'Нижня панель стала прозорішою: розмиття зменшено — за склом реально видно картки розкладу, під панеллю з\u2019явилось легке затемнення'],
+    ['/', 'Нова анімація вкладок: підсвітка-«пилюля» плавно їздить між кнопками, а сама вкладка перелітає з боку кнопки, яку натиснув (що далі — то довший переліт)'],
+    ['+', 'Зажми вкладку в нижній панелі й веди пальцем по кнопках — підсвітка їде за пальцем, відпусти на потрібній — вона відкриється'],
+    ['/', 'З кнопковою навігацією (квадрат-кружок-трикутник) панель тепер піднімається ближче до системних кнопок — великий відступ зник'],
+    ['✦', 'Вхід через Google більше не вибиває з програми і не перекидає на сайт, поки ти вибираєш акаунт — таймер фолбеку чекає в 4 рази довше']
+  ],
   '3.5.28': [
     ['✦', 'Базу даних у хмарі приведено до ладу: у предметів із поділом — Teacher 1 і Teacher 2 та Zoom 1 і Zoom 2 (у технологій «Дівчата/Хлопці»), у предметів без поділу — один учитель і одне посилання; розклад у базі йде строго Пн → Пт'],
     ['✦', 'Вхід через Google став незламним: сторінка входу в браузері тепер показує КОД — якщо програма не підтягнула профіль сама, натисни «є код зі сайту?» і введи його; вхід завершиться за секунду'],
@@ -5064,10 +5071,13 @@ function init() {
   const dwa = byId('dwAdmin'); if (dwa) dwa.onclick = function () { closeDrawer(); admShow(); };   // 3.3.0
   byId('dwAcc').onclick = function () { if (!ACC.user) { authStart(); return; } showAcc(); };
   /* 3.5.4: НИЖНЯ ПАНЕЛЬ — той самий перехід, що й у шухляді, але в один дотик */
-  const bns = byId('bnSched'); if (bns) bns.onclick = function () { closeDrawer(); showMain(); render(); };
-  const bst = byId('bnSet'); if (bst) bst.onclick = function () { closeDrawer(); showSetup(); };
-  const bpr = byId('bnProf'); if (bpr) bpr.onclick = function () { if (!ACC.user) { authStart(); return; } showAcc(); };
-  const bad = byId('bnAdmin'); if (bad) bad.onclick = function () { closeDrawer(); admShow(); };
+  /* 3.5.29: кнопки панелі йдуть через fhGo() — той самий обробник, але
+     з анімацією перельоту (стара вкладка виїжджає, нова в'їжджає).
+     Профіль без акаунта — як і було, одразу на екран входу. */
+  const bns = byId('bnSched'); if (bns) bns.onclick = function () { closeDrawer(); fhGo('sched', function () { showMain(); render(); }); };
+  const bst = byId('bnSet'); if (bst) bst.onclick = function () { closeDrawer(); fhGo('setup', function () { showSetup(); }); };
+  const bpr = byId('bnProf'); if (bpr) bpr.onclick = function () { if (!ACC.user) { authStart(); return; } fhGo('acc', function () { showAcc(); }); };
+  const bad = byId('bnAdmin'); if (bad) bad.onclick = function () { closeDrawer(); fhGo('adm', function () { admShow(); }); };
   /* 3.4.9: версія в підвалі шухляди (оновлюється і після підтягування з PackageManager) */
   (function () { const dv = byId('dwVer'); if (dv) dv.textContent = verLabel(); })();
   const agoM = byId('agGo'); if (agoM) agoM.onclick = function () { authStart(); };
@@ -5542,3 +5552,151 @@ try { init(); } catch (err) {
   try { bootLoop(); } catch (e2) { hideBoot(); }
   document.body.innerHTML = '<p style="padding:30px;color:#fff">Помилка інтерфейсу: ' + err.message + '</p>';
 }
+
+/* ============================================================
+   3.5.29 — ДВИГУН НАВІГАЦІЇ (просив власник):
+   1) ПЕРЕЛІТ вкладок: fhGo(view, fn) — перед перемиканням ставить
+      напрямок/тривалість у CSS-змінні, стара вкладка стає шаром .vout
+      і виїжджає, нова в'їжджає .vin з боку натиснутої кнопки.
+   2) «ПИЛЮЛЯ» #bnPill — активна вкладка ПЛАВНО ЇЗДИТЬ між кнопками
+      (обгортка markNav кожного разу переставляє її до нової кнопки).
+   3) ЗАЖАВ І ВЕДИ ПАЛЬЦЕМ: тач-жест на #bnav — підсвітка .bn-prev їде
+      за пальцем по кнопках, відпуск = активація тієї, що під пальцем.
+   4) РОЗУМНИЙ ВІДСТУП: з кнопковою навігацією (інсет ≥ 24px) панель
+      піднімається щільніше до системних кнопок (4px замість 12px),
+      з жестами — як було; резерв контенту теж стає меншим.
+   ============================================================ */
+(function () {
+  /* ---------- 1) переліт вкладок ---------- */
+  var VIEW_EL = { sched: 'vMain', home: 'vMain', setup: 'vSetup', acc: 'vAcc', adm: 'vAdmin' };
+  var VIEW_BTN = { sched: 'bnSched', home: 'bnSched', setup: 'bnSet', acc: 'bnProf', adm: 'bnAdmin' };
+  var TAB_ORDER = ['bnSched', 'bnAdmin', 'bnSet', 'bnProf'];   /* порядок кнопок у панелі */
+  var __fhCurView = 'sched';
+
+  function byId2(id) { return document.getElementById(id); }
+  function tabIdx(view) {
+    var b = VIEW_BTN[view]; if (!b) return 0;
+    var el = byId2(b); if (!el || el.classList.contains('hidden')) { /* без «Адмін» порядок зсунутий */
+      var vis = TAB_ORDER.filter(function (x) { var e2 = byId2(x); return e2 && !e2.classList.contains('hidden'); });
+      var j = vis.indexOf(b); return j < 0 ? 0 : j;
+    }
+    var i = TAB_ORDER.indexOf(b); return i < 0 ? 0 : i;
+  }
+
+  window.fhGo = function (view, fn) {
+    var prev = __fhCurView;
+    var curEl = VIEW_EL[prev] && byId2(VIEW_EL[prev]);
+    __fhCurView = view;
+    /* нема з чого виїжджати (старт, вхід, швидкі кліки) — просто перемкнути */
+    if (!curEl || curEl.classList.contains('hidden') || !curEl.classList.contains('view')) { try { fn(); } catch (e) {} return; }
+    var i0 = tabIdx(prev), i1 = tabIdx(view);
+    if (i0 === i1 || !('animate' in Element.prototype)) { try { fn(); } catch (e2) {} return; }
+    var dist = Math.abs(i1 - i0);
+    var dir = i1 > i0 ? 1 : -1;
+    var X = (46 + Math.min(dist, 3) * 16) * dir;               /* дальність вльоту */
+    var dur = 0.36 + Math.min(dist, 3) * 0.06;                 /* далі — довше */
+    var rs = document.documentElement.style;
+    rs.setProperty('--fh-navdir', X.toFixed(1) + 'px');
+    rs.setProperty('--fh-navdur', dur.toFixed(2) + 's');
+    curEl.classList.add('vout');
+    var killed = false;
+    var kill = function () { if (!killed) { killed = true; curEl.classList.remove('vout'); } };
+    setTimeout(function () {
+      try { fn(); } catch (e3) { kill(); throw e3; }
+      setTimeout(kill, dur * 1000 + 90);
+    }, 42);
+  };
+
+  /* ---------- 2) «пилюля» + синхронізація поточного виду ---------- */
+  function pillTo(view, instant) {
+    var pill = byId2('bnPill'); if (!pill) return;
+    var b = VIEW_BTN[view] && byId2(VIEW_BTN[view]);
+    if (!b || b.classList.contains('hidden')) { pill.classList.remove('pon'); return; }
+    pill.classList.add('pon');
+    if (instant) pill.style.transition = 'none';
+    pill.style.width = b.offsetWidth + 'px';
+    pill.style.transform = 'translateX(' + b.offsetLeft + 'px)';
+    if (instant) { void pill.offsetWidth; pill.style.transition = ''; }
+  }
+  var _markNav = window.markNav;
+  if (typeof _markNav === 'function') {
+    window.markNav = function (view) {
+      var r = _markNav.apply(this, arguments);
+      try {
+        if (VIEW_EL[view]) __fhCurView = view;      /* будь-яке перемикання синхронізує стан */
+        pillTo(view, false);
+      } catch (e) {}
+      return r;
+    };
+  }
+  addEventListener('resize', function () { try { pillTo(__fhCurView, true); } catch (e) {} });
+  /* після бута — стати на поточну вкладку без анімації */
+  setTimeout(function () { try { pillTo(__fhCurView, true); } catch (e) {} }, 650);
+  setTimeout(function () { try { pillTo(__fhCurView, true); } catch (e) {} }, 1600);
+
+  /* ---------- 3) зажав вкладку — веди пальцем ---------- */
+  (function () {
+    var nav = byId2('bnav'); if (!nav) return;
+    var st = null;
+    function btnAt(x, y) {
+      var el = document.elementFromPoint(x, y);
+      return el ? el.closest('.bn-b') : null;
+    }
+    function preview(b) {
+      var bs = nav.querySelectorAll('.bn-b');
+      for (var i = 0; i < bs.length; i++) bs[i].classList.toggle('bn-prev', bs[i] === b);
+    }
+    nav.addEventListener('touchstart', function (e) {
+      if (e.touches.length !== 1) { st = null; return; }
+      var t = e.touches[0], b = btnAt(t.clientX, t.clientY);
+      if (!b) { st = null; return; }
+      st = { x0: t.clientX, y0: t.clientY, btn: b, moved: false, t0: Date.now(), hover: null };
+      preview(b);
+    }, { passive: true });
+    nav.addEventListener('touchmove', function (e) {
+      if (!st) return;
+      var t = e.touches[0];
+      if (!st.moved && Math.hypot(t.clientX - st.x0, t.clientY - st.y0) > 11) st.moved = true;
+      if (st.moved) {
+        st.hover = btnAt(t.clientX, t.clientY);
+        preview(st.hover);
+        try { e.preventDefault(); } catch (e2) {}   /* щоб сторінка не скролилась */
+      }
+    }, { passive: false });
+    nav.addEventListener('touchend', function (e) {
+      if (!st) { preview(null); return; }
+      var wasMoved = st.moved, hover = st.hover, t0 = st.t0;
+      st = null; preview(null);
+      if (wasMoved) {
+        try { e.preventDefault(); } catch (e3) {}   /* без синтетичного кліка — активуємо самі */
+        if (hover) hover.click();                    /* звичайний onclick → анімація перельоту */
+      } else if (Date.now() - t0 > 700) {
+        /* довге зажаття без руху — теж активуємо (тап уже міг не встигнути) */
+        try { e.preventDefault(); } catch (e4) {}
+        (hover || btnAt(e.changedTouches[0].clientX, e.changedTouches[0].clientY) || { click: function () {} }).click();
+      }
+      /* короткий тап без руху — браузер сам дасть click */
+    }, { passive: false });
+    nav.addEventListener('touchcancel', function () { st = null; preview(null); }, { passive: true });
+  })();
+
+  /* ---------- 4) розумний відступ (кнопкова навігація) ---------- */
+  (function () {
+    function gapFix() {
+      var sab = 0;
+      try {
+        sab = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--fh-sab')) || 0;
+      } catch (e) {}
+      var b = byId2('bnav'); if (!b) return;
+      /* з кнопками (великий інсет) панель щільніше до них; з жестами — як було */
+      var gap = (sab >= 24) ? 4 : 12;
+      b.style.bottom = 'calc(' + gap + 'px + var(--fh-sab, env(safe-area-inset-bottom, 0px)))';
+      /* резерв контенту під панеллю теж менший — останній урок ближче */
+      var res = (sab >= 24) ? 78 : 85;
+      document.documentElement.style.setProperty('--fh-navres', 'calc(' + res + 'px + var(--fh-sab, env(safe-area-inset-bottom, 0px)))');
+    }
+    gapFix();
+    addEventListener('resize', gapFix);
+    setInterval(gapFix, 900);
+  })();
+})();

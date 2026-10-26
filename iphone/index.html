@@ -356,7 +356,11 @@ try{var _t=localStorage.getItem('fh_theme');if(['standard','light','glass','ocea
 <!-- 3.5.6: ДИЗАЙН ЯК У TELEGRAM — округлена плаваюча панель, іконки без
      підписів, порядок: Розклад / Адмін (лише роль) / Налаштування / Профіль
      (на кнопці профіля — аватарка поточного акаунта) -->
+<!-- 3.5.29: легке затемнення під нижньою панеллю (за склом краще видно картки) -->
+<div id="bnavshade" aria-hidden="true"></div>
 <div id="bnav">
+  <!-- 3.5.29: «пилюля» активної вкладки — плавно їздить між кнопками (керують з ui.js) -->
+  <span id="bnPill" aria-hidden="true"></span>
   <button class="bn-b on" id="bnSched" type="button" aria-label="Розклад">
     <svg class="ic-o" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="17" rx="2.5"/><line x1="3" y1="9.5" x2="21" y2="9.5"/><line x1="8" y1="2.5" x2="8" y2="6.5"/><line x1="16" y1="2.5" x2="16" y2="6.5"/></svg>
     <span class="bn-l">Розклад</span>
