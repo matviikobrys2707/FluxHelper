@@ -1788,3 +1788,12 @@ body.mob #inst{background:rgba(3,3,7,.86)}
 /* легші тіні карток на телефоні (невеликий виграш на слабких GPU) */
 body.mob .card{box-shadow:0 2px 8px rgba(0,0,0,.16)}
 /* ============================================================ */
+
+/* ==== 3.5.28: вхід кодом зі сайту ==== */
+#agate .ag-code-lnk{display:block;margin:10px auto 0;background:none;border:0;padding:4px 10px;font-size:11px;color:#8b8fa8;text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-family:inherit}
+#agate .ag-code-lnk:active{color:#c4c8de}
+#agate .ag-code-row{display:none;gap:8px;margin-top:10px;align-items:center;justify-content:center}
+#agate .ag-code-in{width:128px;padding:9px 12px;border-radius:11px;border:1px solid #34344c;background:#14141f;color:#eef0f8;font-size:14px;letter-spacing:2.5px;text-align:center;text-transform:uppercase;font-family:inherit;outline:none}
+#agate .ag-code-in:focus{border-color:#8b5cf6}
+#agate .ag-code-go{padding:9px 16px;border-radius:11px;border:0;background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit}
+#agate .ag-code-go:disabled{opacity:.5}

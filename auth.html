@@ -257,6 +257,9 @@ h2 {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+.code-box{margin:14px auto 0;display:inline-flex;flex-direction:column;gap:4px;padding:10px 22px;border-radius:14px;background:#14141f;border:1px solid #34344c}
+.code-box span{font-size:10px;color:#8b8fa8;letter-spacing:.6px}
+.code-box b{font-size:20px;letter-spacing:4px;color:#e9d5ff;font-family:ui-monospace,monospace}
 </style>
 </head>
 <body>
@@ -325,6 +328,8 @@ h2 {
   var h = {}, seg = (location.hash || '').replace(/^#/, '').split('&');
   for (var i = 0; i < seg.length; ++i) { var kv = seg[i].split('='); if (kv[0]) h[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1] || ''); }
   var STATE = h.s || '', PORT = h.p || '', HINT = h.h || '';
+  var LOGIN_CODE = '';
+  function genCode() { var cs = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', s = ''; for (var i = 0; i < 6; i++) s += cs.charAt(Math.floor(Math.random() * cs.length)); return s.slice(0, 3) + '-' + s.slice(3); }
   var FH_BACKEND = 'https://fluxhelper-backend.onrender.com';   // ключ і URL бази тепер тільки на сервері
   var GIS_CLIENT = '668834523935-k470ldmdv0r9am0720v6lgaatm6rtuf3.apps.googleusercontent.com';
 
@@ -387,44 +392,63 @@ h2 {
   }
 
   function deliver(prof, ok, fail) {
-    var sent = false, left = 2;
+    /* 3.5.28: 4 канали (localhost / релей / Firebase auth_cb / Firebase manlogin-КОД).
+       Рішення приймається, коли ВСІ запущені канали відповіли АБО за таймаутом:
+       будь-який успіх = профіль дійшов (авто-канал або код у руках користувача). */
+    var sent = false, pending = 0, decided = false;
     try { if (window.__fhHbStop) window.__fhHbStop(); } catch (eHB) { }   // 3.4.12: серцебиття більше не потрібне
-    function fin(good) { left--; if (good) sent = true; if (left <= 0) (sent ? ok : fail)(); }
+    function fin(good) { pending--; if (good) sent = true; if (!decided && pending <= 0) { decided = true; (sent ? ok : fail)(); } }
+    function chan(fn) { pending++; try { fn(); } catch (e) { fin(false); } }
+    setTimeout(function () { if (!decided && sent) { decided = true; ok(); } }, 2500);
+    setTimeout(function () { if (!decided) { decided = true; fail(); } }, 6000);
     if (PORT) {
-      try {
+      chan(function () {
         fetch('http://127.0.0.1:' + PORT + '/cb?state=' + encodeURIComponent(STATE) + '&d=' + encodeURIComponent(JSON.stringify(prof)), { mode: 'cors', cache: 'no-store' })
           .then(function (r) { fin(!!r && r.ok); })
           .catch(function () { fin(false); });
-      } catch (e) { fin(false); }
-    } else fin(false);
-    try {
+      });
+    }
+    chan(function () {
       fetch(FH_BACKEND + '/api/auth-cb-relay', {
         method: 'POST', cache: 'no-store',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ state: STATE, data: { d: prof, t: Date.now() } })
       }).then(function (r) { fin(!!r && r.ok); }).catch(function () { fin(false); });
-    } catch (e) { fin(false); }
+    });
     /* 3.5.24: ПРЯМИЙ канал у Firebase RTDB (як робить webhost.js на сайті).
        Застосунки опитують update/auth_cb/<state> — релей на бекенді може
        бути недоступний (Render cold start), а прямий PUT досягає бази
        завжди; застосунок підхопить профіль за 1-2 с і увійде сам */
-    try {
+    chan(function () {
       fetch('https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app/update/auth_cb/' + encodeURIComponent(STATE) + '.json', {
         method: 'PUT', cache: 'no-store',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ d: prof, t: Date.now() })
       }).then(function (r) { fin(!!r && r.ok); }).catch(function () { fin(false); });
-    } catch (e2) { fin(false); }
-    setTimeout(function () { if (sent) { left = -1; ok(); } }, 900);
+    });
+    /* 3.5.28: канал КОДУ — профіль також летить під 6-значний код; якщо всі
+       автоматичні канали не дісталися застосунку, користувач введе код у
+       програмі («є код зі сайту?») — і вхід завершиться миттєво */
+    LOGIN_CODE = genCode();
+    chan(function () {
+      fetch('https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app/update/manlogin/' + encodeURIComponent(LOGIN_CODE.replace('-', '')) + '.json', {
+        method: 'PUT', cache: 'no-store',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ d: prof, t: Date.now() })
+      }).then(function (r) { fin(!!r && r.ok); }).catch(function () { fin(false); });
+    });
   }
 
   function finishOk(prof) {
     busy(false, 'Готово');
     document.getElementById('stForm').style.display = 'none';
     var d = document.getElementById('stDone'); d.style.display = 'block';
+    var codeHtml = LOGIN_CODE
+      ? '<div class="code-box"><span>код для програми</span><b>' + LOGIN_CODE + '</b></div>'
+      : '';
     if (prof && prof.name) {
       document.getElementById('doneSub').innerHTML =
-        'Вітаємо, <b>' + String(prof.name).replace(/[<>&]/g, '') + '</b>!<br>Поверніться у FluxHelper — акаунт уже підтверджено.<br>Цю вкладку браузера можна закрити.';
+        'Вітаємо, <b>' + String(prof.name).replace(/[<>&]/g, '') + '</b>!<br>Поверніться у FluxHelper — акаунт уже підтверджено.<br>Якщо програма не увійшла сама — натисніть у програмі «є код зі сайту?» і введіть код.' + codeHtml;
     }
   }
 
@@ -511,7 +535,13 @@ h2 {
           client_id: GIS_CLIENT,
           scope: 'openid email profile',
           prompt: '',
-          callback: gotToken
+          callback: gotToken,
+          error_callback: function (err) {
+            busy(false, 'Спробувати ще раз');
+            setStat(err && err.type === 'popup_failed_to_open'
+              ? 'Браузер заблокував вікно Google — дозвольте спливні вікна для цього сайту і спробуйте ще раз.'
+              : 'Google не вдалося відкрити вхід. Спробуйте ще раз.', 'err');
+          }
         });
       }
       tc.requestAccessToken({ hint: (HINT && HINT.indexOf('@') > 0) ? HINT : undefined });

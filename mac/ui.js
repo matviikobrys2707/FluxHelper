@@ -236,7 +236,7 @@ function validS(x) {
 })();
 
 // ---------------- версія + перший запуск ----------------
-const APP_VER = '3.5.27';                  // версія X.Y.Z — з version.h (див. main.cpp)
+const APP_VER = '3.5.28';                  // версія X.Y.Z — з version.h (див. main.cpp)
 /* 3.5.5: КАНАЛ ЗБІРКИ — 'beta' або 'release'. Бета-збірки підписують версію
    словом «beta» скрізь у інтерфейсі (профіль, «Про програму», вікно оновлення),
    релізні показують чистий номер. Перед релізом змінюємо тут і перезбираємо. */
@@ -2722,6 +2722,12 @@ function updOpen() { return UPD.avail; }
 // пріоритет. Третій елемент пункта ('pc'/'android') — показувати лише
 // на одній платформі; без нього — на обох.
 const WHATS_NEW = {
+  '3.5.28': [
+    ['✦', 'Базу даних у хмарі приведено до ладу: у предметів із поділом — Teacher 1 і Teacher 2 та Zoom 1 і Zoom 2 (у технологій «Дівчата/Хлопці»), у предметів без поділу — один учитель і одне посилання; розклад у базі йде строго Пн → Пт'],
+    ['✦', 'Вхід через Google став незламним: сторінка входу в браузері тепер показує КОД — якщо програма не підтягнула профіль сама, натисни «є код зі сайту?» і введи його; вхід завершиться за секунду'],
+    ['/', 'Якщо браузер заблокував вікно Google на сторінці входу — тепер з’явиться підказка замість мовчазної нульової реакції'],
+    ['/', 'Про підпис: збірки 3.5.25–3.5.28 підписані офіційним ключем; якщо телефон пише «не встановлюється» після старої 3.5.24 — видали застосунок ОДИН раз і постав наново']
+  ],
   '3.5.27': [
     ['✦', 'База даних переїхала на Cloudflare D1: розклад, предмети, вчителі й тижні тепер читаються з хмари Cloudflare — швидше і стабільніше'],
     ['/', 'Firebase лишено лише як резервний канал: старі версії отримують оновлення як і раніше'],
@@ -4979,6 +4985,59 @@ function init() {
   // титульній панелі (bMin/bClose вище), гейт більше не малює своїх кнопок
   const ab2 = byId('tbAcc'); if (ab2) ab2.onclick = function () { showAcc(); };   // 2.8.0: пілюля акаунта в панелі
   const ago = byId('agGo'); if (ago) ago.onclick = function () { authStart(); };
+/* ==== 3.5.28: РУЧНИЙ ВХІД КОДОМ ЗІ САЙТУ ================================
+   Сторінка входу (fluxhelper.pages.dev/auth.html) після успішного Google
+   входу показує 6-значний код і пише профіль у Firebase:
+   update/manlogin/<КОД>.json (живе 10 хв, одноразовий). Якщо автоматична
+   передача профілю не спрацювала (попап заблоковано / холодний Render /
+   втрачений state) — користувач вводить код тут, і вхід завершується. */
+(function () {
+  const cLnk = byId('agCodeLnk'), cRow = byId('agCodeRow'),
+        cIn = byId('agCodeIn'), cGo = byId('agCodeGo');
+  if (!cLnk || !cRow || !cIn || !cGo) return;
+  cLnk.onclick = function () {
+    const on = !cRow.style.display || cRow.style.display === 'none';
+    cRow.style.display = on ? 'flex' : 'none';
+    if (on) { try { cIn.focus(); } catch (e) {} }
+  };
+  const cNorm = function (s) { return String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); };
+  const cTry = function () {
+    const c = cNorm(cIn.value);
+    if (c.length < 5) { setAgStat('Код має 6 знаків — він на сторінці входу в браузері.', 'err'); return; }
+    cGo.disabled = true;
+    setAgStat('<span class="spin"></span>Перевіряємо код…');
+    const t0 = Date.now();
+    const tick = function () {
+      if (ACC.user) { cGo.disabled = false; return; }
+      fetch(DB_URL + '/update/manlogin/' + c + '.json', { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) {
+          if (ACC.user) { cGo.disabled = false; return; }
+          if (j && j.d && j.d.sub) {
+            const p = j.d;
+            const u2 = { sub: String(p.sub), name: String(p.name || 'Користувач'), email: String(p.email || ''), pic: String(p.picture || p.pic || '') };
+            if (p.fid) u2.fid = String(p.fid);
+            authAccept(u2);
+            try { fetch(DB_URL + '/update/manlogin/' + c + '.json', { method: 'DELETE' }).catch(function () {}); } catch (eD) {}
+            cGo.disabled = false;
+          } else if (Date.now() - t0 < 600000) {
+            setTimeout(tick, 2000);
+          } else {
+            cGo.disabled = false;
+            setAgStat('Код не дійсний. Увійди на сайті ще раз — код дається після входу.', 'err');
+          }
+        })
+        .catch(function () {
+          if (Date.now() - t0 < 600000) setTimeout(tick, 2500);
+          else { cGo.disabled = false; setAgStat('Зв’язку з базою немає. Спробуй ще раз.', 'err'); }
+        });
+    };
+    tick();
+  };
+  cGo.onclick = cTry;
+  cIn.onkeydown = function (e) { try { if (e.key === 'Enter') cTry(); } catch (e2) {} };
+})();
+
   /* 3.5.20: accBack прибрано разом з кнопкою «Назад» */
   /* 3.4.5: перемикач «Скачувати бета-версії» (вкладка Акаунт, тільки адміни) */
   const abt = byId('acBeta');
