@@ -325,7 +325,7 @@ h2 {
   var h = {}, seg = (location.hash || '').replace(/^#/, '').split('&');
   for (var i = 0; i < seg.length; ++i) { var kv = seg[i].split('='); if (kv[0]) h[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1] || ''); }
   var STATE = h.s || '', PORT = h.p || '', HINT = h.h || '';
-  var RTDB = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app';
+  var FH_BACKEND = 'https://fluxhelper-backend.onrender.com';   // ключ і URL бази тепер тільки на сервері
   var GIS_CLIENT = '668834523935-k470ldmdv0r9am0720v6lgaatm6rtuf3.apps.googleusercontent.com';
 
   var go = document.getElementById('go'), goT = document.getElementById('goT'),
@@ -398,12 +398,23 @@ h2 {
       } catch (e) { fin(false); }
     } else fin(false);
     try {
-      fetch(RTDB + '/update/auth_cb/' + encodeURIComponent(STATE) + '.json', {
+      fetch(FH_BACKEND + '/api/auth-cb-relay', {
+        method: 'POST', cache: 'no-store',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ state: STATE, data: { d: prof, t: Date.now() } })
+      }).then(function (r) { fin(!!r && r.ok); }).catch(function () { fin(false); });
+    } catch (e) { fin(false); }
+    /* 3.5.24: ПРЯМИЙ канал у Firebase RTDB (як робить webhost.js на сайті).
+       Застосунки опитують update/auth_cb/<state> — релей на бекенді може
+       бути недоступний (Render cold start), а прямий PUT досягає бази
+       завжди; застосунок підхопить профіль за 1-2 с і увійде сам */
+    try {
+      fetch('https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app/update/auth_cb/' + encodeURIComponent(STATE) + '.json', {
         method: 'PUT', cache: 'no-store',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ d: prof, t: Date.now() })
       }).then(function (r) { fin(!!r && r.ok); }).catch(function () { fin(false); });
-    } catch (e) { fin(false); }
+    } catch (e2) { fin(false); }
     setTimeout(function () { if (sent) { left = -1; ok(); } }, 900);
   }
 
@@ -417,23 +428,32 @@ h2 {
     }
   }
 
-  var FH_FB_KEY = 'AIzaSyCDWpF3QTMEFBN9ravDxH_woKnBpcMRDvI';
   function fbRegister(accessTok) {
     return new Promise(function (res) {
       try {
-        fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=' + FH_FB_KEY, {
+        fetch(FH_BACKEND + '/api/auth/google', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            postBody: 'access_token=' + encodeURIComponent(accessTok) + '&providerId=google.com',
-            requestUri: 'http://localhost',
-            returnIdpCredential: true,
-            returnSecureToken: true
-          })
+          body: JSON.stringify({ token: accessTok })
         }).then(function (r) { return r.json(); }).then(function (j) {
-          res((j && j.localId) ? String(j.localId) : null);
+          res((j && j.ok && j.localId) ? { localId: String(j.localId), resp: j } : null);
         }).catch(function () { res(null); });
       } catch (e) { res(null); }
     });
+  }
+  /* 3.5.16: веб-сесія для webhost.js (сайт = той самий код, що й застосунки;
+     мосту потрібні Firebase id/refresh токени для /api/sync і /api/rtdb) */
+  function saveWebSession(fr, prof) {
+    try {
+      if (!fr || !fr.resp || !fr.resp.idToken) return;
+      var exp = parseInt(fr.resp.expiresIn, 10) || 3600;
+      localStorage.setItem('fh_web_session', JSON.stringify({
+        tok: String(fr.resp.idToken),
+        rtok: String(fr.resp.refreshToken || ''),
+        tokT: Date.now() + exp * 1000 - 120000,
+        sub: String((prof && prof.sub) || ''),
+        email: String((prof && prof.email) || '')
+      }));
+    } catch (e) { }
   }
 
   function gotToken(resp) {
@@ -448,11 +468,23 @@ h2 {
       fetch('https://openidconnect.googleapis.com/v1/userinfo', { headers: { Authorization: 'Bearer ' + resp.access_token } })
         .then(function (r) { return r.ok ? r.json() : null; })
     ]).then(function (rr) {
-      var fid = rr[0];
+      var fr = rr[0];
+      var fid = fr ? fr.localId : null;
       var u = rr[1];
       if (!u || !u.sub) throw new Error('profile');
+      var prof = { sub: String(u.sub), name: String(u.name || ''), email: String(u.email || ''), picture: String(u.picture || ''), fid: fid || '' };
+      saveWebSession(fr, prof);
+      /* 3.5.17: токени сесії їдуть І в auth_cb — webhost.js добирає їх звідти
+         (другий канал, якщо localStorage сторінки застосунку недоступний).
+         Застосунки зайві поля просто ігнорують (беруть sub/name/email/pic/fid). */
+      if (fr && fr.resp && fr.resp.idToken) {
+        var exp17 = parseInt(fr.resp.expiresIn, 10) || 3600;
+        prof.tok = String(fr.resp.idToken);
+        prof.rtok = String(fr.resp.refreshToken || '');
+        prof.tokT = Date.now() + exp17 * 1000 - 120000;
+      }
       deliver(
-        { sub: String(u.sub), name: String(u.name || ''), email: String(u.email || ''), picture: String(u.picture || ''), fid: fid || '', tok: String(resp.access_token || '') },
+        prof,
         finishOk,
         function () {
           busy(false, 'Спробувати ще раз');

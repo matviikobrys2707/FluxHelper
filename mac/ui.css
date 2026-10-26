@@ -1,0 +1,1535 @@
+*{margin:0;padding:0;box-sizing:border-box;-webkit-user-select:none;user-select:none;-webkit-user-drag:none}
+/* 2.8.0: виділення/копіювання тексту вимкнено скрізь — звичайна програма, а не браузер
+   (текст у полях, що редагуються, за потреби все одно вводиться) */
+::selection{background:transparent}
+::-moz-selection{background:transparent}
+/* 3.5.21: СКРОЛБАРИ ПРИХОВАНО ВІЗУАЛЬНО (просив власник: «физически оно
+   должно быть, чтобы можно было скроллить колёсиком, а визуально — нет»).
+   Скрол працює як і раніше: коліщатко, тачпад, тач, клавіатура. Смуги
+   немає ні в темній, ні у світлій темі, ні в Liquid Glass. */
+*{scrollbar-width:none;-ms-overflow-style:none}
+::-webkit-scrollbar{width:0;height:0;display:none}
+::-webkit-scrollbar-thumb{background:transparent;border-radius:99px}
+::-webkit-scrollbar-thumb:hover{background:transparent}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-corner{background:transparent}
+html,body{height:100%;overflow:hidden}
+#app{flex:1;min-height:0;display:flex;flex-direction:column;position:relative}
+/* 2.9.0: панель — дитина body (поза #app): ніколи не масштабується zoom'ом
+   і завжди над гейтом входу/сплешем — кнопки вікна однакові всюди */
+#tbar{flex:none}
+body{
+  font-family:'Segoe UI Variable','Segoe UI',system-ui,-apple-system,sans-serif;
+  color:#f4f4f8;-webkit-font-smoothing:antialiased;
+  background:
+    radial-gradient(540px 360px at 14% -10%, rgba(124,58,237,.17), transparent 68%),
+    radial-gradient(580px 400px at 88% 114%, rgba(79,70,229,.14), transparent 66%),
+    #050508;
+  display:flex;flex-direction:column;
+}
+button{font-family:inherit}
+.hidden{display:none!important}
+
+/* ---------- титульна панель ---------- */
+/* 2.8.1: ЖОДНОГО розділення між панеллю і контентом (без border/фону) —
+   панель «розчиняється» у фоні програми, як просив власник */
+#tbar{height:50px;flex:none;display:flex;align-items:center;justify-content:space-between;
+  padding-left:14px;padding-right:7px;user-select:none;-webkit-user-select:none;
+  app-region:drag;-webkit-app-region:drag;
+  border-bottom:0;background:transparent;position:relative;z-index:5}
+.tb-l{display:flex;align-items:center;gap:10px;position:relative;z-index:2;transition:transform .3s ease,opacity .25s ease}
+.lmark{display:grid;place-items:center;pointer-events:none}
+.lmark svg{display:block}
+#tbar .lmark{box-shadow:0 4px 14px rgba(99,102,241,.45);border-radius:9px}
+.tb-name{font-size:14.5px;font-weight:700;letter-spacing:.3px;color:#fff}
+.tb-ver{font-size:9.5px;font-weight:800;letter-spacing:1.2px;color:#a5b4fc;text-transform:uppercase;opacity:.85}
+.tb-r{display:flex;height:100%;align-items:center}
+/* 2.8.1: кнопки вікна — БЕЗ рамки (просто іконки), при наведенні — тонка
+   підсвічена рамочка навколо (мінімалістично, як просив власник) */
+.tb-btn{width:34px;height:29px;margin:0 2px;display:grid;place-items:center;background:transparent;
+  border:1px solid transparent;border-radius:9px;cursor:pointer;color:#a9adbf;
+  transition:background .15s ease,color .15s ease,border-color .15s ease,transform .1s ease;
+  app-region:no-drag;-webkit-app-region:no-drag}
+.tb-btn:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.17);color:#fff}
+.tb-btn:active{transform:scale(.9)}
+.tb-btn.tb-x{margin-right:4px}
+.tb-btn.tb-x:hover{background:rgba(244,63,94,.14);border-color:rgba(244,63,94,.55);color:#fb7185}
+.tb-btn.tb-x:active{transform:scale(.9)}
+/* 2.8.0: кнопка акаунта в титульній панелі — аватар + ім'я + пошта (дрібним шрифтом),
+   ОДНАЙМАЛися на одному рівні з лого/назвою/вкладками/кнопками вікна */
+.tb-acc{display:flex;align-items:center;gap:9px;height:34px;margin-right:8px;padding:0 13px 0 5px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:12px;cursor:pointer;
+  app-region:no-drag;-webkit-app-region:no-drag;font-family:inherit;text-align:left;
+  transition:background .15s ease,border-color .15s ease,transform .1s ease}
+.tb-acc:hover{background:rgba(255,255,255,.1);border-color:rgba(139,92,246,.4)}
+.tb-acc:active{transform:scale(.97)}
+.tb-acc .tb-acc-i{width:24px;height:24px;border-radius:50%;flex:none;display:grid;place-items:center;
+  font-size:11px;font-weight:800;color:#fff;background:linear-gradient(135deg,#8b5cf6,#6366f1);overflow:hidden}
+.tb-acc .tb-acc-i img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.tb-acc .tb-acc-t{min-width:0;display:flex;flex-direction:column;line-height:1.15}
+.tb-acc .tb-acc-t b{font-size:11.5px;font-weight:700;color:#f0f1f7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+.tb-acc .tb-acc-t span{font-size:9.5px;color:#8b8fa3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+/* 2.8.1: СТАРТОВИЙ СТАН: сплеш УЖЕ показує великий логотип по центру екрана —
+   дублювати лого в панелі НЕ треба. У панелі тільки кнопки вікна справа,
+   вкладок і акаунта немає */
+body.booting .tb-seg,body.booting .tb-acc{opacity:0;visibility:hidden;pointer-events:none}
+body.booting .tb-l{display:none}
+body.booting #tbar{justify-content:flex-end}   /* кнопки вікна лишаються справа */
+.tb-seg,.tb-acc{transition:opacity .3s ease,visibility .3s ease}
+/* 2.8.8: ФІКС «вкладки ще висять після виходу» — transition на visibility
+   малював вкладки ще ~0.3 с після кліку «Вийти». На гейті перемикання
+   миттєве, без плавного зникнення */
+body.gate-on .tb-seg,body.gate-on .tb-acc{transition:none;opacity:0;visibility:hidden;pointer-events:none}
+/* 2.8.8: ФІКС «вкладки ще висять після виходу» — вище.
+   3.5.19: на екрані входу — ТІЛЬКИ «Вітаємо у FluxHelper» (просив власник):
+   лого і назву зліва більше НЕ показуємо — ні на гейті, ні під час
+   сплешу перед гейтом. Сплеш має власний великий логотип по центру. */
+body.booting.gate-on .tb-l{display:none}
+body.booting.gate-on #tbar{justify-content:flex-end}
+body.booting.gate-on .tb-seg,body.booting.gate-on .tb-acc{opacity:0;visibility:hidden;pointer-events:none}
+/* на ПК титульна панель — ЗАВЖДИ найвища: згорнути/закрити/лого/назва видно
+   навіть поверх екранів оновлення і «немає з'єднання» (модалка нижче панелі).
+   2.8.1: z 400 — запас понад будь-які оверлеї (гейт 230, модалки 118/120) */
+body.upd-lock #tbar,body.net-lock #tbar{z-index:400;background:transparent}
+/* 3.4.14: на екрані оновлення ховається І кнопка акаунта (скарга власника:
+   «кнопки вкладок пропадають, а кнопка профіля — нізділа не пропадає»).
+   Тепер на екрані оновлення лишається тільки лого + Згорнути/Закрити. */
+body.upd-lock .tb-seg,body.upd-lock #tbAcc{visibility:hidden}
+body.upd-lock .tb-ver,body.net-lock .tb-ver{visibility:hidden}
+/* 3.4.9: екрани оновлення/мережі покривають УВЕСЬ вікно (top:0) — раніше
+   верхня смуга (50 px під тайтлбаром) мала ІНШИЙ фон, ніж решта екрана
+   (там просвічував градієнт сторінки). Тепер фон суцільний однаковий. */
+body.upd-lock #upd,body.upd-lock #neterr{top:0}
+body.net-lock #upd,body.net-lock #neterr{top:0}
+
+/* перемикач вкладок у ЦЕНТРІ титульної панелі: Розклад | Налаштування.
+   Кожна кнопка з іконкою (календар / шестерня). Окрема кнопка
+   «Налаштування» біля «Згорнути» більше не потрібна */
+.tb-seg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;gap:3px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:3px;
+  box-shadow:0 6px 18px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.06);
+  app-region:no-drag;-webkit-app-region:no-drag}
+.tb-seg button{display:inline-flex;align-items:center;gap:7px;border:0;background:transparent;color:#9aa0b4;
+  font-family:inherit;font-size:11.5px;font-weight:800;padding:5px 17px;border-radius:8px;cursor:pointer;
+  transition:all .15s ease;letter-spacing:.2px;white-space:nowrap}
+.tb-seg button svg{flex:none;opacity:.85;transition:opacity .15s ease,transform .2s ease}
+.tb-seg button:hover{color:#e0e2f0;background:rgba(255,255,255,.06)}
+.tb-seg button:hover svg{opacity:1;transform:rotate(-6deg) scale(1.08)}
+.tb-seg button.on{background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff;box-shadow:0 4px 14px rgba(99,102,241,.4)}
+.tb-seg button.on svg{opacity:1}
+.tb-seg button:active{transform:scale(.96)}
+
+/* ---------- головний екран ---------- */
+.view{flex:1;min-height:0;display:flex;flex-direction:column;padding:16px 20px 14px;position:relative;z-index:1}
+.view:not(.hidden){animation:viewIn .32s ease both}
+@keyframes viewIn{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:11px;gap:10px}
+.hd-row{display:flex;align-items:center;gap:10px;min-width:0}
+.hd-ic{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;color:#fff;flex:none;
+  background:linear-gradient(135deg,#8b5cf6,#6366f1);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.16),0 6px 16px rgba(99,102,241,.35)}
+h2{font-size:21px;font-weight:800;letter-spacing:.3px}
+.chip{font-size:11.5px;color:#c7cbe0;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  padding:6px 12px;border-radius:999px;white-space:nowrap;display:inline-flex;align-items:center;gap:7px}
+.chip svg{opacity:.75;flex:none}
+
+nav{display:flex;gap:8px;margin-bottom:11px}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:7px 4px;border-radius:12px;
+  cursor:pointer;user-select:none;-webkit-user-select:none;position:relative;
+  background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);transition:all .18s ease}
+.tab .d{font-size:13px;font-weight:700}
+.tab .dt{font-size:10px;color:#8b8fa3}
+.tab:hover{transform:translateY(-1px);border-color:rgba(139,92,246,.35);background:rgba(255,255,255,.05)}
+.tab:active{transform:scale(.97)}
+.tab.on{background:linear-gradient(135deg,#8b5cf6,#6366f1,#8b5cf6);background-size:220% 100%;border-color:transparent;
+  box-shadow:0 8px 22px rgba(99,102,241,.30);animation:tabg 3.4s ease infinite}
+@keyframes tabg{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.tab.on .dt{color:rgba(255,255,255,.85)}
+.tab .tdot{position:absolute;top:6px;right:8px;width:6px;height:6px;border-radius:50%;background:#818cf8;box-shadow:0 0 8px #818cf8;display:none}
+.tab.td .tdot{display:block}
+
+main{flex:1;min-height:0;overflow-y:auto;padding-right:2px}
+/* 3.5.21: смуг скролу не видно — коліщатко працює */
+main::-webkit-scrollbar{width:0;height:0;display:none}
+
+.empty{display:flex;flex-direction:column;align-items:center;gap:10px;padding:60px 0;color:#8b8fa3;font-size:13px}
+.empty svg{opacity:.5}
+
+.card{position:relative;display:grid;grid-template-columns:46px minmax(0,1fr) auto;gap:13px;align-items:center;height:108px;
+  padding:13px 15px;border-radius:18px;margin-bottom:10px;cursor:pointer;overflow:hidden;
+  /* 3.5.23 (власник: «сделай, чтобы все рамки были темнее» + «все рамки
+     одного размера»): ОДНАКОВА темніша рамка в усіх карток і ОДНАКОВА
+     висота (min-height 76px — вміщується і дворядкова назва, нічого
+     не налазить одне на одного); анімацію появи знято, тож жодна картка
+     більше не може бути «світлішою» за іншу */
+  background:rgba(255,255,255,.032);border:1px solid rgba(255,255,255,.11);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.025),0 2px 10px rgba(0,0,0,.18);
+  transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
+/* 3.5.22: анімація появи лише з класом .pop (знімається після завершення —
+  страховка від «завислої» проміжної прозорості карток у Safari) */
+.card:hover{transform:translateY(-2px);border-color:rgba(139,92,246,.28);box-shadow:0 10px 34px -18px rgba(99,102,241,.5)}
+.card:hover .ic{transform:scale(1.07) rotate(-2deg)}
+main.still .card{animation:none!important}
+.ic{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;color:#fff;flex:none;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),0 4px 12px rgba(0,0,0,.3);transition:transform .25s ease}
+.ic svg{display:block}
+.ic.pic{padding:0;overflow:hidden}
+.ic.pic img{width:100%;height:100%;object-fit:cover;display:block}
+.mid{min-width:0}
+/* 3.4.7: назва уроку НІКОЛИ не переноситься на другий рядок — довга назва
+  («Українська культура») лишається одним акуратним рядком по центру картки;
+  чіпи ЗАРАЗ/ДАЛІ не обрізаються (flex:none), обрізається лише сама назва */
+.card h3{display:flex;align-items:center;min-width:0;font-size:15px;font-weight:700;line-height:1.25;color:#f4f4f8}
+.card h3 .ln{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.now-chip,.next-chip{flex:none}
+/* 3.5.14: КАРТКА УРОКУ — СТАРИЙ ДИЗАЙН 3.5.0 (просив власник: «верни
+   старый дизайн… иконка, название урока; второй рядок — время и имя
+   учителя; кнопка по центру между двумя рядками»). Сітка: іконка |
+   контент (назва над мета) | кнопка; кнопка вертикально по центру. */
+.meta{display:flex;align-items:center;gap:11px;margin-top:5px;flex-wrap:wrap;max-height:40px;overflow:hidden}
+.tc{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#9aa0b4;font-weight:600;white-space:nowrap;max-width:100%;min-width:0}
+/* 3.5.23: довге ім'я вчителя акуратно обрізається крапками */
+.tc span{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.tc svg{opacity:.75;flex:none}
+.card,.card *{user-select:none;-webkit-user-select:none;cursor:pointer}
+
+.b-join{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:#fff;
+  border:0;border-radius:13px;padding:10px 16px;cursor:pointer;white-space:nowrap;
+  background:linear-gradient(135deg,#8b5cf6,#6366f1);box-shadow:0 8px 22px rgba(99,102,241,.28);transition:all .16s ease}
+.b-join:hover{transform:translateY(-1px);filter:brightness(1.14);box-shadow:0 10px 26px rgba(99,102,241,.45)}
+.b-join:active{transform:scale(.97)}
+.b-join.starting{opacity:.55;pointer-events:none;filter:saturate(.5)}
+.b-join.starting span::after{content:'…'}
+/* блиск, що пробігає головними кнопками при наведенні */
+.b-join,.b-save,.b-groups,.us-btn,.bn-btn{position:relative;overflow:hidden}
+.b-join::after,.b-save::after,.b-groups::after,.us-btn::after,.bn-btn::after{content:'';position:absolute;top:0;left:-90%;
+  width:55%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.30),transparent);
+  transform:skewX(-18deg);pointer-events:none}
+.b-join:hover::after,.b-save:hover::after,.b-groups:hover::after,.us-btn:hover::after,.bn-btn:hover::after{animation:shine .75s ease}
+@keyframes shine{from{left:-90%}to{left:140%}}
+
+/* поточний (зелений) / наступний (жовтий) урок */
+.now-chip{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:800;letter-spacing:1px;
+  color:#34d399;margin-right:2px;flex:none}
+.now-chip i,.next-chip i{width:6px;height:6px;border-radius:50%;animation:pulse 1.4s infinite}
+.now-chip i{background:#34d399}
+.next-chip{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:800;letter-spacing:1px;
+  color:#fbbf24;margin-right:2px;flex:none}
+.next-chip i{background:#fbbf24}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(.85)}50%{opacity:.45;transform:scale(1.12)}}
+.card.now{border-color:rgba(52,211,153,.5);box-shadow:0 0 0 1px rgba(52,211,153,.2),0 14px 36px rgba(52,211,153,.09)}
+.card.next{border-color:rgba(251,191,36,.5);box-shadow:0 0 0 1px rgba(251,191,36,.18),0 14px 36px rgba(251,191,36,.08)}
+.prog{position:absolute;left:0;right:0;bottom:0;height:3px;border-radius:3px 3px 0 0;
+  background:linear-gradient(90deg,#34d399,#10b981);box-shadow:0 0 14px rgba(52,211,153,.55)}
+.today-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#34d399;margin-left:4px;vertical-align:1px;
+  box-shadow:0 0 8px rgba(52,211,153,.9);animation:pulse 1.4s infinite}
+
+/* ---------- ЕКРАН НАЛАШТУВАНЬ (ПК) ----------
+   Окремий «десктопний» стиль: широкі картки у сітці, сегмент-кнопки
+   груп (перемикання на місці, без вікон), рядки як у Windows 11.
+   Це НЕ той самий дизайн, що на телефоні (там — великий список і
+   шторка знизу). */
+#vSetup{display:block;overflow-y:auto;padding:18px 24px 24px}
+#vSetup::-webkit-scrollbar{width:0;height:0;display:none}
+.sw-duo{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:stretch}
+.sw-duo .sw-card{margin-bottom:10px}
+body.mob .sw-duo{grid-template-columns:1fr}
+.sw-wrap{width:100%;max-width:780px;margin:0 auto}
+.sw-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:16px}
+.sw-title-row{display:flex;align-items:center;gap:10px}
+.sw-title-row h2{font-size:24px}
+.sw-sub{display:block;font-size:12px;color:#8b8fa3;margin-top:3px}
+.sw-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.sw-card{position:relative;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.085);
+  border-radius:18px;padding:15px 17px 14px;overflow:hidden;animation:secIn .4s ease both;
+  transition:border-color .2s ease,box-shadow .2s ease}
+.sw-card:hover{border-color:rgba(139,92,246,.30);box-shadow:0 18px 44px rgba(0,0,0,.35),0 0 34px rgba(99,102,241,.06)}
+.sw-card.sw-wide{grid-column:1 / -1}
+.sw-grid > .sw-card:nth-child(2){animation-delay:.05s}
+.sw-grid > .sw-card:nth-child(3){animation-delay:.1s}
+.sw-card::before{content:'';position:absolute;top:0;left:8%;right:8%;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(139,92,246,.5),rgba(99,102,241,.5),transparent)}
+@keyframes secIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.sw-c-head{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+.sw-c-ic{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;color:#fff;flex:none;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),0 4px 12px rgba(0,0,0,.3)}
+.sw-c-ic.grad{background:linear-gradient(135deg,#8b5cf6,#6366f1)}
+.sw-c-ic.plain{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#a5b4fc}
+.sw-c-tt{flex:1;min-width:0}
+.sw-c-tt b{display:block;font-size:14.5px;font-weight:800;color:#f4f4f8;letter-spacing:.2px}
+.sw-c-tt span{display:block;font-size:11px;color:#8b8fa3;margin-top:1px;line-height:1.4}
+/* сегмент-перемикач групи (1 | 2) — миттєве застосування */
+.seg{display:inline-flex;flex:none;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  border-radius:11px;padding:3px;gap:3px}
+.seg button{border:0;background:transparent;color:#9aa0b4;font-family:inherit;font-size:11.5px;font-weight:800;
+  padding:6px 14px;border-radius:8px;cursor:pointer;transition:all .15s ease;white-space:nowrap}
+.seg button:hover{color:#e0e2f0;background:rgba(255,255,255,.06)}
+.seg button.on{background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff;
+  box-shadow:0 4px 14px rgba(99,102,241,.4)}
+.sw-row{display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:13px;margin-bottom:7px;
+  background:rgba(255,255,255,.028);border:1px solid rgba(255,255,255,.055);transition:all .16s ease}
+.sw-row:last-child{margin-bottom:0}
+.sw-row:hover{border-color:rgba(139,92,246,.3);background:rgba(255,255,255,.045)}
+.sw-row .su-tile{width:34px;height:34px;border-radius:10px}
+.sw-gname{flex:1;min-width:0}
+.sw-gname b{display:block;font-size:12.5px;font-weight:700;color:#f0f1f7}
+.sw-gname span{display:block;font-size:10.5px;color:#8b8fa3;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sum-tch{font-size:11px;color:#9aa0b4;line-height:1.4;margin-top:3px}
+.sum-hint{font-size:11.5px;color:#8b8fa3;line-height:1.55;padding:2px 2px 4px}
+.b-groups{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:12px;
+  font-size:12.5px;font-weight:800;color:#fff;border:0;border-radius:13px;padding:11px;cursor:pointer;
+  background:linear-gradient(135deg,#8b5cf6,#6366f1);box-shadow:0 8px 22px rgba(99,102,241,.32);transition:all .18s ease}
+.b-groups:hover{filter:brightness(1.14);transform:translateY(-1px)}
+.b-groups:active{transform:scale(.98)}
+.setup{width:100%;max-width:600px;background:rgba(255,255,255,.028);border:1px solid rgba(255,255,255,.09);
+  border-radius:22px;padding:16px 18px 15px;box-shadow:0 24px 60px rgba(0,0,0,.45),0 0 44px rgba(99,102,241,.07);
+  animation:pop .35s ease both;margin:auto;position:relative;overflow:hidden}
+.setup::before{content:'';position:absolute;top:0;left:10%;right:10%;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(139,92,246,.8),rgba(99,102,241,.8),transparent)}
+.su-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.su-gear{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,#8b5cf6,#6366f1);
+  display:grid;place-items:center;color:#fff;flex:none;box-shadow:0 8px 24px rgba(99,102,241,.35)}
+.su-head h2{font-size:18px}
+.su-head .su-sub{font-size:11px;color:#8b8fa3;display:block;margin-top:1px}
+.su-back{display:inline-flex;align-items:center;gap:7px;padding:9px 15px 9px 12px;border-radius:12px;flex:none;
+  border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#e0e2f0;font-size:12.5px;font-weight:800;
+  cursor:pointer;transition:all .18s ease}
+.su-back:hover{background:linear-gradient(135deg,rgba(139,92,246,.38),rgba(99,102,241,.26));border-color:rgba(129,140,248,.55);
+  color:#fff;transform:translateX(-2px);box-shadow:0 6px 18px rgba(99,102,241,.25)}
+.su-back:active{transform:scale(.96)}
+.su-back svg{flex:none}
+/* рядки-налаштування (перемикачі) */
+.su-item{display:flex;gap:12px;align-items:center;padding:10px 11px;margin-bottom:8px;border-radius:15px;
+  background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06);transition:all .18s ease}
+.su-item:last-child{margin-bottom:0}
+.su-item:hover{border-color:rgba(139,92,246,.35);background:rgba(255,255,255,.055);transform:translateX(3px)}
+.su-tile{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:#fff;flex:none;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),0 4px 12px rgba(0,0,0,.3);transition:transform .22s ease}
+.su-item:hover .su-tile{transform:scale(1.08) rotate(-3deg)}
+.su-tile svg{display:block}
+.su-body{flex:1;min-width:0}
+.su-name{font-weight:700;font-size:12.5px;margin-bottom:6px}
+/* опції вибору групи (майстер груп): два стовпці «група 1 / група 2» */
+.su-opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.su-opt{position:relative;text-align:left;cursor:pointer;border-radius:13px;padding:8px 30px 8px 30px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:#c7cbe0;transition:all .16s ease}
+.su-opt b{display:block;font-size:11.5px;color:#fff;font-weight:700}
+.su-opt span{font-size:10px;color:#8b8fa3;line-height:1.35;display:block;margin-top:2px}
+.su-opt:hover{border-color:rgba(139,92,246,.45);background:rgba(255,255,255,.055);transform:translateY(-1px)}
+.su-opt.on{background:linear-gradient(135deg,rgba(139,92,246,.32),rgba(99,102,241,.22));border-color:#818cf8;
+  box-shadow:0 8px 22px rgba(99,102,241,.28)}
+.su-opt.on span{color:#dfe3ff}
+.su-opt::before{content:'';position:absolute;left:11px;top:14px;width:9px;height:9px;border-radius:50%;
+  border:2px solid rgba(255,255,255,.3);transition:all .15s ease}
+.su-opt.on::before{border-color:#c7d2fe;background:#818cf8;box-shadow:0 0 10px rgba(129,140,248,.9)}
+.su-opt .ck{position:absolute;right:9px;top:10px;color:#c7d2fe;opacity:0;transform:scale(.5);transition:all .18s ease}
+.su-opt.on .ck{opacity:1;transform:scale(1)}
+.s-prog{font-size:10px;font-weight:800;letter-spacing:.6px;color:#a5b4fc;background:rgba(99,102,241,.12);
+  border:1px solid rgba(99,102,241,.28);padding:3px 11px;border-radius:999px}
+.sw-tog-row{display:flex;align-items:center;gap:12px;padding:2px 0}
+.sw-tog-row.c-row{margin-top:12px;padding:11px 12px;border-radius:13px;background:rgba(255,255,255,.028);
+  border:1px solid rgba(255,255,255,.055);transition:border-color .16s ease}
+.sw-tog-row.c-row:hover{border-color:rgba(139,92,246,.3)}
+.su-ic2{width:36px;height:36px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+  display:grid;place-items:center;color:#a5b4fc;flex:none}
+.su-body b{display:block;font-size:12.5px;font-weight:700;color:#f0f1f7}
+.su-body > span{font-size:10.5px;color:#8b8fa3;display:block;margin-top:2px;line-height:1.4}
+/* 2.8.4: СТАРЕ ВИЗНАЧЕННЯ .sw ВИДАЛЕНО — конфліктувало з новим (нижче):
+   input:checked давав РАЗОМ left:22px (звідси) і translateX(20px) (звідти),
+   через що кружок вилазив за доріжку. Єдине канонічне .sw — у блоці профілю. */
+/* слайдер хвилин до уроку (1–15) */
+.nslider{margin:11px 0 2px;padding:13px 15px 11px;border-radius:15px;background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.07)}
+.ns-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:11px}
+.ns-lbl{font-size:11px;color:#8b8fa3;font-weight:700;letter-spacing:.3px}
+.ns-val{font-size:14px;font-weight:800;background:linear-gradient(90deg,#a78bfa,#818cf8);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+input[type=range]#nMin{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:99px;outline:none;cursor:pointer;
+  background:linear-gradient(90deg,#8b5cf6,#6366f1 var(--p,28.6%),rgba(255,255,255,.12) var(--p,28.6%))}
+input[type=range]#nMin::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#fff;
+  border:3px solid #818cf8;box-shadow:0 0 0 4px rgba(129,140,248,.20),0 4px 14px rgba(99,102,241,.45);
+  cursor:pointer;transition:transform .15s ease,box-shadow .2s ease}
+input[type=range]#nMin::-webkit-slider-thumb:hover{transform:scale(1.14)}
+input[type=range]#nMin::-webkit-slider-thumb:active{transform:scale(1.26);box-shadow:0 0 0 7px rgba(129,140,248,.24),0 4px 18px rgba(99,102,241,.6)}
+input[type=range]#nMin::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#fff;border:3px solid #818cf8;cursor:pointer}
+.ns-scale{display:flex;justify-content:space-between;margin-top:8px;font-size:9.5px;color:#6b6f85;font-weight:700;letter-spacing:.4px}
+.su-perm{margin:10px 0 0;padding:8px 14px;font-size:11.5px;font-weight:700;color:#fde68a;background:rgba(245,158,11,.12);
+  border:1px solid rgba(245,158,11,.4);border-radius:12px;cursor:pointer;width:100%;text-align:left}
+.b-mini{font-size:11px;font-weight:700;color:#c7d2fe;background:rgba(99,102,241,.14);border:1px solid rgba(99,102,241,.35);
+  padding:7px 13px;border-radius:10px;cursor:pointer;transition:all .15s ease;display:inline-flex;align-items:center;gap:6px;flex:none}
+.b-mini:hover{background:rgba(99,102,241,.28);color:#fff}
+.b-save{width:100%;margin-top:3px;font-size:13px;font-weight:800;color:#fff;border:0;border-radius:13px;padding:11px;
+  cursor:pointer;background:linear-gradient(135deg,#8b5cf6,#6366f1);box-shadow:0 8px 22px rgba(99,102,241,.32);transition:all .18s ease}
+.b-save:hover:not(:disabled){filter:brightness(1.14);transform:translateY(-1px)}
+.b-save:active:not(:disabled){transform:scale(.98)}
+.b-save:disabled{opacity:.35;cursor:not-allowed;box-shadow:none}
+/* секція режиму розробника */
+.sw-card.dev{border-color:rgba(251,191,36,.35);background:linear-gradient(180deg,rgba(251,191,36,.06),rgba(255,255,255,.02))}
+.sw-card.dev::before{background:linear-gradient(90deg,transparent,rgba(251,191,36,.6),rgba(245,158,11,.5),transparent)}/* діалог підтвердження режиму розробника (по центру {position:fixed;inset:0;z-index:82;display:flex;align-items:center;justify-content:center;padding:20px}
+
+/* ---------- модальне вікно копіювання (по центру екрана) ---------- */
+#mwrap{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:20px}
+/* 2.9.1: .mback БЕЗ backdrop-filter — повноекранний блюр під модалками
+   просідав до 2 fps на слабких телефонах (той самий урок, що і #agate:
+   композитор Chrome/WebView не витягує fullscreen blur). Фон трохи
+   щільніший, щоб затемнення виглядало так само. */
+.mback{position:absolute;inset:0;background:rgba(3,3,7,.78);
+  animation:fdin .18s ease both}
+@keyframes fdin{from{opacity:0}to{opacity:1}}
+.modal{position:relative;width:min(432px,100%);background:rgba(17,17,26,.97);border:1px solid rgba(255,255,255,.1);
+  border-radius:22px;padding:16px;box-shadow:0 30px 90px rgba(0,0,0,.65),0 0 0 1px rgba(99,102,241,.14);
+  animation:mup .24s cubic-bezier(.2,.9,.3,1.15) both}
+@keyframes mup{from{opacity:0;transform:scale(.9) translateY(16px)}to{opacity:1;transform:none}}
+.m-head{display:flex;align-items:center;gap:11px;margin-bottom:13px}
+.m-ic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;color:#fff;flex:none;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.15)}
+.m-ic svg{display:block}
+.m-head .m-tt{min-width:0}
+.m-head b{display:block;font-size:15px;color:#fff;line-height:1.25}
+.m-head span{font-size:11px;color:#8b8fa3;display:block;margin-top:2px}
+.m-x{margin-left:auto;width:32px;height:32px;border-radius:10px;border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.04);color:#c8cad8;cursor:pointer;display:grid;place-items:center;transition:all .15s ease;flex:none}
+.m-x:hover{background:rgba(255,255,255,.1);color:#fff}
+.m-item{display:flex;align-items:center;gap:11px;width:100%;text-align:left;border:1px solid rgba(255,255,255,.09);
+  background:rgba(255,255,255,.035);color:#e8eaf2;border-radius:15px;padding:11px 14px;cursor:pointer;
+  margin-bottom:8px;transition:all .15s ease}
+.m-item:last-child{margin-bottom:0}
+.m-item:hover{background:linear-gradient(135deg,rgba(139,92,246,.32),rgba(99,102,241,.24));
+  border-color:rgba(129,140,248,.5);transform:translateY(-1px)}
+.m-item svg{flex:none;opacity:.8}
+.m-item .m-l{min-width:0}
+.m-item .m-lbl{font-weight:800;font-size:12.5px;color:#fff;display:block}
+.m-item .m-t{font-size:11px;color:#9aa0b4;display:block;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m-item small{margin-left:auto;font-size:9.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;
+  color:#a5b4fc;display:inline-flex;align-items:center;gap:5px;flex:none}
+
+/* ---------- модальне вікно налаштування груп ---------- */
+#gwrap{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:20px}
+.gmodal{width:min(524px,100%)}
+.g-rows{max-height:min(56vh,470px);overflow-y:auto;margin:0 -3px;padding:0 3px}
+.g-rows::-webkit-scrollbar{width:0;height:0;display:none}
+.g-foot{display:flex;align-items:center;gap:9px;margin-top:13px}
+
+/* 3.5.1: «ЩО НОВОГО» — віконце змін після оновлення. Пункти у гарних
+   рамочках із кольоровим маркером: + додавили, − прибрали, / переділали,
+   ✦ виправили. Показ один раз на версію (fh_wn_seen у localStorage). */
+#wn{position:fixed;inset:0;z-index:84;display:flex;align-items:center;justify-content:center;padding:20px}
+#wn .modal{width:min(412px,100%);border-radius:22px;border-bottom:1px solid rgba(255,255,255,.1);
+  padding-bottom:16px;animation:mup .24s cubic-bezier(.2,.9,.3,1.15) both}
+.wn-ic{background:linear-gradient(135deg,#8b5cf6,#6366f1)}
+.wn-ver{margin-left:auto;flex:none;padding:5px 10px;border-radius:999px;font-size:11px;font-weight:800;
+  color:#e9d5ff;background:rgba(139,92,246,.16);border:1px solid rgba(139,92,246,.35);letter-spacing:.4px}
+.wn-list{display:flex;flex-direction:column;gap:8px;margin:2px 0 14px;max-height:min(46vh,380px);
+  overflow-y:auto;-webkit-overflow-scrolling:touch;padding:2px}
+.wn-list::-webkit-scrollbar{width:0;height:0;display:none}
+.wn-row{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:14px;
+  border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.035)}
+.wn-mark{flex:none;width:26px;height:26px;border-radius:9px;display:grid;place-items:center;
+  font-size:15px;font-weight:800;color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+.wn-add .wn-mark{background:linear-gradient(135deg,#22c55e,#15803d)}
+.wn-rem .wn-mark{background:linear-gradient(135deg,#f87171,#dc2626)}
+.wn-chg .wn-mark{background:linear-gradient(135deg,#60a5fa,#4f46e5);font-size:14px}
+.wn-fix .wn-mark{background:linear-gradient(135deg,#fbbf24,#d97706);font-size:13px}
+.wn-row>i{font-style:normal;font-size:13px;line-height:1.5;color:#e7e7f2;padding-top:3.5px;min-width:0;word-break:break-word}
+.wn-ok{width:100%}
+/* підтвердження заходу на урок */
+#cwrap{position:fixed;inset:0;z-index:82;display:flex;align-items:center;justify-content:center;padding:20px}
+.cmodal{width:min(412px,100%)}
+.c-info{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:14px;
+  background:rgba(139,92,246,.09);border:1px solid rgba(139,92,246,.28)}
+.c-info .ci-tile{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;color:#fff;flex:none;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+.c-info .ci-t{min-width:0}
+.c-info .ci-t b{display:block;font-size:13.5px;color:#f0f1f7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c-info .ci-t span{display:block;font-size:11px;color:#9aa0b4;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmodal .b-save{flex:1;padding:11px 16px}
+
+/* ---------- банери на головному екрані (оновлення / сповіщення) ---------- */
+.ban{display:flex;align-items:center;gap:11px;margin:0 0 11px;padding:11px 13px;border-radius:16px;
+  background:linear-gradient(135deg,rgba(139,92,246,.17),rgba(99,102,241,.10));
+  border:1px solid rgba(139,92,246,.42);box-shadow:0 10px 30px rgba(99,102,241,.15)}
+.bn-ic{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,#8b5cf6,#6366f1);
+  display:grid;place-items:center;color:#fff;flex:none;box-shadow:0 6px 16px rgba(99,102,241,.35)}
+.bn-t{flex:1;min-width:0}
+.bn-t b{display:block;font-size:13px;color:#fff}
+.bn-t span{display:block;font-size:11px;color:#c7cbe0;margin-top:2px;line-height:1.35}
+.bn-btn{font-size:11.5px;font-weight:800;color:#fff;border:0;border-radius:11px;padding:9px 14px;cursor:pointer;
+  background:linear-gradient(135deg,#8b5cf6,#6366f1);box-shadow:0 6px 18px rgba(99,102,241,.35);flex:none;
+  white-space:nowrap;transition:all .15s ease}
+.bn-btn:hover{filter:brightness(1.14);transform:translateY(-1px)}
+.bn-x{width:30px;height:30px;border-radius:9px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);
+  color:#c8cad8;cursor:pointer;display:grid;place-items:center;flex:none;transition:all .15s ease}
+.bn-x:hover{background:rgba(255,255,255,.1);color:#fff}
+
+/* ---------- тост ---------- */
+/* 2.8.6: тост адаптується до теми через змінні --toast-* (раніше був
+   жорстко зашитий зелений на чорному в УСІХ темах). Стандартна —
+   фіолетова обводка + темне тло; світла — біле тло + фіолетовий текст;
+   Liquid Glass — напівпрозоре скло з blur; кольорові — акцент теми. */
+:root{--toast-bg:rgba(24,21,42,.97);--toast-bd:rgba(139,92,246,.55);--toast-tx:#ede9fe;--toast-sh:rgba(0,0,0,.5)}
+body[data-theme="light"]{--toast-bg:rgba(255,255,255,.97);--toast-bd:rgba(124,58,237,.45);--toast-tx:#5b21b6;--toast-sh:rgba(28,33,74,.20)}
+/* 3.5.17: світлий тост — біла пілюля з фіолетовим обідком */
+body[data-theme="light"] #toast{color:#5b21b6;border-color:transparent;
+  background:linear-gradient(135deg,rgba(255,255,255,.98),rgba(250,248,255,.96)) padding-box,
+             linear-gradient(135deg,rgba(124,58,237,.55),rgba(99,102,241,.35),rgba(167,139,250,.45)) border-box;
+  box-shadow:0 16px 40px rgba(28,33,74,.20),0 4px 18px rgba(124,58,237,.16),inset 0 1px 0 rgba(255,255,255,.9)}
+body[data-theme="light"] #toast svg{color:#7c3aed}
+body[data-theme="glass"]{--toast-bg:rgba(30,26,58,.5);--toast-bd:rgba(167,139,250,.45);--toast-tx:#ede9fe;--toast-sh:rgba(0,0,0,.45)}
+/* 3.5.15: тости ВГОРІ — вилітають з-під шапки (єдиний стиль з телефоном і сайтом) */
+/* 3.5.17: ТОСТИ ПОВНІСТЮ ПЕРЕРОБЛЕНО + ПЕРЕНЕСЕНО ВНИЗ (просив власник:
+   «всплывающие уведомления вверху были только на телефонах, для версии
+   для компьютера — внизу»). Скляна пілюля з фіолетовим градієнтним
+   обідком, акцентна іконка, пружина з перельотом, блиск по пілюлі. */
+#toast{position:fixed;left:50%;top:auto;bottom:24px;
+  transform:translateX(-50%) translateY(30px) scale(.9);z-index:95;
+  display:inline-flex;align-items:center;gap:9px;max-width:82vw;text-align:center;overflow:hidden;
+  padding:11px 20px 11px 16px;border-radius:999px;font-size:12.5px;font-weight:700;letter-spacing:.2px;color:var(--toast-tx,#f2f3fa);
+  border:1px solid transparent;
+  background:linear-gradient(135deg,var(--toast-bg,rgba(32,26,66,.92)),var(--toast-bg,rgba(32,26,66,.92))) padding-box,
+             linear-gradient(135deg,rgba(167,139,250,.65),rgba(56,189,248,.30),rgba(236,72,153,.28)) border-box;
+  -webkit-backdrop-filter:blur(18px) saturate(165%);backdrop-filter:blur(18px) saturate(165%);
+  box-shadow:0 18px 44px var(--toast-sh,rgba(0,0,0,.5)),0 4px 22px rgba(124,58,237,.30),inset 0 1px 0 rgba(255,255,255,.14);
+  opacity:0;pointer-events:none;
+  transition:transform .5s cubic-bezier(.18,1.5,.4,1),opacity .3s ease,background .3s ease,color .3s ease,box-shadow .3s ease}
+body[data-theme="glass"] #toast{-webkit-backdrop-filter:blur(22px) saturate(175%);backdrop-filter:blur(22px) saturate(175%)}
+#toast svg{flex:none;opacity:.95;color:#c4b5fd}
+#toast::after{content:'';position:absolute;top:-8px;left:-70%;width:44%;height:calc(100% + 16px);
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.17),transparent);transform:skewX(-18deg)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+#toast.show::after{animation:fhToastShine .85s ease .1s 1}
+@keyframes fhToastShine{to{left:135%}}
+
+/* ---------- екран завантаження (2.8.8: повний редизайн) ----------
+   Фон = фіолетовий градієнт, як в основному меню. Вгорі — міні-титулбар
+   (маленька іконка + назва зліва, «Згорнути»/«Закрити» справа — працюють
+   і під час завантаження). По центру — велика іконка, назва, смуга, %. */
+#boot{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;transition:opacity .5s ease;
+  background:
+    radial-gradient(620px 420px at 50% -6%, rgba(124,58,237,.22), transparent 62%),
+    radial-gradient(700px 500px at 88% 118%, rgba(79,70,229,.16), transparent 66%),
+    linear-gradient(180deg,#0b0817 0%,#050508 72%)}
+#boot.off{opacity:0;pointer-events:none}
+/* міні-титулбар сплеша — такий самий, як у головній програмі */
+.bt-tb{height:50px;flex:none;display:flex;align-items:center;justify-content:space-between;
+  padding-left:14px;padding-right:7px;user-select:none;-webkit-user-select:none}
+.bt-tb-l{display:flex;align-items:center;gap:10px}
+.bt-tb-l img{display:block;border-radius:8px;box-shadow:0 4px 14px rgba(99,102,241,.45)}
+.bt-tb-l span{font-size:14.5px;font-weight:700;letter-spacing:.3px;color:#fff}
+.bt-tb-r{display:flex;align-items:center}
+.bt-wbtn{width:34px;height:29px;margin:0 2px;display:grid;place-items:center;background:transparent;
+  border:1px solid transparent;border-radius:9px;cursor:pointer;color:#a9adbf;padding:0;font-family:inherit;
+  transition:background .15s ease,color .15s ease,border-color .15s ease,transform .1s ease}
+.bt-wbtn:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.17);color:#fff}
+.bt-wbtn:active{transform:scale(.9)}
+.bt-wbtn.bt-x{margin-right:4px}
+.bt-wbtn.bt-x:hover{background:rgba(244,63,94,.14);border-color:rgba(244,63,94,.55);color:#fb7185}
+/* центральний блок: іконка + назва + смуга + відсотки */
+.bt-mid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:15px}
+/* ФІКС «лого з'являється із затримкою»: поки PNG не декодовано — центральний
+   блок приховано (фон і титулбар видно, під ними — такий самий GDI-сплеш).
+   Щойно іконка готова — іконка/назва/смуга з'являються ОДНОЧАСНО */
+#boot.pre .bt-mark,#boot.pre .bt-name,#boot.pre .bt-bar,#boot.pre .bt-pct{opacity:0}
+#boot .bt-mark,#boot .bt-name,#boot .bt-bar,#boot .bt-pct{transition:opacity .15s ease}
+/* 2.8.8: ВАЖЛИВИЙ ФІКС «іконки немає, з'являється через пару секунд»:
+   filter:drop-shadow() на іконці rasterизувався окремим проходом композитора —
+   на слабких GPU текст/смуга малювались одразу, а іконка з фільтром «доїжджала»
+   пізніше. Тінь прибрано (радіус і так скруглений) — іконка малюється
+   РАЗОМ із першим кадром */
+.bt-mark img{display:block;border-radius:20px}
+.bt-name{font-size:20px;font-weight:800;color:#fff;letter-spacing:.4px}
+.bt-bar{width:198px;height:5px;border-radius:99px;background:rgba(255,255,255,.09);overflow:hidden;margin-top:4px}
+.bt-bar i{display:block;height:100%;width:0%;border-radius:99px;
+  background:linear-gradient(90deg,#8b5cf6,#6366f1);box-shadow:0 0 12px rgba(129,140,248,.85)}
+.bt-pct{font-size:10.5px;color:#8b8fa3;font-weight:800;letter-spacing:1.5px}
+/* --- 2.8.8: сплеш під тему аккаунта (хост підтягує тему з хмари ще ДО
+   показу вікна і підставляє data-theme на <body>) --- */
+body[data-theme="light"] #boot{
+  background:
+    radial-gradient(620px 420px at 50% -6%, rgba(139,92,246,.15), transparent 62%),
+    radial-gradient(700px 500px at 88% 118%, rgba(99,102,241,.11), transparent 66%),
+    linear-gradient(180deg,#f5f4fc 0%,#eef0f8 72%)}
+body[data-theme="light"] #boot .bt-name{color:#1c1f33}
+body[data-theme="light"] #boot .bt-tb-l span{color:#23263a}
+body[data-theme="light"] .bt-wbtn{color:#3d4257}
+body[data-theme="light"] .bt-wbtn:hover{background:rgba(20,24,46,.07);border-color:rgba(20,24,46,.16);color:#15172a}
+body[data-theme="light"] .bt-wbtn.bt-x:hover{background:rgba(244,63,94,.1);border-color:rgba(244,63,94,.45);color:#e11d48}
+body[data-theme="light"] #boot .bt-bar{background:rgba(20,24,46,.1)}
+body[data-theme="light"] #boot .bt-pct{color:#6a7089}
+body[data-theme="glass"] #boot{
+  background:
+    radial-gradient(760px 540px at 6% -10%, rgba(168,85,247,.5), transparent 62%),
+    radial-gradient(820px 580px at 96% 4%, rgba(56,189,248,.32), transparent 58%),
+    radial-gradient(880px 620px at 50% 118%, rgba(236,72,153,.3), transparent 62%),
+    linear-gradient(160deg,#0e0a26 0%,#141033 45%,#1a0f2e 100%)}
+body[data-theme="glass"] #boot .bt-name{color:#f2f3fa}
+body[data-theme="glass"] #boot .bt-tb-l span{color:#f2f3fa}
+body[data-theme="glass"] .bt-wbtn{color:#cfcbe8}
+body[data-theme="glass"] .bt-wbtn:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25);color:#fff}
+/* 2.8.1: АНІМАЦІЮ #app ПРИБРАНО (apin). Вона тримала #app у власному
+   stacking-context (transform/opacity<1), і поки вона триває — а в WebView2
+   вона може ЗАСТРЯГАТИ назавжди, доки вікно під GDI-сплешем — гейт входу
+   (z 230, сусід на рівні body) малювався ПОВЕРХ титулбара: кнопки вікна
+   зникали, вікно не перетягувалось, кліки по кнопках не працювали. */
+.fld{margin-top:9px}
+.fld label{display:block;font-size:11px;color:#8b8fa3;font-weight:700;margin:0 0 4px 2px}
+.fld input{width:100%;box-sizing:border-box;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  border-radius:10px;padding:9px 11px;color:#fff;font:inherit;font-size:12.5px;outline:none}
+.fld input:focus{border-color:rgba(139,92,246,.55)}
+.fld2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.icon-grid{display:flex;gap:6px;flex-wrap:wrap}
+.icon-grid button{width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.05);color:#c9cbe0;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.icon-grid button.on{background:linear-gradient(135deg,#8b5cf6,#6366f1);border-color:transparent;color:#fff}
+.b-save{padding:12px 22px;border:none;border-radius:12px;font-size:13px;font-weight:800;color:#fff;cursor:pointer;
+  font-family:inherit;background:linear-gradient(135deg,#8b5cf6,#6366f1);box-shadow:0 8px 20px rgba(99,102,241,.3)}
+.b-save:disabled{opacity:.5;cursor:default}
+.b-mini{padding:12px 18px;border-radius:12px;border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.05);
+  color:#c9cbe0;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.b-mini.danger{border-color:rgba(244,63,94,.35);color:#fda4af;background:rgba(244,63,94,.07)}
+.b-mini:hover{background:rgba(255,255,255,.09)}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* ---------- блокуючі екрани: оновлення / без інтернету ---------- */
+#neterr,#upd{position:fixed;inset:0;z-index:118;background:rgba(3,3,7,.92);
+  display:flex;align-items:center;justify-content:center;padding:20px}
+#upd{z-index:120;padding:0}
+#neterr.hidden,#upd.hidden{display:none}
+.us-card{width:500px;max-width:min(94vw,560px);max-height:calc(92vh - 48px);overflow:auto;background:rgba(17,17,28,.97);
+  border:1px solid rgba(139,92,246,.28);border-radius:22px;padding:26px 28px 22px;text-align:center;
+  box-shadow:0 30px 80px rgba(0,0,0,.6);animation:usin .45s cubic-bezier(.16,1,.3,1) both}
+@keyframes usin{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+.us-logo img{width:74px;height:74px;border-radius:17px;display:block;margin:0 auto 10px;
+  filter:drop-shadow(0 10px 26px rgba(99,102,241,.45))}
+/* 3.3.2: на гейті логотип — ГОЛОВНИЙ елемент: великий, по центру, з тінню
+   (раніше тут було 56px — тепер гейт без картки, іконка 84px) */
+#agate .us-logo{position:relative;z-index:1;animation:agIn .65s cubic-bezier(.16,1,.3,1) both}
+#agate .us-logo img{width:84px;height:84px;border-radius:20px;display:block;margin:0 auto 10px;
+  box-shadow:0 18px 44px rgba(0,0,0,.5),0 0 0 1px rgba(148,163,184,.14) inset}
+#agate .us-chip{padding:3px 10px;margin-bottom:5px;font-size:9.5px}
+#neterr h2,#upd h2{font-size:21px;color:#fff;margin:2px 0 5px;letter-spacing:.2px}
+#upd h2 b{background:linear-gradient(90deg,#a78bfa,#818cf8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.us-chip{display:inline-block;font-size:10px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;
+  color:#c4b5fd;background:rgba(139,92,246,.16);border:1px solid rgba(139,92,246,.35);border-radius:99px;
+  padding:4px 12px;margin-bottom:8px}
+.us-sub{font-size:12.5px;color:#8b8fa3;margin:0 0 14px;line-height:1.5}
+.us-prog{display:none;height:6px;border-radius:99px;background:rgba(255,255,255,.09);overflow:hidden;margin:2px 0 8px}
+.us-prog.on{display:block}
+.us-prog i{display:block;height:100%;width:0%;border-radius:99px;background:linear-gradient(90deg,#8b5cf6,#6366f1);
+  box-shadow:0 0 12px rgba(129,140,248,.85);transition:width .25s ease}
+.us-row{display:flex;justify-content:space-between;gap:10px;font-size:11px;color:#8b8fa3;font-weight:700;margin:0 2px 14px;min-height:14px}
+.us-btn{width:100%;padding:13px;border:none;border-radius:14px;font-size:14px;font-weight:800;color:#fff;cursor:pointer;
+  font-family:inherit;background:linear-gradient(135deg,#8b5cf6,#6366f1);
+  box-shadow:0 10px 26px rgba(99,102,241,.35);transition:transform .15s ease,box-shadow .2s ease,opacity .2s}
+.us-btn:hover{transform:translateY(-1px);box-shadow:0 14px 30px rgba(99,102,241,.45)}
+.us-btn:disabled{opacity:.55;cursor:default;transform:none}
+/* 3.5.5: додаткові кнопки у вікні оновлення (помилка завантаження) */
+.us-btn.alt{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);color:#e8eaf2;box-shadow:none;margin-top:9px}
+.us-btn.alt:hover{transform:none;box-shadow:none;background:rgba(255,255,255,.11)}
+.us-btn.alt2{background:linear-gradient(135deg,#8b5cf6,#6366f1);box-shadow:0 10px 26px rgba(99,102,241,.35);margin-top:9px}
+/* 3.5.15: «Пізніше» — тихий третій варіант (вхід без оновлення) */
+.us-btn.ghost{background:transparent;border:1.5px solid rgba(255,255,255,.16);color:#c8cad8;box-shadow:none;margin-top:9px}
+.us-btn.ghost:hover{border-color:rgba(139,92,246,.5);color:#fff}
+.us-btn + .us-btn{margin-top:9px}
+
+/* ---------- анімації зміни дня (свайп/клік) ---------- */
+/* 3.5.11: анімація появи вкладки — плавний вліт виду при переключенні */
+.view.vin{animation:viewIn .32s cubic-bezier(.2,.9,.3,1) both}
+@keyframes viewIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+#list.slide-l{animation:slideL .28s cubic-bezier(.2,.9,.3,1) both}
+#list.slide-r{animation:slideR .28s cubic-bezier(.2,.9,.3,1) both}
+@keyframes slideL{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes slideR{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:none}}
+.dchg{animation:dchg .32s ease}
+@keyframes dchg{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+
+/* ================================================================
+   ТЕМИ ОФОРМЛЕННЯ (2.1.0): standard · light · glass
+   ================================================================ */
+body[data-theme="light"]{
+  color:#0f172a;
+  background:
+    radial-gradient(920px 580px at 4% -6%, rgba(147,51,234,.22), transparent 64%),
+    radial-gradient(980px 620px at 96% 8%, rgba(99,102,241,.18), transparent 62%),
+    radial-gradient(880px 560px at 50% 108%, rgba(168,85,247,.16), transparent 66%),
+    radial-gradient(600px 400px at 20% 60%, rgba(192,132,252,.12), transparent 58%),
+    linear-gradient(168deg,#fdfdfe 0%,#f6f7fd 42%,#eceffb 100%);
+  background-attachment:fixed;
+}
+/* 3.5.16: БЕЗШОВНИЙ ПЕРЕХІД у світлій темі (просив власник: «вверху очень
+   заметный переход между панелью навигации и основной частью — сделай,
+   чтобы переход был незаметный, и небольшой градиент фиолетовый»).
+   Панель ПРОЗОРА, без межі — фон програми (м'який фіолетовий градієнт)
+   суцільно проходить крізь шапку, як у темній темі. */
+body[data-theme="light"] #tbar{background:transparent;border-bottom:0;backdrop-filter:none;-webkit-backdrop-filter:none}
+body[data-theme="light"] #tbar .tb-name{color:#0f172a;font-weight:800}
+body[data-theme="light"] .tb-btn{color:#334155;background:rgba(255,255,255,.8);border:1.5px solid rgba(139,92,246,.22);box-shadow:0 1px 3px rgba(15,23,42,.04)}
+body[data-theme="light"] .tb-btn:hover{background:#f3e8ff;border-color:rgba(124,58,237,.45);color:#581c87}
+body[data-theme="light"] .tb-seg{background:rgba(255,255,255,.85);border:1.5px solid rgba(139,92,246,.25);box-shadow:0 1px 4px rgba(99,102,241,.06)}
+body[data-theme="light"] .tb-seg button{color:#334155;font-weight:600}
+body[data-theme="light"] .tb-seg button:hover{color:#581c87;background:rgba(139,92,246,.1)}
+body[data-theme="light"] .tb-seg button.on{background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;box-shadow:0 3px 10px rgba(124,58,237,.32)}
+body[data-theme="light"] .card{background:#ffffff;border:1.5px solid rgba(139,92,246,.26);
+  box-shadow:0 4px 18px rgba(99,102,241,.08),0 1px 3px rgba(15,23,42,.04);border-radius:18px}
+body[data-theme="light"] .card:hover{border-color:rgba(124,58,237,.55);box-shadow:0 10px 28px rgba(124,58,237,.18);transform:translateY(-2px)}
+body[data-theme="light"] .card h3{color:#0f172a;font-weight:800}
+body[data-theme="light"] .card .meta{color:#334155;font-weight:600}
+body[data-theme="light"] .card .meta i{color:#059669;font-weight:700}
+body[data-theme="light"] .card .b-join{background:linear-gradient(135deg,rgba(124,58,237,.12),rgba(99,102,241,.12));color:#6d28d9;border:1.5px solid rgba(124,58,237,.35);font-weight:700}
+body[data-theme="light"] .card .b-join:hover{background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border-color:transparent;box-shadow:0 6px 18px rgba(124,58,237,.36)}
+body[data-theme="light"] .card.now{background:linear-gradient(135deg,#faf5ff 0%,#ede9fe 100%);border:2px solid #8b5cf6;box-shadow:0 8px 26px rgba(139,92,246,.26)}
+body[data-theme="light"] .card.next{background:linear-gradient(135deg,#fffbeb 0%,#fef3c7 100%);border:2px solid #f59e0b;box-shadow:0 8px 24px rgba(245,158,11,.2)}
+body[data-theme="light"] .tab{background:rgba(255,255,255,.9);border:1.5px solid rgba(139,92,246,.26);color:#1e1b4b;font-weight:700;box-shadow:0 2px 8px rgba(99,102,241,.07);border-radius:13px;transition:all .18s ease}
+body[data-theme="light"] .tab:hover{background:#f5f3ff;border-color:rgba(124,58,237,.5);color:#6d28d9;transform:translateY(-1px);box-shadow:0 6px 16px rgba(124,58,237,.16)}
+body[data-theme="light"] .tab.on{background:linear-gradient(135deg,#7c3aed 0%,#6366f1 100%);border:1.5px solid transparent;color:#ffffff;box-shadow:0 8px 22px rgba(124,58,237,.38)}
+body[data-theme="light"] .tab .dt,body[data-theme="light"] .tab .d{color:#475569;font-weight:600}
+body[data-theme="light"] .tab.on .dt,body[data-theme="light"] .tab.on .d{color:rgba(255,255,255,.95);font-weight:600}
+body[data-theme="light"] header h2{color:#0f172a;font-weight:800}
+body[data-theme="light"] .chip{background:rgba(139,92,246,.12);color:#6d28d9;border:1.5px solid rgba(139,92,246,.32);font-weight:700}
+body[data-theme="light"] .empty{color:#475569;font-weight:600}body[data-theme="light"] #vSetup{color:#0f172a}
+body[data-theme="light"] .sw-sub,body[data-theme="light"] .sw-c-tt span{color:#475569;font-weight:600}
+body[data-theme="light"] .sw-c-tt b,body[data-theme="light"] .su-body b{color:#0f172a;font-weight:800}
+body[data-theme="light"] .sw-card{background:#ffffff;border:1.5px solid rgba(139,92,246,.26);box-shadow:0 12px 34px rgba(99,102,241,.12);border-radius:20px}
+body[data-theme="light"] .modal{background:#ffffff;border:2px solid rgba(139,92,246,.32);box-shadow:0 24px 70px rgba(76,29,149,.25);border-radius:22px}
+body[data-theme="light"] .m-head b{color:#0f172a;font-weight:800}
+body[data-theme="light"] .m-head span,body[data-theme="light"] .m-item .m-t{color:#475569;font-weight:600}
+body[data-theme="light"] .m-item{background:#f8fafc;border:1.5px solid rgba(139,92,246,.22);color:#0f172a;border-radius:12px}
+body[data-theme="light"] .m-item:hover{background:#f5f3ff;border-color:rgba(124,58,237,.45)}
+body[data-theme="light"] .m-item .m-lbl{color:#0f172a;font-weight:700}
+body[data-theme="light"] .m-item small{color:#6d28d9;font-weight:700}
+body[data-theme="light"] .mback{background:rgba(15,23,42,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+body[data-theme="light"] .sum-hint{color:#475569;font-weight:600}
+body[data-theme="light"] .ms-card{background:#ffffff;border:1.5px solid rgba(139,92,246,.26);box-shadow:0 10px 30px rgba(99,102,241,.1);border-radius:18px}
+body[data-theme="light"] .ms-row{background:#f8fafc;border:1px solid rgba(139,92,246,.18);border-radius:12px;color:#0f172a}
+body[data-theme="light"] .ms-row:hover{background:#f5f3ff;border-color:rgba(124,58,237,.35)}
+body[data-theme="light"] .ms-row b{color:#0f172a;font-weight:700}
+body[data-theme="light"] .ms-body > span{color:#475569;font-weight:600}
+body[data-theme="light"] .sw-row{background:#f8fafc;border:1.5px solid rgba(139,92,246,.2);border-radius:12px}
+body[data-theme="light"] .sw-row:hover{background:#f5f3ff;border-color:rgba(124,58,237,.45)}
+body[data-theme="light"] .sw-gname b{color:#0f172a;font-weight:800}
+body[data-theme="light"] .sw-gname span,body[data-theme="light"] .sum-tch{color:#475569;font-weight:600}
+body[data-theme="light"] .seg button{color:#334155;font-weight:600}
+body[data-theme="light"] .seg button:hover{color:#581c87;background:rgba(139,92,246,.1)}
+body[data-theme="light"] .ms-badge{background:rgba(124,58,237,.12);color:#6d28d9;border:1.5px solid rgba(124,58,237,.32);font-weight:700}
+body[data-theme="light"] .su-opt{background:#f8fafc;border:1.5px solid rgba(139,92,246,.22);color:#1e1b4b;border-radius:12px}
+body[data-theme="light"] .su-opt:hover{border-color:rgba(124,58,237,.45)}
+body[data-theme="light"] .su-opt b{color:#0f172a;font-weight:800}
+body[data-theme="light"] .su-opt.on{background:linear-gradient(135deg,rgba(139,92,246,.18),rgba(99,102,241,.12));border-color:#7c3aed;box-shadow:0 3px 12px rgba(124,58,237,.2)}
+body[data-theme="light"] #neterr,body[data-theme="light"] #upd{background:rgba(248,249,253,.94)}
+body[data-theme="light"] .us-card{background:#ffffff;border:1.5px solid rgba(139,92,246,.32);box-shadow:0 14px 40px rgba(99,102,241,.14);border-radius:20px}
+body[data-theme="light"] #neterr h2,body[data-theme="light"] #upd h2{color:#0f172a;font-weight:800}
+body[data-theme="light"] .us-sub,body[data-theme="light"] #uStat{color:#475569;font-weight:600}
+body[data-theme="light"] .us-chip{color:#6d28d9;background:rgba(124,58,237,.12);border:1.5px solid rgba(124,58,237,.35);font-weight:700}
+body[data-theme="light"] .fld input{background:#ffffff;border:1.5px solid rgba(139,92,246,.32);color:#0f172a;border-radius:12px;font-weight:600;box-shadow:0 1px 3px rgba(99,102,241,.06)}
+body[data-theme="light"] .fld input:focus{border-color:#7c3aed;box-shadow:0 0 0 3px rgba(124,58,237,.22)}
+body[data-theme="light"] .fld label{color:#334155;font-weight:600}
+body[data-theme="light"] .b-mini{background:rgba(124,58,237,.1);border:1.5px solid rgba(124,58,237,.32);color:#6d28d9;font-weight:700}
+body[data-theme="light"] .c-info{background:rgba(124,58,237,.08);border:1.5px solid rgba(124,58,237,.26);border-radius:14px}
+body[data-theme="light"] .c-info .ci-t b{color:#0f172a;font-weight:800}
+body[data-theme="light"] .c-info .ci-t span{color:#334155;font-weight:600}
+body[data-theme="light"] .sw i{background:#e2e8f0;border:1.5px solid rgba(139,92,246,.3);box-shadow:inset 0 1px 3px rgba(15,23,42,.08)}
+body[data-theme="light"] .sw i::after{background:#ffffff;box-shadow:0 2px 6px rgba(15,23,42,.25)}
+body[data-theme="light"] .sw input:checked + i{background:linear-gradient(135deg,#7c3aed,#6366f1);border-color:transparent;box-shadow:0 4px 14px rgba(124,58,237,.4)}
+body[data-theme="light"] .sw input:checked + i::after{background:#fff;box-shadow:0 2px 6px rgba(76,29,149,.35)}
+body[data-theme="light"] .ms-lbl{color:#334155;font-weight:700}
+body[data-theme="light"] .back-btn{background:#ffffff;border:1.5px solid rgba(139,92,246,.26);color:#1e1b4b;font-weight:700;box-shadow:0 2px 8px rgba(99,102,241,.08);border-radius:12px}
+body[data-theme="light"] .back-btn:hover{background:#f5f3ff;border-color:rgba(124,58,237,.5);color:#6d28d9}
+body[data-theme="light"] .acc-hero-card{background:linear-gradient(165deg,rgba(124,58,237,.92),rgba(99,102,241,.8) 52%,rgba(79,70,229,.7));border:1.5px solid rgba(139,92,246,.45);box-shadow:0 12px 34px rgba(99,102,241,.25)}
+body[data-theme="light"] .acc-hero-card::before{background:radial-gradient(closest-side,rgba(255,255,255,.35),transparent)}
+body[data-theme="light"] .acc-id b{color:#fff}
+body[data-theme="light"] .acc-mail{color:rgba(255,255,255,.88)}
+body[data-theme="light"] .ms-row + .ms-row::before{background:transparent}
+body[data-theme="light"] .ms-lbl::after{background:linear-gradient(90deg,rgba(139,92,246,.25),transparent)}
+body[data-theme="light"] .ac-note{color:#475569;font-weight:600}
+body[data-theme="light"] .dv-v{color:#0f172a;font-weight:800}
+body[data-theme="light"] .dv-cur{color:#475569;font-weight:600}
+body[data-theme="light"] .dv-row{border-bottom-color:rgba(139,92,246,.2)}
+body[data-theme="light"] .dv-row span.dv-chip.rel{color:#1d4ed8;background:rgba(29,78,216,.1);border:1px solid rgba(29,78,216,.28);font-weight:700}
+body[data-theme="light"] .dv-row span.dv-chip.bet{color:#b45309;background:rgba(180,83,9,.1);border:1px solid rgba(180,83,9,.28);font-weight:700}
+body[data-theme="light"] .sw-about{background:#f8fafc;border:1.5px solid rgba(139,92,246,.22);border-radius:14px}
+.danger-t{color:#fda4af}
+body[data-theme="light"] .danger-t{color:#dc2626;font-weight:700}
+body[data-theme="light"] .ac-role.r-user{color:#fff;background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.5)}
+body[data-theme="light"] .ac-role.r-admin{color:#fff;background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.5)}
+body[data-theme="light"] .ac-role.r-developer{color:#fde68a;background:rgba(255,255,255,.18);border-color:rgba(253,230,138,.6)}
+body[data-theme="light"] .tb-acc{background:#ffffff;border:1.5px solid rgba(139,92,246,.26);box-shadow:0 2px 8px rgba(99,102,241,.08)}
+body[data-theme="light"] .tb-acc .tb-acc-t b{color:#0f172a;font-weight:800}
+body[data-theme="light"] .tb-acc .tb-acc-t span{color:#475569;font-weight:600}
+body[data-theme="light"] .bn-t span{color:#334155;font-weight:600}
+body[data-theme="light"] .su-perm{color:#92400e;background:rgba(245,158,11,.14);border:1.5px solid rgba(180,83,9,.35);font-weight:700}
+
+/* ---------- LIQUID GLASS — 2.8.5 ОПТИМІЗОВАНО ДЛЯ СЛАБКИХ ПК ----------
+   Чому лагало: backdrop-filter стояв на КОЖНІЙ картці уроку (25 шт.), кожній
+   вкладці дня й дрібних елементах. Композитор перераховує всі блюри на КОЖЕН
+   кадр (скрол, поява, hover, анімація .tab.on tabg 3.4s infinite) — старий
+   iGPU не витягує. За картками уроків лише СТАТИЧНИЙ градієнт, тож блюр там
+   візуально нічого не дає: знімаємо блюр, трохи піднімаємо тінт — вигляд той
+   самий. Блюр лишається ТІЛЬКИ де під ним справжній контент (модалки/тости).
+   Для дуже слабких машин watchdog вмикає body.lite-glass — мінус і ці блюри. */
+body[data-theme="glass"]{
+  color:#f2f3fa;
+  background:
+    radial-gradient(760px 540px at 6% -10%, rgba(168,85,247,.5), transparent 62%),
+    radial-gradient(820px 580px at 96% 4%, rgba(56,189,248,.32), transparent 58%),
+    radial-gradient(880px 620px at 50% 118%, rgba(236,72,153,.3), transparent 62%),
+    linear-gradient(160deg,#0e0a26 0%,#141033 45%,#1a0f2e 100%);
+  background-attachment:fixed;
+}
+body[data-theme="glass"] #tbar{background:transparent;border-bottom:0;backdrop-filter:none;-webkit-backdrop-filter:none}
+body[data-theme="glass"] .tb-seg{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.18)}
+body[data-theme="glass"] .card{background:rgba(255,255,255,.10);
+  border:1px solid rgba(255,255,255,.17);
+  box-shadow:0 10px 34px rgba(10,6,40,.4),inset 0 1px 0 rgba(255,255,255,.22)}
+body[data-theme="glass"] .card.now{background:linear-gradient(135deg,rgba(139,92,246,.34),rgba(99,102,241,.18));
+  border-color:rgba(196,181,253,.5)}
+body[data-theme="glass"] .tab{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.16)}
+body[data-theme="glass"] .tab.on{background:linear-gradient(135deg,rgba(139,92,246,.65),rgba(99,102,241,.6));
+  border-color:rgba(255,255,255,.35);animation:none}   /* tabg 3.4s infinite на склі = 60fps repaint -> вимкнено */
+body[data-theme="glass"] .sw-card{background:rgba(255,255,255,.11);
+  border:1px solid rgba(255,255,255,.2);
+  box-shadow:0 24px 70px rgba(5,3,24,.5),inset 0 1px 0 rgba(255,255,255,.22)}
+body[data-theme="glass"] .modal{background:rgba(24,20,52,.74);backdrop-filter:blur(16px) saturate(1.7);
+  -webkit-backdrop-filter:blur(16px) saturate(1.7);border:1px solid rgba(255,255,255,.22);
+  box-shadow:0 30px 90px rgba(5,3,24,.6),inset 0 1px 0 rgba(255,255,255,.25)}
+body[data-theme="glass"] .mback{background:rgba(10,6,34,.72)}/* 2.9.1: без блюру — лагало на слабких телефонах */body[data-theme="glass"] .su-opt,body[data-theme="glass"] .m-item,body[data-theme="glass"] .ms-row,
+body[data-theme="glass"] .c-info {background:rgba(255,255,255,.11);
+  border:1px solid rgba(255,255,255,.16)}
+body[data-theme="glass"] .su-opt.on{background:linear-gradient(135deg,rgba(139,92,246,.5),rgba(99,102,241,.4));
+  border-color:rgba(196,181,253,.6)}
+body[data-theme="glass"] .m-item:hover{background:linear-gradient(135deg,rgba(139,92,246,.4),rgba(99,102,241,.3))}body[data-theme="glass"] .fld input {background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.2)}
+body[data-theme="glass"] .us-card{background:rgba(26,22,54,.76);backdrop-filter:blur(16px) saturate(1.7);
+  -webkit-backdrop-filter:blur(16px) saturate(1.7);border:1px solid rgba(255,255,255,.22)}
+/* 2.8.6: glass-тост тепер через --toast-* (прозоріше скло + blur) */
+/* --- 2.8.5: lite-glass — на слабких GPU знімає блюр модалок/тостів --- */
+body.lite-glass[data-theme="glass"] .modal,body.lite-glass[data-theme="glass"] .mback,
+body.lite-glass[data-theme="glass"] .us-card{backdrop-filter:none;-webkit-backdrop-filter:none}
+body.lite-glass[data-theme="glass"] .modal,body.lite-glass[data-theme="glass"] .us-card{background:rgba(26,22,54,.97)}
+body.lite-glass[data-theme="glass"] .mback{background:rgba(8,5,26,.75)}
+body.lite-glass .ac-hero-card::before{animation:none!important}
+body.lite-glass .now-chip i,body.lite-glass .next-chip i{animation:none!important}
+
+/* ---------- 2.3.9: сегмент-перемикач «Запуск Zoom» ---------- */
+.seg-z{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:14px;padding:4px;border-radius:14px;
+  background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09)}
+.seg-z-b{display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 8px;border-radius:11px;
+  border:1px solid transparent;background:transparent;color:#9aa0b4;cursor:pointer;font-family:inherit;
+  transition:background .16s ease,color .16s ease,box-shadow .16s ease}
+.seg-z-b svg{flex:none}
+.seg-z-b b{font-size:12.5px;font-weight:800;letter-spacing:.2px}
+.seg-z-b:hover{color:#e8eaf2;background:rgba(255,255,255,.06)}
+.seg-z-b.on{background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff;box-shadow:0 6px 18px rgba(99,102,241,.38)}
+body[data-theme="light"] .seg-z{background:rgba(20,24,46,.05);border-color:rgba(20,24,46,.1)}
+/* 3.5.16: активна кнопка — БІЛИЙ шрифт на фіолетовому (як просив власник) */
+body[data-theme="light"] .seg-z-b{color:#6a7089}
+body[data-theme="light"] .seg-z-b:hover{color:#1c1f33;background:rgba(20,24,46,.06)}
+body[data-theme="light"] .seg-z-b.on{color:#ffffff}
+body[data-theme="light"] .seg-z-b.on:hover{color:#ffffff}
+body[data-theme="glass"] .seg-z{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18)}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .seg-z{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.13)}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .seg-z-b.on{background:linear-gradient(135deg,var(--ac1),var(--ac2));box-shadow:0 6px 18px var(--acShadow)}
+.sw-tog-row.c-row .su-ic2{width:36px;height:36px;border-radius:11px;flex:none;display:grid;place-items:center;
+  background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.16),0 6px 16px rgba(99,102,241,.4)}
+.sw-tog-row.c-row .su-ic2 svg{stroke:#fff}
+
+/* ---------- вибір теми (2.3.9: витягнуті рядки) ---------- */
+.theme-rows{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
+.theme-tile{position:relative;text-align:left;border-radius:14px;padding:9px 10px 8px;cursor:pointer;
+  border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.045);transition:all .16s ease;
+  color:inherit;font-family:inherit}
+.theme-tile .tp{display:block;height:34px;border-radius:9px;margin-bottom:7px;border:1px solid rgba(255,255,255,.14)}
+.theme-tile .tp.std{background:linear-gradient(135deg,#0b0b14,#221a3f)}
+.theme-tile .tp.lit{background:linear-gradient(135deg,#eef0f8,#dfe3f4)}
+.theme-tile .tp.gls{background:linear-gradient(135deg,#2b1a5e,#7c3aed 55%,#38bdf8)}
+.theme-tile b{display:block;font-size:11.5px;color:#e8eaf2;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.theme-tile > span:not(.tp){display:block;font-size:9.5px;color:#8b8fa3;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.theme-tile:hover{transform:translateY(-1px);border-color:rgba(129,140,248,.45)}
+.theme-tile.on{border-color:#818cf8;background:linear-gradient(135deg,rgba(139,92,246,.3),rgba(99,102,241,.18));
+  box-shadow:0 8px 22px rgba(99,102,241,.26)}
+.theme-tile.on b{color:#fff}
+body[data-theme="light"] .theme-tile{background:#ffffff;border-color:rgba(20,24,46,.1);box-shadow:0 1px 3px rgba(20,24,46,.05)}
+body[data-theme="light"] .theme-tile b{color:#1c1f33}
+body[data-theme="light"] .theme-tile > span:not(.tp){color:#6a7089}
+body[data-theme="light"] .theme-tile.on{border-color:#6366f1;background:linear-gradient(135deg,rgba(139,92,246,.15),rgba(99,102,241,.1))}
+body[data-theme="light"] .theme-tile.on b{color:#1c1f33}
+
+/* ---------- 2.3.10: рамка «Про програму» (повернена) ---------- */
+.sw-about{display:flex;align-items:center;gap:12px;margin-top:16px;padding:14px 16px;border-radius:20px;
+  grid-column:1 / -1;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1)}
+.sw-about .lmark img{display:block;border-radius:11px}
+.sw-about .ab-t{flex:1;min-width:0}
+.sw-about .ab-t b{display:block;font-size:14px;color:#e8eaf2;letter-spacing:.3px;font-weight:700}
+.sw-about .ab-t span{display:block;font-size:11px;color:#8b8fa3;margin-top:2px}
+.sw-about .ab-ver{font-size:10px;font-weight:700;letter-spacing:.4px;color:#9aa0b4;flex:none;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:999px;padding:4px 11px}
+body[data-theme="light"] .sw-about{background:#ffffff;border:1px solid rgba(20,24,46,.09)}
+body[data-theme="light"] .sw-about .ab-t b{color:#1c1f33}
+body[data-theme="light"] .sw-about .ab-t span{color:#6a7089}
+body[data-theme="glass"] .sw-about{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18)}/* ================================================================
+   2.2.0 — плюшки авторизації, конфіг хмари, довідка входу {min-width:64px;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ---------- 2.3.6: КОЛЬОРОВІ ТЕМИ НА ПК (Океан / Захід / Ліс / Аврора) ----------
+   Ті самі палітри, що й на телефоні. Змінні --ac* задають акцент, спільні
+   :is()-правила перефарбовують компоненти вікна — синхронізація теми з
+   телефона тепер працює в обидва боки. */
+body[data-theme="ocean"]{--ac1:#38bdf8;--ac2:#2563eb;--acT:#7dd3fc;--acSoft:rgba(56,189,248,.17);--acShadow:rgba(37,99,235,.34);
+  color:#dfe9f5;
+  background:radial-gradient(700px 460px at 10% -12%,rgba(14,165,233,.22),transparent 66%),
+             radial-gradient(760px 520px at 92% 114%,rgba(37,99,235,.18),transparent 64%),#030b16}
+body[data-theme="sunset"]{--ac1:#fb923c;--ac2:#e11d48;--acT:#fda4af;--acSoft:rgba(251,113,133,.17);--acShadow:rgba(225,29,72,.30);
+  color:#f7e4e6;
+  background:radial-gradient(700px 460px at 10% -12%,rgba(244,63,94,.19),transparent 66%),
+             radial-gradient(760px 520px at 92% 114%,rgba(249,115,22,.17),transparent 64%),#0d0509}
+body[data-theme="forest"]{--ac1:#34d399;--ac2:#059669;--acT:#6ee7b7;--acSoft:rgba(52,211,153,.15);--acShadow:rgba(5,150,105,.30);
+  color:#ddefe7;
+  background:radial-gradient(700px 460px at 10% -12%,rgba(16,185,129,.18),transparent 66%),
+             radial-gradient(760px 520px at 92% 114%,rgba(5,150,105,.16),transparent 64%),#03100a}
+body[data-theme="aurora"]{--ac1:#2dd4bf;--ac2:#0284c7;--acT:#5eead4;--acSoft:rgba(45,212,191,.16);--acShadow:rgba(2,132,199,.32);
+  color:#ddeef0;
+  background:radial-gradient(700px 460px at 10% -12%,rgba(20,184,166,.20),transparent 66%),
+             radial-gradient(760px 520px at 92% 114%,rgba(14,165,233,.16),transparent 64%),
+             radial-gradient(900px 600px at 78% -6%,rgba(45,212,191,.10),transparent 60%),#02100e}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) #tbar{background:transparent;border-bottom:0}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) #tbar .tb-name{color:#fff}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .tb-btn{color:var(--acT);border-color:transparent;background:transparent}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .tb-btn:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#fff}:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .tb-acc{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.18)}:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .tb-acc .ta-n{color:#fff}:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .tb-acc .ta-mail,:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .m-head span,
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .m-item .m-t{color:rgba(255,255,255,.62)}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .tb-seg{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .tb-seg button{color:var(--acT)}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .tb-seg button.on{background:linear-gradient(135deg,var(--ac1),var(--ac2));color:#fff}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.13);box-shadow:0 10px 30px rgba(0,0,0,.32)}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .card h3{color:#fff}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .card .meta{color:rgba(255,255,255,.62)}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .card .b-join{background:var(--acSoft);color:var(--acT);border:1px solid var(--acSoft)}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .card .b-join:hover{background:linear-gradient(135deg,var(--ac1),var(--ac2));color:#fff;border-color:transparent}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .card.now{background:var(--acSoft);border-color:var(--ac1)}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .card.next{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.18)}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .tab{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.13);color:var(--acT)}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .tab.on{background:linear-gradient(135deg,var(--ac1),var(--ac2));border-color:transparent;color:#fff}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) header h2{color:#fff}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .chip{background:rgba(255,255,255,.06);color:var(--acT);border:1px solid rgba(255,255,255,.12)}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .empty,:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .empty{color:rgba(255,255,255,.55)}:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) #vSetup,
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) #vSetup,
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) #vSetup,
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) #vDev{color:#e6ecf5}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .sw-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.13);box-shadow:0 18px 50px rgba(0,0,0,.38)}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .sw-c-tt b,
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .su-body b{color:#fff}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .sw-c-tt span,
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .sw-sub{color:rgba(255,255,255,.6)}:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .su-opt,:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .ms-row,:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .m-item,
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .c-info,
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .su-opt,:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .ms-row,:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .m-item,
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .c-info,
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .su-opt,:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .ms-row,:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .m-item,
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .c-info,
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .dv-acc{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12)}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .su-opt.on{background:var(--acSoft);border-color:var(--ac1)}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .su-opt.on b,
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .su-opt.on span{color:#fff}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .m-item:hover{background:var(--acSoft)}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .modal{background:#0b101c;border:1px solid rgba(255,255,255,.15);box-shadow:0 30px 90px rgba(0,0,0,.6),0 0 0 1px var(--acSoft)}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .mback{background:rgba(2,6,12,.62)}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .m-head b{color:#fff}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .m-head span,
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .m-item .m-t{color:rgba(255,255,255,.62)}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .b-save{background:linear-gradient(135deg,var(--ac1),var(--ac2));border-color:transparent;color:#fff}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .theme-tile.on{border-color:var(--ac1);background:var(--acSoft)}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .us-card{background:#0b101c;border:1px solid rgba(255,255,255,.14);box-shadow:0 30px 90px rgba(0,0,0,.6)}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .us-btn{background:linear-gradient(135deg,var(--ac1),var(--ac2))}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]){--toast-bg:rgba(8,12,22,.97);--toast-bd:var(--ac1);--toast-tx:var(--acT)}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .theme-tile b{color:#fff}:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .a-perk{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.13)}:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .a-perk b{color:#fff}
+/* плитки-мініатюри нових тем */
+.theme-tile .tp.oce{background:linear-gradient(135deg,#03102a,#0e3a6e 60%,#38bdf8)}
+.theme-tile .tp.sun{background:linear-gradient(135deg,#1c060c,#7a1024 55%,#fb923c)}
+.theme-tile .tp.for{background:linear-gradient(135deg,#02110a,#065f46 55%,#34d399)}
+.theme-tile .tp.aur{background:linear-gradient(135deg,#02100e,#0b4a5e 50%,#2dd4bf)}
+body[data-theme="light"] .theme-tile .tp.oce,body[data-theme="light"] .theme-tile .tp.sun,
+body[data-theme="light"] .theme-tile .tp.for,body[data-theme="light"] .theme-tile .tp.aur{border-color:rgba(20,24,46,.2)}
+/* ===== 2.7.2: гейт входу, акаунт, вкладка розробника ===== */
+.spin{display:inline-block;width:11px;height:11px;border:2px solid rgba(196,181,253,.35);border-top-color:#c4b5fd;border-radius:50%;vertical-align:-2px;margin-right:6px;animation:fhsp .8s linear infinite}
+@keyframes fhsp{to{transform:rotate(360deg)}}
+/* 2.8.1: КРИТИЧНЕ — БЕЗ backdrop-filter на #agate! Через нього композитор
+   Chrome/WebView2 «підіймав» гейт ПОВЕРХ титулбара (z-index ігнорувався):
+   після показу розкладу кнопки вікна і перетягування зникали — саме це
+   бачив власник на екрані входу. Фон майже непрозорий — блюр і не видно.
+   3.3.0/3.3.2: гейт починається ПІД титулбаром (inset 50px 0 0 0) — гейт
+   фізично не перекриває панель, навіть якщо композитор знову «підійме» шар.
+   3.3.2: титульна панель ВИДНА під час входу — зліва лого + назва (як на
+   всіх інших сторінках), справа кнопки вікна; вкладки й акаунт сховані.
+   У центрі гейта — ОДНА іконка (лого FluxHelper). */
+#agate{position:fixed;inset:0;z-index:230;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px 20px 20px;overflow:auto;
+  /* єдиний безшовний фон на все вікно разом із титульною панеллю */
+  background:
+    radial-gradient(540px 360px at 14% -10%, rgba(124,58,237,.17), transparent 68%),
+    radial-gradient(580px 400px at 88% 114%, rgba(79,70,229,.14), transparent 66%),
+    #050508}
+#agate.hidden{display:none}
+/* під час входу титульна панель повністю безшовна і прозора над гейтом.
+   3.5.19: на екрані входу — лише «Вітаємо у FluxHelper»: лого і назву
+   зліва ховаємо (власник просив прибрати іконку і назва зверху). */
+body.gate-on #tbar{justify-content:flex-end;z-index:400;background:transparent;border-bottom:0}
+body.gate-on .tb-l{display:none}
+body.gate-on .tb-ver{visibility:hidden}
+body.gate-on .tb-acc{visibility:hidden}
+/* 3.5.19: після вибору акаунта Google — одразу ЕКРАН ЗАВАНТАЖЕННЯ
+   (без «перевіряємо акаунт»): boot піднімається НАД гейтом (230) */
+body.dl-over #boot{z-index:320}
+/* ===== 3.3.0: ГЕЙТ ВХОДУ — ЯК НА ТЕЛЕФОНІ ===== */
+/* 3.3.2: ОДНА іконка по центру — тільки лого FluxHelper (без Google і «+») */
+#agate .ag-glow{position:absolute;top:calc(50% - 270px);left:50%;transform:translateX(-50%);width:320px;height:180px;background:radial-gradient(closest-side,rgba(139,92,246,.35),transparent);pointer-events:none}
+#agate h2{font-size:20px;color:#fff;margin:12px 0 7px;letter-spacing:.2px;text-align:center}
+#agate .ag-sub{font-size:12.5px;color:#9aa0b4;line-height:1.55;margin:0 6px 16px;max-width:320px;text-align:center}
+#agate .ag-mini{display:flex;justify-content:center;gap:6px;margin:0 0 20px;flex-wrap:wrap}
+#agate .ag-mini span{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:#a7abc2;background:rgba(148,163,184,.07);border:1px solid rgba(148,163,184,.13);border-radius:99px;padding:4.5px 10px}
+#agate .ag-mini span svg{opacity:.8;flex:none}
+/* 2.7.5: біла кнопка Google — офіційний логотип G, чорний текст, як на
+   справжніх сайтах Google (власник: «біла кнопка, іконка Google і чорний текст») */
+#agate .ag-go{width:100%;max-width:300px;justify-content:center;display:flex;align-items:center;gap:10px;height:46px;border-radius:14px;font-size:14px;font-weight:700;letter-spacing:.1px;background:#fff;box-shadow:0 10px 26px rgba(0,0,0,.45),0 1px 0 rgba(255,255,255,.25) inset;border:0;color:#1f2937;transition:transform .12s ease,box-shadow .2s ease;animation:agIn .65s cubic-bezier(.16,1,.3,1) .42s both}
+#agate .ag-go:hover{transform:translateY(-1px);box-shadow:0 14px 32px rgba(0,0,0,.5),0 1px 0 rgba(255,255,255,.25) inset}
+#agate .ag-go:active{transform:scale(.97)}
+#agate .ag-go:disabled{opacity:.62;cursor:default;transform:none;filter:none}
+#agate .ag-go svg{flex:none}
+#agate .ag-stat{min-height:18px;font-size:11.5px;color:#9aa0b4;margin-top:14px;line-height:1.45;text-align:center}
+#agate .ag-stat.err{color:#fda4af}
+#agate .ag-foot{position:absolute;bottom:22px;left:0;right:0;font-size:10px;color:#6b7086;letter-spacing:.3px;text-align:center}
+/* ==== 3.4.0: КАСКАДНІ АНІМАЦІЇ ГЕЙТА — елементи з'являються послідовно,
+   м'яко (fade + підйом + розблюрювання); показ/зникнення без «стрибає» ==== */
+@keyframes agIn{from{opacity:0;transform:translateY(16px) scale(.97);filter:blur(5px)}to{opacity:1;transform:none;filter:none}}
+#agate{animation:agFade .45s ease both}
+@keyframes agFade{from{opacity:0}to{opacity:1}}
+#agate.ag-out{animation:none;opacity:0;transform:scale(.985);transition:opacity .32s ease,transform .32s ease;pointer-events:none}
+#agate .us-chip,#agate h2,#agate .ag-sub,#agate .ag-mini,#agate .ag-stat,#agate .ag-foot{animation:agIn .65s cubic-bezier(.16,1,.3,1) both}
+#agate .us-chip{animation-delay:.09s}
+#agate h2{animation-delay:.17s}
+#agate .ag-sub{animation-delay:.25s}
+#agate .ag-mini{animation-delay:.35s}
+#agate .ag-stat{animation-delay:.52s}
+#agate .ag-foot{animation-delay:.6s}
+#agate .ag-glow{animation:agGlow 5.5s ease-in-out infinite alternate}
+@keyframes agGlow{from{opacity:.5;transform:translateX(-50%) scale(1)}to{opacity:1;transform:translateX(-50%) scale(1.2)}}
+
+/* 3.3.2: плаваючі кнопки вікна з гейта ЗНЯТО — кнопки вікна живуть у
+   титульній панелі (вона знову видима під час входу) */
+/* світла тема: гейт теж світлий — той самий фон, що й в основної частини,
+   текст затемнено так само, як у головному вікні */
+body[data-theme="light"] #agate{background:
+  radial-gradient(700px 460px at 10% -12%, rgba(139,92,246,.14), transparent 66%),
+  radial-gradient(760px 520px at 92% 114%, rgba(99,102,241,.12), transparent 64%),
+  #eef0f8}
+body[data-theme="light"] #agate h2{color:#1c1f33}
+body[data-theme="light"] #agate .ag-sub{color:#5b6079}
+body[data-theme="light"] #agate .ag-mini span{color:#4b5069;background:rgba(20,24,46,.05);border-color:rgba(20,24,46,.11)}
+body[data-theme="light"] #agate .ag-stat{color:#5b6079}
+body[data-theme="light"] #agate .ag-stat.err{color:#be123c}
+body[data-theme="light"] #agate .ag-foot{color:#8a8fa8}
+body[data-theme="light"] #agate .us-chip{color:#5b21b6}
+/* скло: той самий фон, що й в основної частини */
+body[data-theme="glass"] #agate{background:
+  radial-gradient(760px 540px at 6% -10%, rgba(168,85,247,.5), transparent 62%),
+  radial-gradient(820px 580px at 96% 4%, rgba(56,189,248,.32), transparent 58%),
+  radial-gradient(880px 620px at 50% 118%, rgba(236,72,153,.3), transparent 62%),
+  linear-gradient(160deg,#0e0a26 0%,#141033 45%,#1a0f2e 100%)}
+.tb-ava{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800;color:#fff;background:linear-gradient(135deg,#8b5cf6,#6366f1);overflow:hidden}
+.tb-ava img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+/* ==== 2.8.3: ПРОФІЛЬ — новий дизайн (герой-картка, сірі сегменти) ==== */
+/* 2.8.6: у профілі вкладки виглядають ЦІЛКОМ ЗВИЧАЙНО — правило
+   body[data-view="acc"] .tb-seg button.on ВИДАЛЕНО. Воно мало вищу
+   специфічність за :hover, тому «Розклад» (який залишався .on) не
+   підсвічувався при наведенні, і жорстко зашивало колір #9aa0b4 —
+   він не змінювався зі темою (у світлій темі текст бив «сірішим»).
+   Тепер showAcc() сам знімає .on (setSeg('acc')) — обидві кнопки
+   мають звичайний колір теми, обидві підсвічуються при наведенні. */
+#vAcc{display:block;overflow:auto;padding:22px 26px 30px}
+.acc-wrap{max-width:480px;margin:0 auto}
+.back-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid rgba(148,163,184,.2);background:rgba(148,163,184,.07);color:#c9cddb;border-radius:12px;padding:8px 15px;font-size:12.5px;font-weight:700;cursor:pointer;margin-bottom:16px;font-family:inherit;transition:background .18s ease,color .18s ease,transform .12s ease;animation:accIn .4s cubic-bezier(.16,1,.3,1) both}
+.back-btn:hover{background:rgba(148,163,184,.14);color:#fff}
+.back-btn:active{transform:scale(.96)}
+.acc-hero-card{position:relative;overflow:hidden;border-radius:24px;padding:28px 20px 22px;text-align:center;margin:0 0 16px;
+  background:linear-gradient(165deg,rgba(124,58,237,.30),rgba(99,102,241,.16) 52%,rgba(255,255,255,.045));
+  border:1px solid rgba(148,163,184,.17);animation:accIn .55s cubic-bezier(.16,1,.3,1) both}
+.acc-hero-card::before{content:'';position:absolute;top:-90px;left:50%;transform:translateX(-50%);width:300px;height:160px;border-radius:50%;
+  background:radial-gradient(closest-side,rgba(139,92,246,.45),transparent);filter:blur(8px);pointer-events:none;animation:acGlow 6s ease-in-out infinite alternate}
+@keyframes acGlow{from{opacity:.6;transform:translateX(-50%) scale(1)}to{opacity:1;transform:translateX(-50%) scale(1.14)}}
+@keyframes accIn{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
+.acc-hero-card .acc-ava-big{width:82px;height:82px;font-size:32px;margin:0 auto}
+.acc-ava-big{width:62px;height:62px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:26px;font-weight:800;color:#fff;background:linear-gradient(135deg,#8b5cf6,#6366f1);overflow:hidden;box-shadow:0 12px 32px rgba(99,102,241,.45),0 0 0 3px rgba(139,92,246,.28)}
+.acc-ava-big img{width:100%;height:100%;object-fit:cover}
+.acc-id{margin-top:13px}
+.acc-id b{display:block;font-size:19px;color:#fff;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acc-mail{display:block;font-size:12.5px;color:#b3b8cc;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ac-role{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;padding:4.5px 12px;border-radius:99px;border:1px solid;margin-top:11px}
+.ac-role.r-user{color:#a7abc2;background:rgba(148,163,184,.1);border-color:rgba(148,163,184,.35)}
+.ac-role.r-admin{color:#c4b5fd;background:rgba(139,92,246,.12);border-color:rgba(139,92,246,.45)}
+.ac-role.r-developer{color:#fde68a;background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.45)}
+.ac-uid{display:inline-flex;align-items:center;gap:6px;max-width:100%;margin:13px auto 0;font-size:10.5px;color:#8b8fa3;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:99px;padding:5px 13px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;transition:background .18s ease,border-color .18s ease,transform .12s ease;font-family:inherit}
+.ac-uid:hover{background:rgba(139,92,246,.14);border-color:rgba(139,92,246,.4)}
+.ac-uid:active{transform:scale(.97)}
+.ac-uid svg{flex:none;opacity:.75}
+.ac-uid b{color:#c7cbe0;font-weight:700;overflow:hidden;text-overflow:ellipsis;max-width:280px}
+/* ==== 2.8.4: СЕКЦІЯ «АКАУНТ І СИНХРОНІЗАЦІЯ» — портовано 1:1 з ТЕЛЕФОНА:
+   ms-lbl (підпис) + ms-card (картка) + ms-row (рядки з плитками) + ac-note ==== */
+#vAcc .ms-sec{animation:accIn .5s cubic-bezier(.16,1,.3,1) both;animation-delay:.08s;margin:2px 0 4px}
+.ms-lbl{display:flex;align-items:center;gap:8px;font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:#8b8fa3;margin:6px 2px 8px}
+.ms-lbl::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(148,163,184,.25),transparent)}
+.ms-card{background:rgba(148,163,184,.055);border:1px solid rgba(148,163,184,.13);border-radius:20px;padding:6px;overflow:hidden}
+.ms-row{position:relative;display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:14px;transition:background .16s ease,transform .12s ease}
+.ms-row:hover{background:rgba(148,163,184,.07)}
+.ms-row[role="button"]{cursor:pointer}
+.ms-row[role="button"]:active{transform:scale(.985)}
+.ms-row + .ms-row::before{content:'';position:absolute;top:-6px;left:54px;right:12px;height:1px;background:rgba(148,163,184,.09)}
+.ms-tile{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:#fff;flex:none;box-shadow:0 4px 14px rgba(0,0,0,.28)}
+.ms-body{min-width:0;flex:1}
+.ms-body b{display:block;font-size:13.5px;font-weight:800;color:#f0f1f7;letter-spacing:.2px}
+.ms-body > span{display:block;font-size:11px;color:#8b8fa3;margin-top:2px;line-height:1.45}
+/* 2.8.4: ЄДИНИЙ канонічний перемикач — фіксована геометрія, пружинна анімація.
+   (старе 44x25-визначення видалено: воно давало подвійний зсув кружка) */
+.sw{position:relative;flex:none;width:46px;height:26px;cursor:pointer;display:inline-block}
+.sw input{position:absolute;opacity:0;left:0;top:0;width:100%;height:100%;margin:0;cursor:pointer;z-index:2}
+.sw i{position:absolute;left:0;top:0;right:0;bottom:0;border-radius:99px;background:rgba(148,163,184,.3);transition:background .2s ease,box-shadow .2s ease}
+.sw i::after{content:'';position:absolute;top:50%;left:3px;margin-top:-9.5px;width:19px;height:19px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.35);transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+.sw input:checked + i{background:linear-gradient(135deg,#8b5cf6,#6366f1);box-shadow:0 3px 12px rgba(99,102,241,.4)}
+.sw input:checked + i::after{transform:translateX(20px)}
+.sw:active input:checked + i::after{transform:translateX(20px) scale(.88)}
+.sw:active input:not(:checked) + i::after{transform:scale(.88)}
+#vAcc .ac-note{animation:accIn .5s cubic-bezier(.16,1,.3,1) both;animation-delay:.2s}
+.ac-note{font-size:11px;color:#7c8199;line-height:1.55;margin-top:10px;padding:0 4px}
+#secDev{display:none}
+#secDev.show{display:block}
+.dv-row{display:flex;align-items:center;gap:10px;padding:9px 2px;border-bottom:1px solid rgba(148,163,184,.09)}
+.dv-row:last-child{border-bottom:0}
+.dv-v{font-weight:800;font-size:13px;color:#e8eaf2;min-width:64px}
+.dv-chip{font-size:9.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:3px 8px;border-radius:99px}
+.dv-chip.rel{color:#93c5fd;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.3)}
+.dv-chip.bet{color:#fde68a;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3)}
+.dv-cur{margin-left:auto;font-size:10.5px;color:#8b8fa3}
+.dv-inst{margin-left:auto}
+/* ---------- 2.7.6: акаунт у налаштуваннях ---------- */
+.ac2-row{display:flex;align-items:center;gap:12px;padding:4px 2px 2px}
+.ac2-ava{width:44px;height:44px;border-radius:14px;flex:none;display:grid;place-items:center;
+  background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff;font-weight:800;font-size:17px;overflow:hidden}
+.ac2-ava img{width:100%;height:100%;object-fit:cover;display:block}
+.ac2-info{flex:1;min-width:0;text-align:left}
+.ac2-info b{display:block;font-size:13.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ac2-info span{display:block;font-size:11.5px;color:#8b8fa3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ac2-go{border:1px solid rgba(139,92,246,.35);background:rgba(139,92,246,.12);color:#c4b5fd;border-radius:11px;
+  padding:8px 14px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;transition:background .15s ease}
+.ac2-go:hover{background:rgba(139,92,246,.22)}
+/* ================= 3.0.0 → 3.3.1: АДМІН-ПАНЕЛЬ (порт з 3.2.0) ================= */
+/* 3.3.1: СКРОЛЛ, який НЕ ЛАМАЄТЬСЯ: панель позиціонується абсолютно всередині
+   #app (position:relative) — висота більше не залежить від flex/zoom-квірків
+   WebView2, тому #admBody завжди прокручується до кінця. Плюс ПК-дизайн:
+   контент центрується (max-width 900px), сегменти «прилипають» зверху. */
+#vAdmin{position:absolute;inset:0;display:block;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:16px 20px 44px}
+/* ===== 3.3.2: адмін-панель у стилі «Налаштувань» — рамки-картки (adm-card),
+   малі кнопки, підрамки списків як ms-card у профілі. Функціонал не змінено. */
+.adm-wrap{max-width:780px;margin:0 auto;width:100%}
+.adm-back{display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(148,163,184,.2);background:rgba(148,163,184,.07);color:#c9cddb;border-radius:12px;padding:8px 15px;font-size:12.5px;font-weight:700;margin:2px 0 12px;cursor:pointer;font-family:inherit;transition:background .18s ease,color .18s ease,transform .12s ease}
+.adm-back:hover{background:rgba(148,163,184,.14);color:#fff}
+.adm-back:active{transform:scale(.96)}
+.adm-card{position:relative;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.085);
+  border-radius:18px;padding:15px 17px 14px;overflow:hidden;animation:secIn .4s ease both;
+  transition:border-color .2s ease,box-shadow .2s ease;margin-bottom:13px}
+.adm-card:hover{border-color:rgba(139,92,246,.30);box-shadow:0 18px 44px rgba(0,0,0,.35),0 0 34px rgba(99,102,241,.06)}
+.adm-card::before{content:'';position:absolute;top:0;left:8%;right:8%;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(139,92,246,.5),rgba(99,102,241,.5),transparent)}
+.adm-c-head{display:flex;align-items:center;gap:11px;margin-bottom:13px}
+.adm-c-head .sw-c-ic{width:34px;height:34px;border-radius:10px}
+.adm-seg{display:flex;gap:4px;background:rgba(148,163,184,.07);border:1px solid rgba(148,163,184,.16);border-radius:13px;padding:4px;margin:2px 0 13px;position:relative;z-index:2}
+.adm-seg-b{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12.5px;font-weight:700;color:#8f95ad;background:transparent;border:0;border-radius:11px;padding:10px 6px;cursor:pointer;font-family:inherit;transition:color .15s ease,background .15s ease}
+.adm-seg-b:hover{color:#c7cbdd;background:rgba(255,255,255,.05)}
+.adm-seg-b.on{color:#fff;background:linear-gradient(135deg,#7c3aed,#6366f1);box-shadow:0 4px 14px rgba(124,58,237,.35)}
+.adm-seg-b.on:hover{color:#fff;background:linear-gradient(135deg,#7c3aed,#6366f1)}
+.adm-sec-t{font-size:14px;font-weight:800;color:#c7d2fe;margin:6px 2px 12px}
+.adm-days{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:12px}
+.adm-day{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;font-weight:800;color:#9aa1bb;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:8px 2px;cursor:pointer;font-family:inherit;transition:all .15s ease}
+.adm-day:hover{border-color:rgba(139,92,246,.35);color:#c7cbdd}
+.adm-day span{font-size:10px;font-weight:600;color:#6b7188}
+.adm-day.on{color:#fff;background:linear-gradient(135deg,#7c3aed,#6366f1);border-color:transparent}
+.adm-day.on span{color:rgba(255,255,255,.78)}
+.adm-rows{display:flex;flex-direction:column;gap:6px;background:rgba(148,163,184,.055);border:1px solid rgba(148,163,184,.13);border-radius:16px;padding:8px}
+.adm-lesson{position:relative;background:linear-gradient(140deg,rgba(255,255,255,.055),rgba(255,255,255,.016) 60%);border:1px solid rgba(255,255,255,.07);border-radius:15px;padding:11px 12px;transition:border-color .18s ease,background .18s ease,transform .18s ease,box-shadow .18s ease}
+.adm-lesson:hover{border-color:rgba(139,92,246,.45);background:linear-gradient(140deg,rgba(139,92,246,.11),rgba(255,255,255,.02) 62%);transform:translateY(-1px);box-shadow:0 12px 28px rgba(76,29,149,.24)}
+.adm-lrow{display:flex;align-items:center;gap:8px}
+.adm-tile{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:12px;color:#fff;flex:none}
+.adm-tile.big{width:46px;height:46px;border-radius:14px}
+.adm-time{width:96px;flex:none;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:#e7eaf6;font-size:12.5px;font-weight:700;padding:8px 6px;text-align:center;color-scheme:dark;font-family:inherit;outline:none}
+.adm-dash{width:8px;height:2px;border-radius:2px;background:#4b5069;flex:none}
+.adm-sub{flex:1;min-width:0;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:#e7eaf6;font-size:12.5px;font-weight:600;padding:8px 8px;outline:none;font-family:inherit}
+.adm-rb{display:flex;gap:4px;flex:none}
+.adm-rbtn{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;color:#9aa1bb;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);cursor:pointer;padding:0}
+.adm-rbtn:hover{color:#fff;background:rgba(255,255,255,.1)}
+.adm-rbtn.danger:hover{color:#fca5a5;background:rgba(248,113,113,.15);border-color:rgba(248,113,113,.3)}
+.adm-linfo{margin-top:8px;font-size:11.5px;color:#8f95ad;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.adm-linfo b{color:#c7d2fe;font-weight:700}
+.adm-linfo .ok{color:#6ee7b7}
+.adm-linfo .dim,.adm-linfo span.dim{color:#6b7188}
+.adm-dot{width:3px;height:3px;border-radius:50%;background:#4b5069;display:inline-block}
+.adm-empty{text-align:center;padding:22px 10px;color:#6b7188}
+.adm-empty p{font-size:13px;font-weight:700;color:#9aa1bb;margin:0 0 4px}
+.adm-empty span{font-size:11px}
+.adm-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+/* 3.3.2: кнопки МАЛІ — як b-mini у налаштуваннях (були на всю ширину) */
+.adm-actions .adm-btn{flex:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:12px;font-weight:800;border-radius:11px;padding:8px 14px;cursor:pointer;border:1px solid transparent;font-family:inherit}
+.adm-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-size:13px;font-weight:800;border-radius:12px;padding:11px 14px;cursor:pointer;border:1px solid transparent;font-family:inherit}
+.adm-btn.primary{color:#fff;background:linear-gradient(135deg,#7c3aed,#6366f1);box-shadow:0 6px 18px rgba(124,58,237,.4)}
+.adm-btn.primary:hover{filter:brightness(1.12)}
+.adm-btn.ghost{color:#c7d2fe;background:rgba(99,102,241,.12);border-color:rgba(99,102,241,.3)}
+.adm-btn.ghost:hover{background:rgba(99,102,241,.2)}
+.adm-note{margin-top:10px;font-size:10.5px;line-height:1.5;color:#6b7188}
+.adm-srow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:rgba(255,255,255,.028);border:1px solid rgba(255,255,255,.055);border-radius:13px;padding:9px 11px;cursor:pointer;color:inherit;font-family:inherit;transition:all .15s ease}
+.adm-srow:hover{background:rgba(255,255,255,.05);border-color:rgba(139,92,246,.4)}
+.adm-sname{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.adm-sname b{font-size:13px;font-weight:800;color:#e7eaf6}
+.adm-sname span{font-size:11px;color:#8f95ad}
+#admwrap{position:fixed;inset:0;z-index:215;display:flex;align-items:center;justify-content:center;padding:16px}
+#admwrap.hidden{display:none}
+.adm-backdrop{position:absolute;inset:0;background:rgba(3,3,7,.78);backdrop-filter:blur(6px)}
+.adm-modal{position:relative;width:min(560px,100%);max-height:min(86vh,660px);overflow-y:auto;background:rgba(17,17,26,.98);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:18px 16px 16px;box-shadow:0 24px 60px rgba(0,0,0,.55)}
+.adm-x{position:absolute;top:10px;right:12px;width:28px;height:28px;border-radius:9px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#9aa1bb;font-size:15px;line-height:1;cursor:pointer;padding:0;font-family:inherit}
+.adm-mh{display:flex;align-items:center;gap:11px;margin-bottom:14px;padding-right:28px}
+.adm-mh b{display:block;font-size:15px;font-weight:800;color:#fff}
+.adm-mh span{font-size:11px;color:#8f95ad}
+.adm-lbl{display:block;font-size:11px;font-weight:700;color:#9aa1bb;margin:10px 1px 5px}
+.adm-in{width:100%;box-sizing:border-box;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.11);border-radius:11px;color:#e7eaf6;font-size:13px;padding:10px 12px;outline:none;font-family:inherit}
+.adm-in:focus{border-color:rgba(139,92,246,.55);background:rgba(139,92,246,.07)}
+.adm-mfoot{display:flex;gap:8px;margin-top:16px}
+.adm-igrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:7px;margin-top:4px}
+.adm-ig{display:flex;align-items:center;justify-content:center;width:100%;aspect-ratio:1;border-radius:12px;color:#fff;border:2px solid transparent;cursor:pointer;padding:0}
+.adm-ig.on{border-color:#a78bfa;box-shadow:0 0 0 2px rgba(167,139,250,.35)}
+.adm-ig:hover{transform:translateY(-1px)}
+body[data-theme="light"] .adm-seg,body[data-theme="light"] .adm-day{background:rgba(20,24,46,.05);border-color:rgba(20,24,46,.09)}
+body[data-theme="light"] .adm-seg-b,body[data-theme="light"] .adm-day{color:#5a6079}
+/* 3.5.16: активна вкладка Адміна — білий шрифт на фіолетовому */
+body[data-theme="light"] .adm-seg-b.on{color:#ffffff}
+body[data-theme="light"] .adm-seg-b.on:hover{color:#ffffff}
+body[data-theme="light"] .adm-lesson,body[data-theme="light"] .adm-srow{background:rgba(20,24,46,.035);border-color:rgba(20,24,46,.08)}
+/* 3.3.2: світла тема для рамок-карток адмінки (як .sw-card у налаштуваннях) */
+body[data-theme="light"] .adm-card{background:#ffffff;border-color:rgba(20,24,46,.1);box-shadow:0 10px 28px rgba(28,33,74,.08)}
+body[data-theme="light"] .adm-rows{background:rgba(20,24,46,.035);border-color:rgba(20,24,46,.08)}
+body[data-theme="light"] .adm-back{background:rgba(20,24,46,.05);border-color:rgba(20,24,46,.12);color:#3d4260}
+body[data-theme="light"] .adm-back:hover{background:rgba(20,24,46,.1);color:#171a2b}
+body[data-theme="light"] .adm-c-head .sw-c-tt b{color:#1c1f33}
+body[data-theme="light"] .adm-c-head .sw-c-tt span,body[data-theme="light"] .adm-sec-t{color:#6a7089}
+body[data-theme="light"] .adm-time,body[data-theme="light"] .adm-sub,body[data-theme="light"] .adm-in{background:rgba(20,24,46,.045);border-color:rgba(20,24,46,.12);color:#232742}
+body[data-theme="light"] .adm-sname b,body[data-theme="light"] .adm-mh b{color:#232742}
+body[data-theme="light"] .adm-modal{background:#ffffff;border-color:rgba(20,24,46,.12)}
+body[data-theme="light"] .adm-backdrop{background:rgba(28,33,74,.4)}
+
+/* ================================================================
+   3.1.0 — ЖИВІ ТАЙМЕРИ ЗАРАЗ/ДАЛІ (.cd у чипах)
+   ================================================================ */
+.now-chip .cd,.next-chip .cd{font-weight:800;letter-spacing:.4px;opacity:.92;font-variant-numeric:tabular-nums}
+.now-chip .cd::before{content:"·";margin:0 2px 0 1px;opacity:.55}
+.next-chip .cd::before{content:"·";margin:0 2px 0 1px;opacity:.55}
+body[data-theme="light"] .now-chip .cd{color:#047857}
+body[data-theme="light"] .next-chip .cd{color:#b45309}
+.card .prog{transition:width .6s linear}
+
+/* ================================================================
+   3.1.0 — LIQUID GLASS БЕЗ ЛАГІВ (GPU-захист; дзеркало мобільного)
+   ================================================================ */
+body.lite-glass *,
+body.glass-scroll *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+body.lite-glass[data-theme="glass"] .card,
+body.glass-scroll[data-theme="glass"] .card{background:rgba(22,20,42,.92)}
+body.lite-glass[data-theme="glass"] .sw-card,
+body.glass-scroll[data-theme="glass"] .sw-card{background:rgba(22,20,42,.9)}
+body.lite-glass[data-theme="glass"] #drawer,
+body.glass-scroll[data-theme="glass"] #drawer{background:rgba(16,15,30,.97)}
+body.lite-glass[data-theme="glass"] .tb,
+body.glass-scroll[data-theme="glass"] .tb{background:rgba(20,19,38,.96)}
+body.lite-glass[data-theme="glass"] .adm-backdrop,
+body.glass-scroll[data-theme="glass"] .adm-backdrop{background:rgba(3,3,7,.86);backdrop-filter:none}
+@media (prefers-reduced-motion:reduce){
+  body[data-theme="glass"] *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+  .now-chip i,.next-chip i{animation:none}
+  .card .prog{transition:none}
+}
+
+/* ============================================================
+   3.1.0 — SKELETON/SHIMMER ЗАВАНТАЖЕННЯ РОЗКЛАДУ + АНІМАЦІЇ МОДАЛОК
+   Поки перший мережевий знімок не прийшов (тіньові картки з переливом),
+   адмін-модалка з'являється так само плавно, як і решта (mup).
+   ============================================================ */
+.skl{position:relative;overflow:hidden;height:66px;border-radius:18px;margin-bottom:10px;
+  background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.05);
+  animation:pop .4s cubic-bezier(.2,.9,.3,1.1) both}
+.skl .a{position:absolute;left:11px;top:13px;width:40px;height:40px;border-radius:13px;background:rgba(255,255,255,.07)}
+.skl .b{position:absolute;left:64px;top:16px;height:13px;width:46%;border-radius:7px;background:rgba(255,255,255,.08)}
+.skl .c{position:absolute;left:64px;top:38px;height:10px;width:30%;border-radius:6px;background:rgba(255,255,255,.05)}
+.skl .d{position:absolute;right:12px;top:24px;height:18px;width:64px;border-radius:9px;background:rgba(255,255,255,.06)}
+.skl::after{content:'';position:absolute;inset:0;transform:translateX(-100%);
+  background:linear-gradient(100deg,transparent 25%,rgba(139,92,246,.13) 48%,rgba(255,255,255,.10) 52%,transparent 78%);
+  animation:sklshine 1.25s ease-in-out infinite}
+@keyframes sklshine{to{transform:translateX(100%)}}
+main.still .skl{animation:none}
+#admwrap .adm-modal{animation:mup .26s cubic-bezier(.2,.9,.3,1.12) both}
+#admwrap .adm-backdrop{animation:fdin .22s ease both}
+body[data-theme="light"] .skl{background:rgba(20,24,46,.05);border-color:rgba(20,24,46,.06)}
+body[data-theme="light"] .skl .a{background:rgba(20,24,46,.08)}
+body[data-theme="light"] .skl .b{background:rgba(20,24,46,.09)}
+body[data-theme="light"] .skl .c,body[data-theme="light"] .skl .d{background:rgba(20,24,46,.06)}
+
+/* ============================================================
+   3.2.0 — АДМІН-ПАНЕЛЬ v2: крупні картки уроків (іконка +
+   предмет + учитель + час), кнопки вгору/вниз/налаштування/
+   видалити, модалка часу з межами, режими груп Zoom,
+   бібліотека іконок (на уроках / вільні), календар тижнів.
+   ============================================================ */
+.adm-lesson{padding:12px 12px 10px}
+.adm-lrow{gap:10px}
+.adm-num{flex:none;width:24px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#8f95ad;background:rgba(255,255,255,.05);border-radius:8px}
+.adm-lmain{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.adm-lname{font-size:15px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adm-lteach{font-size:11.5px;color:#8f95ad;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adm-lteach i{color:#6ee7b7;font-style:normal}
+.adm-ltime{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:2px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:6px 9px}
+.adm-ltime b{font-size:13px;font-weight:800;color:#c7d2fe}
+.adm-ltime span{font-size:11px;color:#6b7188;font-weight:600}
+.adm-lbtns{display:flex;gap:6px;margin-top:9px}
+.adm-rb2{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;font-size:11px;font-weight:700;color:#9aa1bb;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.075);border-radius:9px;padding:6px 4px;cursor:pointer;font-family:inherit;transition:all .14s ease}
+.adm-rb2:hover{color:#fff;background:rgba(255,255,255,.09);border-color:rgba(139,92,246,.3)}
+.adm-rb2:disabled{opacity:.35;cursor:default;pointer-events:none}
+.adm-rb2.set{color:#c7d2fe;background:rgba(99,102,241,.1);border-color:rgba(99,102,241,.28)}
+.adm-rb2.set:hover{background:rgba(99,102,241,.2)}
+.adm-rb2.del{color:#fca5a5;background:rgba(248,113,113,.07);border-color:rgba(248,113,113,.2)}
+.adm-rb2.del:hover{background:rgba(248,113,113,.16)}
+/* 3.4.0: КОМПАКТНІ ІКОН-КНОПКИ УРОКУ (вгору/вниз/налаштування) — замість
+   широких сірих кнопок; видалення живе в модалці «Налаштування уроку» */
+.adm-lacts{display:flex;gap:5px;flex:none;margin-left:4px}
+.adm-ib{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:10px;color:#9aa1bb;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.085);cursor:pointer;padding:0;font-family:inherit;transition:all .15s ease}
+.adm-ib:hover{color:#fff;background:rgba(139,92,246,.24);border-color:rgba(139,92,246,.5);transform:translateY(-1px)}
+.adm-ib:active{transform:scale(.92)}
+.adm-ib:disabled{opacity:.3;cursor:default;pointer-events:none}
+.adm-ib.set{color:#c7d2fe;background:rgba(99,102,241,.13);border-color:rgba(99,102,241,.32)}
+.adm-ib.set:hover{color:#fff;background:rgba(99,102,241,.28);border-color:rgba(129,140,248,.55)}
+#admWeeks{margin-top:2px}
+body[data-theme="light"] .adm-lesson{background:linear-gradient(140deg,#ffffff,#f5f6fb);border-color:rgba(20,24,46,.09)}
+body[data-theme="light"] .adm-lesson:hover{background:linear-gradient(140deg,#f5f2ff,#ffffff);border-color:rgba(124,58,237,.38);box-shadow:0 10px 24px rgba(28,33,74,.12)}
+body[data-theme="light"] .adm-ib{color:#5b6070;background:rgba(20,24,46,.05);border-color:rgba(20,24,46,.11)}
+body[data-theme="light"] .adm-ib:hover{color:#fff;background:#7c3aed;border-color:#7c3aed}
+body[data-theme="light"] .adm-ib.set{color:#4f46e5;background:rgba(99,102,241,.1);border-color:rgba(99,102,241,.26)}
+body[data-theme="light"] .adm-ib.set:hover{color:#fff;background:#6366f1;border-color:#6366f1}
+
+/* 3.4.0: ЖИВІ ПЛИТКИ ПРОФІЛЮ (синхронізація / пристрій / версія) */
+.acc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:0 0 14px;animation:accIn .5s cubic-bezier(.16,1,.3,1) .06s both}
+.acc-stat{background:rgba(148,163,184,.055);border:1px solid rgba(148,163,184,.13);border-radius:16px;padding:12px 8px 10px;text-align:center;min-width:0}
+.acc-stat b{display:block;font-size:13px;font-weight:800;color:#e8eaf2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acc-stat span{display:block;font-size:9px;color:#8b8fa3;margin-top:3px;font-weight:800;letter-spacing:.6px;text-transform:uppercase}
+/* 3.5.19: рамка «Пристрой» — іконка платформи (Android/Apple/Windows)
+   над ім'ям пристрою; значення довші — трохи компактніший шрифт */
+/* 3.5.20: рамка «Пристрой» — ВЛАСНІ іконки платформ: градієнтна плитка ОС
+   (ставить JS: deviceLabel().tile) + білий гліф — точь-в-точь як плитки
+   іконок уроків; внутрішнє кільце + м'яка тінь */
+.acc-stat.acc-dev b{font-size:11.5px;letter-spacing:-.15px}
+/* 3.5.21: іконку платформи в «Пристрой» ЗНЕСЕНО (просил владелец:
+   «иконку убери, она некрасивая» і взагалі «говно полное») — лишилось
+   лише ім'я: Телефон (Android) / Комп'ютер (Windows) тощо */
+body[data-theme="light"] .acc-stat{background:rgba(20,24,46,.04);border-color:rgba(20,24,46,.1)}
+body[data-theme="light"] .acc-stat b{color:#1c1f33}
+body[data-theme="light"] .acc-stat span{color:#6a7089}
+body[data-theme="glass"] .acc-stat{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.16)}
+
+
+/* модалка «Налаштування уроку» */
+.adm-tgrid{display:flex;gap:10px}
+.adm-tgrid > div{flex:1;min-width:0}
+.adm-in.sel{cursor:pointer}
+.adm-hint{margin-top:8px;font-size:11px;line-height:1.5;color:#8f95ad;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.14);border-radius:10px;padding:7px 10px}
+.adm-btn.redd{color:#fca5a5;background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.3)}
+.adm-btn.redd:hover{background:rgba(248,113,113,.18)}
+
+/* режими: одна/дві групи, стандартні/свої назви */
+.adm-mode{display:flex;gap:6px;margin:4px 0 6px}
+.adm-mode.sm{margin:2px 0 4px}
+.adm-mb{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 6px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08);border-radius:12px;cursor:pointer;font-family:inherit}
+.adm-mb b{font-size:12.5px;font-weight:800;color:#9aa1bb}
+.adm-mb span{font-size:10px;color:#6b7188}
+.adm-mb.on{background:linear-gradient(135deg,rgba(124,58,237,.28),rgba(99,102,241,.28));border-color:rgba(124,58,237,.55)}
+.adm-mb.on b{color:#fff}
+.adm-mb.on span{color:rgba(255,255,255,.65)}
+.adm-ok2{font-style:normal;font-size:10px;font-weight:700;color:#6ee7b7;background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);border-radius:7px;padding:2px 7px;margin-left:4px;vertical-align:1px}
+.adm-dim2{font-style:normal;font-size:10px;font-weight:700;color:#6b7188;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:7px;padding:2px 7px;margin-left:4px;vertical-align:1px}
+
+/* бібліотека іконок: рамки «на уроках» і «не використовуються» */
+.adm-ihead{display:flex;align-items:baseline;gap:8px;margin:16px 2px 8px}
+.adm-ihead b{font-size:13px;font-weight:800;color:#c7d2fe}
+.adm-ihead span{font-size:10.5px;color:#6b7188}
+.adm-iframe{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:10px}
+.adm-iframe .adm-ig2{cursor:default}
+.adm-iusage{display:flex;align-items:center;gap:10px;padding:5px 4px;font-size:11.5px;color:#8f95ad}
+.adm-iusage + .adm-iusage{border-top:1px solid rgba(255,255,255,.05)}
+.adm-iempty{font-size:11px;color:#6b7188;text-align:center;padding:8px 4px}
+.adm-icap{font-size:10.5px;font-weight:700;color:#8f95ad;margin:10px 2px 6px;letter-spacing:.4px;text-transform:uppercase}
+.adm-iframe .adm-icap:first-child{margin-top:2px}
+.adm-igrid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:6px}
+.adm-ig2{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;color:#fff;border:2px solid transparent;cursor:pointer;padding:0}
+.adm-ig2:hover{filter:brightness(1.15)}
+.adm-ig2.sel{border-color:#a5b4fc;box-shadow:0 0 0 3px rgba(124,58,237,.35)}
+
+/* календар онлайн/офлайн тижнів (тест) */
+.wk-top{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.wk-top b{flex:1;text-align:center;font-size:15px;font-weight:800;color:#fff}
+.wk-nav{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:11px;color:#c7d2fe;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.3);cursor:pointer;font-family:inherit}
+.wk-nav:hover{background:rgba(99,102,241,.2)}
+.wk-now{font-size:11.5px;font-weight:700;color:#9aa1bb;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:8px 11px;cursor:pointer;font-family:inherit}
+.wk-now:hover{color:#fff}
+.wk-legend{display:flex;gap:7px;margin-bottom:10px;flex-wrap:wrap}
+.wk-legend .lg{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;border-radius:8px;padding:3px 8px}
+.wk-legend .lg::before{content:'';width:8px;height:8px;border-radius:3px;display:inline-block}
+.wk-legend .lg.on{color:#6ee7b7;background:rgba(52,211,153,.1)}
+.wk-legend .lg.on::before{background:#34d399}
+.wk-legend .lg.off{color:#fca5a5;background:rgba(248,113,113,.1)}
+.wk-legend .lg.off::before{background:#f87171}
+.wk-legend .lg.vac{color:#9aa1bb;background:rgba(255,255,255,.05)}
+.wk-legend .lg.vac::before{background:#6b7188}
+.wk-cal{display:flex;flex-direction:column;gap:6px}
+.wk-hrow{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:0 4px}
+.wk-hrow span{text-align:center;font-size:10px;font-weight:700;color:#6b7188}
+.wk-row{display:flex;align-items:stretch;gap:8px;border-radius:13px;padding:6px 7px;border:1.5px solid transparent}
+.wk-row.on{background:rgba(52,211,153,.07);border-color:rgba(52,211,153,.4)}
+.wk-row.off{background:rgba(248,113,113,.07);border-color:rgba(248,113,113,.4)}
+.wk-row.vac{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.1)}
+.wk-row.cur{box-shadow:0 0 0 2px rgba(124,58,237,.35)}
+.wk-days{flex:1;display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.wk-c{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#e7eaf6;background:rgba(255,255,255,.045);border-radius:8px;min-height:30px}
+.wk-c.out{color:#5b6070;background:rgba(255,255,255,.02)}
+.wk-c.td{color:#fff;background:linear-gradient(135deg,#7c3aed,#6366f1)}
+.wk-swap-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 13px;margin-bottom:12px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);border-radius:13px;flex-wrap:wrap}
+.wk-cur-info{font-size:12.5px;color:#c7cbe0;display:flex;align-items:center;gap:7px}
+.wk-status-pill{padding:3px 9px;border-radius:7px;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+.wk-status-pill.on{background:rgba(52,211,153,.15);color:#34d399;border:1px solid rgba(52,211,153,.35)}
+.wk-status-pill.off{background:rgba(248,113,113,.15);color:#f87171;border:1px solid rgba(248,113,113,.35)}
+.wk-status-pill.vac{background:rgba(255,255,255,.08);color:#9aa1bb;border:1px solid rgba(255,255,255,.15)}
+.wk-swap-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:7px 13px;background:linear-gradient(135deg,rgba(124,58,237,.3),rgba(99,102,241,.3));border:1px solid rgba(139,92,246,.45);border-radius:10px;color:#fff;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s ease}
+.wk-swap-btn:hover{background:linear-gradient(135deg,rgba(124,58,237,.5),rgba(99,102,241,.5));border-color:rgba(167,139,250,.7);transform:translateY(-1px)}
+.wk-swap-btn:active{transform:translateY(0)}
+.wk-tag{flex:none;display:flex;align-items:center;font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;padding:0 8px;border-radius:8px}
+.wk-tag.on{color:#34d399;background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3)}
+.wk-tag.off{color:#f87171;background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.3)}
+.wk-tag.vac{color:#9aa1bb;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1)}
+.wk-flip{flex:none;align-self:center;font-size:10.5px;font-weight:800;color:#c7d2fe;background:rgba(99,102,241,.14);border:1px solid rgba(99,102,241,.35);border-radius:9px;padding:7px 10px;cursor:pointer;font-family:inherit;white-space:nowrap}
+.wk-flip:hover{background:rgba(99,102,241,.24)}
+
+/* світла тема */
+body[data-theme="light"] .adm-lesson{background:#ffffff;border:1.5px solid rgba(139,92,246,.24);box-shadow:0 4px 14px rgba(99,102,241,.08)}
+body[data-theme="light"] .adm-lesson:hover{background:#faf5ff;border-color:rgba(124,58,237,.5);box-shadow:0 8px 24px rgba(124,58,237,.16)}
+body[data-theme="light"] .adm-num{color:#6d28d9;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.25);font-weight:800}
+body[data-theme="light"] .adm-lname{color:#0f172a;font-weight:800}
+body[data-theme="light"] .adm-lteach{color:#334155;font-weight:600}
+body[data-theme="light"] .adm-ltime{background:#f8fafc;border:1.5px solid rgba(139,92,246,.22)}
+body[data-theme="light"] .adm-ltime b{color:#6d28d9;font-weight:800}
+body[data-theme="light"] .adm-ltime span{color:#475569;font-weight:600}
+body[data-theme="light"] .adm-ib{color:#334155;background:#ffffff;border:1.5px solid rgba(139,92,246,.24)}
+body[data-theme="light"] .adm-ib:hover{color:#fff;background:#7c3aed;border-color:#7c3aed}
+body[data-theme="light"] .adm-ib.set{color:#6d28d9;background:rgba(124,58,237,.12);border-color:rgba(124,58,237,.32)}
+body[data-theme="light"] .adm-ib.set:hover{color:#fff;background:#6366f1;border-color:#6366f1}
+body[data-theme="light"] .adm-rb2{color:#334155;background:#ffffff;border:1.5px solid rgba(139,92,246,.24)}
+body[data-theme="light"] .adm-rb2:hover{color:#0f172a;background:#f5f3ff;border-color:rgba(124,58,237,.4)}
+body[data-theme="light"] .adm-rb2.set{color:#6d28d9;background:rgba(124,58,237,.12);border-color:rgba(124,58,237,.32)}
+body[data-theme="light"] .adm-rb2.del{color:#dc2626;background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.3)}
+body[data-theme="light"] .adm-hint{color:#334155;background:rgba(139,92,246,.08);border:1.5px dashed rgba(139,92,246,.3)}
+body[data-theme="light"] .adm-mb{background:#ffffff;border:1.5px solid rgba(139,92,246,.24)}
+body[data-theme="light"] .adm-mb b{color:#334155}
+body[data-theme="light"] .adm-mb.on{background:linear-gradient(135deg,rgba(124,58,237,.18),rgba(99,102,241,.18));border-color:#7c3aed}
+body[data-theme="light"] .adm-mb.on b{color:#581c87;font-weight:800}
+body[data-theme="light"] .adm-iframe{background:#f8fafc;border:1.5px solid rgba(139,92,246,.22)}
+body[data-theme="light"] .adm-iusage{color:#334155}
+body[data-theme="light"] .wk-c{color:#0f172a;background:#ffffff;border:1px solid rgba(139,92,246,.2)}
+body[data-theme="light"] .wk-c.out{color:#94a3b8;background:rgba(255,255,255,.5)}
+body[data-theme="light"] .wk-row.on{background:rgba(16,185,129,.12);border:1.5px solid rgba(16,185,129,.5)}
+body[data-theme="light"] .wk-row.off{background:rgba(239,68,68,.1);border:1.5px solid rgba(239,68,68,.45)}
+body[data-theme="light"] .wk-row.vac{background:#f8fafc;border:1.5px solid rgba(139,92,246,.22)}\n
+/* 3.4.8: кнопка «Скинути налаштування акаунта» — озброєний стан (перший тап) */
+.ms-row.arm { background: rgba(244,63,94,.12); }
+.ms-row.arm .ms-body b { color: #fb7185; }
+
+/* ===== 3.4.9: верхня смуга над екранами оновлення/мережі — повністю
+   прозора в УСІХ темах (правила в кінці файлу — сильніші за теми) ===== */
+body.upd-lock #tbar,body.net-lock #tbar{z-index:400!important;background:transparent!important;
+  border-bottom:0!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+
+/* ================================================================
+   3.5.18: СВІТЛА ТЕМА — УСІ СПЛИВАЮЧІ ПОВІДОМЛЕННЯ (просив власник:
+   «изменила дизайн для стандартной темы и Liquid Glass, а для светлой
+   ты нифига не изменила»). Єдиний стиль із новими тостами 3.5.17:
+   біла картка, фіолетовий градієнтний обідок (padding-box/border-box),
+   слейт-текст, м'які фіолетові тіні. Стосується: модалки (копіювання,
+   групи, «Що нового», підтвердження), вікно оновлення, банери.
+   ================================================================ */
+body[data-theme="light"] .mback{background:rgba(28,33,74,.32)}
+body[data-theme="light"] .modal{background:linear-gradient(135deg,rgba(255,255,255,.99),rgba(250,248,255,.98)) padding-box,
+  linear-gradient(135deg,rgba(124,58,237,.42),rgba(99,102,241,.28),rgba(167,139,250,.38)) border-box;
+  border:1px solid transparent;
+  box-shadow:0 30px 90px rgba(28,33,74,.28),0 8px 30px rgba(124,58,237,.12),inset 0 1px 0 rgba(255,255,255,.9)}
+body[data-theme="light"] .m-head b{color:#0f172a}
+body[data-theme="light"] .m-head span{color:#64748b}
+body[data-theme="light"] .m-x{border-color:rgba(20,24,46,.12);background:rgba(20,24,46,.05);color:#475569}
+body[data-theme="light"] .m-x:hover{background:rgba(124,58,237,.12);border-color:rgba(124,58,237,.4);color:#5b21b6}
+body[data-theme="light"] .m-item{border-color:rgba(20,24,46,.10);background:rgba(250,248,255,.92);color:#1e293b}
+body[data-theme="light"] .m-item:hover{background:linear-gradient(135deg,rgba(139,92,246,.14),rgba(99,102,241,.10));
+  border-color:rgba(124,58,237,.45);transform:translateY(-1px)}
+body[data-theme="light"] .m-item .m-lbl{color:#0f172a}
+body[data-theme="light"] .m-item .m-t{color:#64748b}
+body[data-theme="light"] .m-item small{color:#6d28d9}
+body[data-theme="light"] .wn-ver{color:#6d28d9;background:rgba(139,92,246,.12);border-color:rgba(124,58,237,.35)}
+body[data-theme="light"] .wn-row{border-color:rgba(20,24,46,.10);background:rgba(250,248,255,.92)}
+body[data-theme="light"] .wn-row>i{color:#1e293b}
+body[data-theme="light"] .c-info{background:rgba(139,92,246,.10);border-color:rgba(124,58,237,.30)}
+body[data-theme="light"] .c-info .ci-t b{color:#0f172a}
+body[data-theme="light"] .c-info .ci-t span{color:#64748b}
+/* вікно оновлення (#upd) і екран «немає мережі» (#neterr): картка вже світла
+   (714), Добираємо текст і кнопки — інакше біле-на-білому */
+body[data-theme="light"] #neterr h2,body[data-theme="light"] #upd h2{color:#0f172a}
+body[data-theme="light"] #upd h2 b{background:linear-gradient(90deg,#7c3aed,#6366f1);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+body[data-theme="light"] .us-chip{color:#6d28d9;background:rgba(139,92,246,.12);border-color:rgba(124,58,237,.35)}
+body[data-theme="light"] .us-sub{color:#64748b}
+body[data-theme="light"] .us-prog{background:rgba(20,24,46,.10)}
+body[data-theme="light"] .us-row{color:#64748b}
+body[data-theme="light"] .us-btn.alt{background:rgba(20,24,46,.05);border:1px solid rgba(20,24,46,.14);color:#1e293b;box-shadow:none}
+body[data-theme="light"] .us-btn.alt:hover{background:rgba(124,58,237,.10)}
+body[data-theme="light"] .us-btn.ghost{background:transparent;border:1.5px solid rgba(20,24,46,.16);color:#475569;box-shadow:none}
+body[data-theme="light"] .us-btn.ghost:hover{border-color:rgba(124,58,237,.5);color:#5b21b6}
+/* банери сповіщень на головній */
+body[data-theme="light"] .ban{background:linear-gradient(135deg,rgba(139,92,246,.12),rgba(99,102,241,.07));
+  border:1px solid rgba(124,58,237,.35);box-shadow:0 10px 30px rgba(124,58,237,.12)}
+body[data-theme="light"] .bn-t b{color:#0f172a}
+body[data-theme="light"] .bn-t span{color:#475569}
+body[data-theme="light"] .bn-x{border-color:rgba(20,24,46,.12);background:rgba(20,24,46,.05);color:#475569}
+body[data-theme="light"] .bn-x:hover{background:rgba(124,58,237,.12);color:#5b21b6}
+
+/* ===== 3.5.20: спокійне закривне вікно «немає інтернету» (замість повного екрана помилки) ===== */
+#offl{position:fixed;inset:0;z-index:340;display:flex;align-items:center;justify-content:center;padding:22px}
+#offl.hidden{display:none}
+#offl .offl-back{position:absolute;inset:0;background:rgba(4,4,10,.74);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+#offl .offl-card{position:relative;width:min(380px,100%);border-radius:24px;padding:26px 22px 22px;text-align:center;
+  background:linear-gradient(165deg,rgba(139,92,246,.14),rgba(255,255,255,.04) 60%,rgba(255,255,255,.02));
+  border:1px solid rgba(139,92,246,.35);box-shadow:0 30px 90px rgba(0,0,0,.6);
+  animation:offlIn .4s cubic-bezier(.16,1,.3,1)}
+@keyframes offlIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+#offl .offl-ic{display:inline-flex;align-items:center;justify-content:center;width:58px;height:58px;border-radius:18px;margin-bottom:14px;color:#fbbf24;
+  background:linear-gradient(135deg,rgba(251,191,36,.18),rgba(245,158,11,.10));box-shadow:inset 0 0 0 1px rgba(251,191,36,.35)}
+#offl b{display:block;font-size:16.5px;letter-spacing:.2px;color:#f4f4f8;margin-bottom:8px}
+#offl span{display:block;font-size:12.5px;color:#9aa0b4;line-height:1.65;margin-bottom:18px}
+#offl button{width:100%;padding:13px 18px;border:none;border-radius:14px;cursor:pointer;color:#fff;font-size:14px;font-weight:800;font-family:inherit;
+  background:linear-gradient(135deg,#8b5cf6,#6366f1);box-shadow:0 12px 28px rgba(99,102,241,.38);transition:transform .15s ease}
+#offl button:active{transform:scale(.98)}
+body[data-theme="light"] #offl .offl-back{background:rgba(30,20,60,.34)}
+body[data-theme="light"] #offl .offl-card{background:linear-gradient(165deg,#ffffff,#f7f5ff);border-color:rgba(124,58,237,.28)}
+body[data-theme="light"] #offl b{color:#141830}
+body[data-theme="light"] #offl span{color:#64748b}
+body[data-theme="glass"] #offl .offl-card{background:linear-gradient(165deg,rgba(40,32,74,.72),rgba(22,18,44,.78));backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px)}
+
+/* ===== 3.5.20: su-tile — градієнтні плитки рядків налаштувань, точь-в-точь
+   як на телефоні (ms-tile sm): кольоровий фон + білий значок + внутрішнє кільце */
+.su-tile{width:34px;height:34px;border-radius:11px;flex:none;display:grid;place-items:center;color:#fff;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),0 6px 16px rgba(0,0,0,.30)}
+.su-tile svg{stroke:#fff;display:block}
+.sw-tog-row.c-row .su-tile{width:36px;height:36px}
+body[data-theme="light"] .su-tile{box-shadow:inset 0 0 0 1px rgba(255,255,255,.30),0 6px 16px rgba(0,0,0,.16)}
+body[data-theme="glass"] .su-tile{box-shadow:inset 0 0 0 1px rgba(255,255,255,.25),0 6px 16px rgba(0,0,0,.26)}
