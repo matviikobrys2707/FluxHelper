@@ -28,12 +28,3 @@
   Cache-Control: public, max-age=0, must-revalidate
 /iphone/manifest.webmanifest
   Cache-Control: public, max-age=0, must-revalidate
-
-/iphone/*
-  Cache-Control: no-cache
-/mac/*
-  Cache-Control: no-cache
-/main
-  Cache-Control: no-cache
-/main/*
-  Cache-Control: no-cache
