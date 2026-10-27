@@ -1690,8 +1690,12 @@ body[data-theme="glass"] .rm-chip{background:rgba(139,92,246,.26);border-color:r
 .card h3 .now-chip i,.card h3 .next-chip i{width:5px;height:5px}
 
 /* ============================================================
-   3.5.30 — ПЕРЕМИКАЧІ з ПИЛЮЛЕЮ (1-в-1 з телефоном): .seg-pill плавно
-   їздить між опціями (.seg-z / .adm-seg / .su-opts / #tabs).
+   3.5.30/3.5.31 — ПЕРЕМИКАЧІ з ПИЛЮЛЕЮ: .seg-pill плавно їздить
+   між опціями (.seg-z / .adm-seg / .su-opts / #tabs).
+   3.5.31 ВИПРАВЛЕННЯ (власник: «стандартну тему не чіпати»):
+   активний стан тепер малює пілюля ЛИШЕ коли двигун працює
+   (body.segjs виставляє JS), і пілюля 1-в-1 ВІДТВОРЮЄ оригінальний
+   фон активної опції КОЖНОЇ теми — вигляд у спокої = як у 3.5.29.
    ============================================================ */
 .seg-z,.adm-seg,.su-opts,#tabs{position:relative}
 .seg-pill{position:absolute;left:0;top:0;z-index:0;border-radius:11px;pointer-events:none;opacity:0;
@@ -1702,23 +1706,39 @@ body[data-theme="glass"] .rm-chip{background:rgba(139,92,246,.26);border-color:r
 .seg-pill.pon{opacity:1}
 .seg-pill.arrive{animation:segArrive .34s cubic-bezier(.3,1.4,.4,1)}
 @keyframes segArrive{0%{filter:brightness(1.22)}100%{filter:brightness(1)}}
-.seg-z-b.on,.adm-seg-b.on,.su-opt.on,.tab.on{background:transparent!important;background-size:100% 100%!important;box-shadow:none!important;border-color:transparent!important}
+/* 3.5.31: двері .on віддає пілюлі ТІЛЬКИ з body.segjs — без JS усе як було */
+body.segjs .seg-z-b.on,body.segjs .adm-seg-b.on,body.segjs .su-opt.on,body.segjs .tab.on{background:transparent!important;background-size:100% 100%!important;box-shadow:none!important;border-color:transparent!important;animation:none!important}
 .seg-z-b,.adm-seg-b,.su-opt,.tab{position:relative;z-index:1}
-.su-opts .seg-pill{border-radius:14px;background:linear-gradient(135deg,rgba(139,92,246,.42),rgba(99,102,241,.30));box-shadow:0 8px 22px rgba(99,102,241,.30),inset 0 0 0 1px rgba(129,140,248,.55)}
-#tabs .seg-pill{border-radius:12px}
-body[data-theme="light"] .seg-pill{background:linear-gradient(135deg,#7c3aed,#6366f1)}
-body[data-theme="glass"] .seg-pill{background:linear-gradient(135deg,rgba(139,92,246,.72),rgba(99,102,241,.66));box-shadow:0 6px 20px rgba(124,58,237,.42),inset 0 1px 0 rgba(255,255,255,.28)}
+/* 3.5.31: пілюля = ТОЧНА КОПІЯ активного стану (стандартна тема) */
+#tabs .seg-pill{border-radius:12px;background:linear-gradient(135deg,#8b5cf6,#6366f1,#8b5cf6);background-size:220% 100%;box-shadow:0 8px 22px rgba(99,102,241,.30);animation:tabg 3.4s ease infinite}
+.seg-z .seg-pill{background:linear-gradient(135deg,#8b5cf6,#6366f1);box-shadow:0 6px 18px rgba(99,102,241,.38)}
+.adm-seg .seg-pill{background:linear-gradient(135deg,#7c3aed,#6366f1);box-shadow:0 4px 14px rgba(124,58,237,.35)}
+.su-opts .seg-pill{border-radius:14px;background:linear-gradient(135deg,rgba(139,92,246,.32),rgba(99,102,241,.22));box-shadow:0 8px 22px rgba(99,102,241,.28),inset 0 0 0 1px rgba(129,140,248,.55)}
+/* світла тема — копія світлого .on */
+body[data-theme="light"] #tabs .seg-pill{background:linear-gradient(135deg,#7c3aed 0%,#6366f1 100%);background-size:100% 100%;animation:none;box-shadow:0 8px 22px rgba(124,58,237,.38)}
+body[data-theme="light"] .su-opts .seg-pill{background:linear-gradient(135deg,rgba(139,92,246,.18),rgba(99,102,241,.12));box-shadow:0 3px 12px rgba(124,58,237,.2),inset 0 0 0 1px rgba(124,58,237,.45)}
+/* акцентні теми (ocean/sunset/forest/aurora) — копія їх .on */
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) #tabs .seg-pill{background:linear-gradient(135deg,var(--ac1),var(--ac2));background-size:100% 100%;animation:none;box-shadow:0 4px 14px var(--acShadow)}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .seg-z .seg-pill{background:linear-gradient(135deg,var(--ac1),var(--ac2));box-shadow:0 6px 18px var(--acShadow)}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .adm-seg .seg-pill{background:linear-gradient(135deg,var(--ac1),var(--ac2));box-shadow:0 4px 14px var(--acShadow)}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .su-opts .seg-pill{background:var(--acSoft);box-shadow:inset 0 0 0 1px var(--ac1)}
+/* Liquid Glass — повний редизайн (лише тема glass) */
+body[data-theme="glass"] #tabs .seg-pill{background:linear-gradient(135deg,rgba(139,92,246,.72),rgba(99,102,241,.66));background-size:100% 100%;animation:none;box-shadow:0 6px 20px rgba(124,58,237,.42),inset 0 1px 0 rgba(255,255,255,.28)}
+body[data-theme="glass"] .seg-z .seg-pill,body[data-theme="glass"] .adm-seg .seg-pill{background:linear-gradient(135deg,rgba(139,92,246,.72),rgba(99,102,241,.66));box-shadow:0 6px 20px rgba(124,58,237,.42),inset 0 1px 0 rgba(255,255,255,.28)}
+body[data-theme="glass"] .su-opts .seg-pill{background:linear-gradient(135deg,rgba(139,92,246,.55),rgba(99,102,241,.44));box-shadow:0 6px 20px rgba(124,58,237,.38),inset 0 1px 0 rgba(255,255,255,.24)}
 @media (prefers-reduced-motion:reduce){.seg-pill{transition:opacity .2s ease}}
 
 /* ============================================================
-   3.5.30 — LIQUID GLASS-КНОПКА (референс власника): скляне тіло,
-   конічний обідок, що крутиться, спекулярні грані, «фізичне» натискання.
+   3.5.30/3.5.31 — LIQUID GLASS-КНОПКА (референс власника): скляне
+   тіло, конічний обідок, що крутиться, спекулярні грані.
+   3.5.31: діє ЛИШЕ в темі Liquid Glass (data-theme="glass") —
+   стандартна/світла/акцентні теми мають свої звичайні кнопки.
    ============================================================ */
 @property --lg-a1{syntax:"<angle>";inherits:false;initial-value:-75deg}
 @property --lg-a2{syntax:"<angle>";inherits:false;initial-value:-45deg}
-.b-join,.b-save,.b-groups,.b-groups-m,.b-mini,.us-btn{
+body[data-theme="glass"] .b-join,body[data-theme="glass"] .b-save,body[data-theme="glass"] .b-groups,body[data-theme="glass"] .b-groups-m,body[data-theme="glass"] .b-mini,body[data-theme="glass"] .us-btn{
   --lg-bw:1.5px;
-  background:linear-gradient(-75deg,rgba(139,92,246,.30),rgba(139,92,246,.52) 50%,rgba(99,102,241,.30));
+  background:linear-gradient(-75deg,rgba(255,255,255,.20),rgba(255,255,255,.34) 50%,rgba(255,255,255,.20));
   -webkit-backdrop-filter:blur(6px) saturate(160%);backdrop-filter:blur(6px) saturate(160%);
   box-shadow:
     inset 0 1px 1px rgba(255,255,255,.30),
@@ -1727,7 +1747,7 @@ body[data-theme="glass"] .seg-pill{background:linear-gradient(135deg,rgba(139,92
     0 0.25em 0.125em -0.125em rgba(0,0,0,.30),
     0 8px 22px rgba(99,102,241,.30);
   transition:all var(--lg-ht,.28s) cubic-bezier(.25,1,.5,1)}
-.b-join::before,.b-save::before,.b-groups::before,.b-groups-m::before,.b-mini::before,.us-btn::before{content:'';position:absolute;z-index:0;inset:0;
+body[data-theme="glass"] .b-join::before,body[data-theme="glass"] .b-save::before,body[data-theme="glass"] .b-groups::before,body[data-theme="glass"] .b-groups-m::before,body[data-theme="glass"] .b-mini::before,body[data-theme="glass"] .us-btn::before{content:'';position:absolute;z-index:0;inset:0;
   border-radius:inherit;width:calc(100% + var(--lg-bw));height:calc(100% + var(--lg-bw));
   top:calc(0% - var(--lg-bw)/2);left:calc(0% - var(--lg-bw)/2);padding:var(--lg-bw);box-sizing:border-box;
   background:
@@ -1736,19 +1756,15 @@ body[data-theme="glass"] .seg-pill{background:linear-gradient(135deg,rgba(139,92
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
   -webkit-mask-composite:xor;mask-composite:exclude;
   transition:all .28s cubic-bezier(.25,1,.5,1),--lg-a1 .5s ease;pointer-events:none}
-.b-join:hover::before,.b-save:hover::before,.b-groups:hover::before,.b-groups-m:hover::before,.b-mini:hover::before,.us-btn:hover::before{--lg-a1:-125deg}
-.b-join:hover{transform:translateY(-1px);filter:brightness(1.10)}
-.b-join:active,.b-save:active,.b-groups:active,.b-groups-m:active,.b-mini:active,.us-btn:active{transform:scale(.965)}
-.b-join:active,.b-save:active,.b-groups:active,.b-groups-m:active{box-shadow:
+body[data-theme="glass"] .b-join:hover::before,body[data-theme="glass"] .b-save:hover::before,body[data-theme="glass"] .b-groups:hover::before,body[data-theme="glass"] .b-groups-m:hover::before,body[data-theme="glass"] .b-mini:hover::before,body[data-theme="glass"] .us-btn:hover::before{--lg-a1:-125deg}
+body[data-theme="glass"] .b-join:hover{transform:translateY(-1px);filter:brightness(1.10)}
+body[data-theme="glass"] .b-join:active,body[data-theme="glass"] .b-save:active,body[data-theme="glass"] .b-groups:active,body[data-theme="glass"] .b-groups-m:active,body[data-theme="glass"] .b-mini:active,body[data-theme="glass"] .us-btn:active{transform:scale(.965)}
+body[data-theme="glass"] .b-join:active,body[data-theme="glass"] .b-save:active,body[data-theme="glass"] .b-groups:active,body[data-theme="glass"] .b-groups-m:active{box-shadow:
     inset 0 1px 1px rgba(255,255,255,.28),
     inset 0 -1px 1px rgba(255,255,255,.10),
     0 0.15em 0.05em -0.1em rgba(0,0,0,.30),
     0 0 0.05em 0.1em inset rgba(255,255,255,.16),
     0 4px 12px rgba(99,102,241,.26)}
-body[data-theme="light"] .b-join,body[data-theme="light"] .b-save,body[data-theme="light"] .b-groups,body[data-theme="light"] .b-groups-m,body[data-theme="light"] .b-mini{
-  background:linear-gradient(-75deg,rgba(255,255,255,.42),rgba(255,255,255,.66) 50%,rgba(255,255,255,.42))}
-body[data-theme="glass"] .b-join,body[data-theme="glass"] .b-save,body[data-theme="glass"] .b-groups,body[data-theme="glass"] .b-groups-m{
-  background:linear-gradient(-75deg,rgba(255,255,255,.20),rgba(255,255,255,.34) 50%,rgba(255,255,255,.20))}
 @media (prefers-reduced-motion:reduce){
-  .b-join::before,.b-save::before,.b-groups::before,.b-groups-m::before,.b-mini::before,.us-btn::before{transition:none}
+  body[data-theme="glass"] .b-join::before,body[data-theme="glass"] .b-save::before,body[data-theme="glass"] .b-groups::before,body[data-theme="glass"] .b-groups-m::before,body[data-theme="glass"] .b-mini::before,body[data-theme="glass"] .us-btn::before{transition:none}
 }
