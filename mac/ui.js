@@ -236,7 +236,7 @@ function validS(x) {
 })();
 
 // ---------------- версія + перший запуск ----------------
-const APP_VER = '3.5.31';                  // версія X.Y.Z — з version.h (див. main.cpp)
+const APP_VER = '3.5.32';                  // версія X.Y.Z — з version.h (див. main.cpp)
 /* 3.5.5: КАНАЛ ЗБІРКИ — 'beta' або 'release'. Бета-збірки підписують версію
    словом «beta» скрізь у інтерфейсі (профіль, «Про програму», вікно оновлення),
    релізні показують чистий номер. Перед релізом змінюємо тут і перезбираємо. */
@@ -1000,13 +1000,14 @@ function render(anim) {
     const h3 = el('h3'); const lnS = el('span', 'ln'); lnS.textContent = l.name;
     /* 3.5.30: чіпи ЗАРАЗ/ДАЛІ — У РЯДКУ НАЗВИ (1-в-1 з телефоном) */
     h3.appendChild(lnS);
-    if (i === nowIdx) h3.appendChild(el('span', 'now-chip', '<i></i>ЗАРАЗ'));
-    if (i === nextIdx) h3.appendChild(el('span', 'next-chip', '<i></i>ДАЛІ'));
-    /* 3.5.30: КАБІНЕТ — плашка з номером класу В РЯДКУ НАЗВИ (1-в-1 з телефоном) */
+    /* 3.5.32: порядок — НАЗВА → КАБІНЕТ → ЗАРАЗ/ДАЛІ (просив власник: після
+       номера кабинета — красива рамочка «далі»); бейджі з кольоровими рамочками */
     try {
       const rm = roomFor(DAYDEFS[sel][0], l);
       if (rm) h3.appendChild(el('span', 'rm-chip', rm));
     } catch (eRm) {}
+    if (i === nowIdx) h3.appendChild(el('span', 'now-chip', '<i></i>ЗАРАЗ'));
+    if (i === nextIdx) h3.appendChild(el('span', 'next-chip', '<i></i>ДАЛІ'))
     mid.appendChild(h3);
 
     const meta = el('div', 'meta');
@@ -2712,6 +2713,13 @@ function updOpen() { return UPD.avail; }
 // пріоритет. Третій елемент пункта ('pc'/'android') — показувати лише
 // на одній платформі; без нього — на обох.
 const WHATS_NEW = {
+  '3.5.32': [
+    ['✦', 'ТЕМА LIQUID GLASS — тепер РІДКЕ СКЛО ВЕЗДЕ: картки уроків, вкладки днів, перемикачі, рамки налаштувань, модалки і панелі — скляне тіло, конічний обідок, що крутиться, спекулярні відблиски і справжнє заломлення країв', 'pc'],
+    ['/', 'Карточки уроків стали компактнішими: менші рамки, стрункіші рядки — назва зверху, час і вчитель знизу', 'pc'],
+    ['/', 'КАБІНЕТ уроку — акуратна плашка з нормальним відступом від назви; ЗАРАЗ (зелена рамочка) і ДАЛІ (жовта рамочка) тепер красиві бейджі, ДАЛІ стоїть ПІСЛЯ номера кабінету', 'pc'],
+    ['/', 'Фікс: повторний тап по ВІДКРИТІЙ вкладці або перемикачі більше НЕ запускає анімацію — переліт лише на справжнє переключення', 'pc'],
+    ['/', 'Оновлення ставиться на ТЕ САМЕ місце: програма і її ярлик лишаються там, де ти їх поставив', 'pc'],
+  ],
   '3.5.31': [
     ['/', 'Виправлено стилі, які ламалися у 3.5.30: налаштування, вікно «Що нового» й перемикачі знову з цілим оформленням', 'pc'],
     ['/', 'Стандартну, світлу й акцентні теми НЕ ЗМІНЕНО — повний редизайн має ЛИШЕ тема Liquid Glass', 'pc'],
@@ -4863,7 +4871,8 @@ function buildTabs() {
     const dtE = el('span', 'dt'); dtE.textContent = dateStr(i);
     const dot = el('span', 'tdot');
     t.append(dE, dtE, dot);
-    t.onclick = function () { sel = i; render(); };
+    /* 3.5.32: та сама вкладка — нічого не робимо (жодної анімації, просив власник) */
+    t.onclick = function () { if (sel === i) return; sel = i; render(); };
     tabs.appendChild(t);
     tabEls.push(t);
   });
@@ -5501,6 +5510,42 @@ try { init(); } catch (err) {
 (function () {
   /* 3.5.31: прапорець «двигун пілюлі живий» — CSS віддає .on під пілюлю лише з ним */
   try { document.body.classList.add('segjs'); } catch (eSeg) {}
+  /* 3.5.32: СПРАВЖНЄ РІДКЕ СКЛО — SVG-фільтр заломлення країв для теми
+     Liquid Glass. <filter id="lgDisp"> додається ОДИН раз; CSS вживає його
+     через backdrop-filter: url(#lgDisp) тільки в Chromium (html.lg-ok):
+     WebView2 (ПК), Chrome, Android WebView. Safari/Firefox — те саме скло
+     без шару заломлення. Мапа: R = зсув Y, B = зсув X, центр нейтральний. */
+  try {
+    if (!document.getElementById('lgDisp')) {
+      var _lgMap = 'data:image/png;base64,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';
+      var _d = document.createElement('div');
+      _d.innerHTML = '<svg style="position:absolute;width:0;height:0" aria-hidden="true" focusable="false">' +
+        '<filter id="lgDisp" primitiveUnits="objectBoundingBox" x="-15%" y="-15%" width="130%" height="130%" color-interpolation-filters="sRGB">' +
+        '<feImage href="' + _lgMap + '" xlink:href="' + _lgMap + '" preserveAspectRatio="none" x="0" y="0" width="1" height="1" result="map"/>' +
+        '<feDisplacementMap in="SourceGraphic" in2="map" scale="0.26" xChannelSelector="B" yChannelSelector="R"/>' +
+        '</filter></svg>';
+      document.body.insertBefore(_d.firstChild, document.body.firstChild);
+    }
+  } catch (eSvg) {}
+  try {
+    var _ua32 = navigator.userAgent || '';
+    var _lgOk = (/Chrom(e|ium)\/\d+/.test(_ua32) || /Edg\/\d+/.test(_ua32)) && !/CriOS|FxiOS|EdgiOS/.test(_ua32);
+    if (_lgOk) document.documentElement.classList.add('lg-ok');
+  } catch (eLg) {}
+  /* 3.5.32: у модалці оновлення — пояснення про місце встановлення
+     (просив власник: «після оновлення програма лишилась на тому ж місці») */
+  try {
+    var _ug = document.getElementById('updGo');
+    if (_ug && !document.getElementById('updNote')) {
+      var _pn = document.createElement('p');
+      _pn.className = 'us-sub'; _pn.id = 'updNote';
+      _pn.style.margin = '8px 0 0';
+      _pn.textContent = (typeof ANDROID !== 'undefined' && ANDROID)
+        ? 'APK відкриється у браузері — встанови його, як звичайний файл'
+        : 'оновлення ставиться на те саме місце — програма і її ярлик лишаються там, де ти їх поставив';
+      _ug.parentNode.insertBefore(_pn, _ug);
+    }
+  } catch (eUn) {}
   var SEG_SEL = '.seg-z,.adm-seg,.su-opts,#tabs';
   function pillFor(cont) {
     var p = cont.__segPill;
@@ -5530,6 +5575,7 @@ try { init(); } catch (err) {
     var t = e.target;
     var b = (t && t.closest) ? t.closest('.seg-z-b,.adm-seg-b,.su-opt,.tab') : null;
     if (!b) return;
+    if (b.classList.contains('on')) return;   /* 3.5.32: активна опція — без спалаху пілюлі */
     var cont = b.parentElement;
     if (!cont || !(cont.matches && cont.matches(SEG_SEL))) return;
     requestAnimationFrame(function () { try { segTo(cont, false); } catch (e1) {} });
