@@ -14,14 +14,14 @@
 /* 2.8.3 ФІКС СКРОЛУ: у 2.8.2 загубився html{height:100%} — body ріс разом із контентом,
    тому в'юпорт обрізав низ (у п'ятницю не можна було доскролити до останнього
    уроку, налаштування теж не скролились) */
-html{height:100%}
+html{height:100%;overflow:hidden} /* 3.5.30: overflow:hidden — фікс «панель падає при перемиканні вкладки»: переліт .vin/.vout тимчасово робив документ ширшим, в'юпорт розширювався (844->1013), fixed-панель «падала» вниз за екран і поверталась після анімації */
 html,body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;
   -webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 input,textarea{-webkit-user-select:text;user-select:text}
 ::selection{background:transparent}
 ::moz-selection{background:transparent}
 body{height:100%;overflow:hidden}
-#app{flex:1;min-height:0;display:flex;flex-direction:column}
+#app{flex:1;min-height:0;display:flex;flex-direction:column;position:relative;overflow:hidden} /* 3.5.30: обрізаємо перельоти вкладок усередині — документ ніколи не стає ширшим за екран */
 body{
   font-family:'Segoe UI Variable','Segoe UI',system-ui,-apple-system,sans-serif;
   color:#f4f4f8;-webkit-font-smoothing:antialiased;
@@ -46,8 +46,9 @@ button{font-family:inherit}
 /* 3.5.17: ШАПКА КОМПАКТНА (просив власник: «от самой верхушки и до
    логотипа очень много места»). Безпечна зона ОБМЕЖЕНА 38px (min()),
    рядок контенту 44px замість 48px — лого щільніше до верха. */
-#tbar{height:calc(44px + min(var(--fh-sat, env(safe-area-inset-top, 0px)), 38px));flex:none;display:flex;align-items:center;justify-content:space-between;
-  padding-top:min(var(--fh-sat, env(safe-area-inset-top, 0px)), 38px);padding-left:14px;user-select:none;-webkit-user-select:none;
+/* 3.5.30: шапка КОМПАКТНІША (просив власник: «немножечко уменьши отступы... чтобы было больше места для уроков») 44 -> 38px */
+#tbar{height:calc(38px + min(var(--fh-sat, env(safe-area-inset-top, 0px)), 38px));flex:none;display:flex;align-items:center;justify-content:space-between;
+  padding-top:min(var(--fh-sat, env(safe-area-inset-top, 0px)), 38px);padding-left:12px;user-select:none;-webkit-user-select:none;
   app-region:drag;-webkit-app-region:drag;
   border-bottom:0;background:transparent;position:relative;z-index:5}
 .tb-l{display:flex;align-items:center;gap:10px}
@@ -108,8 +109,9 @@ main::-webkit-scrollbar{width:0;height:0;display:none}
 .empty{display:flex;flex-direction:column;align-items:center;gap:10px;padding:60px 0;color:#8b8fa3;font-size:13px}
 .empty svg{opacity:.5}
 
-.card{position:relative;display:grid;grid-template-columns:46px minmax(0,1fr) auto;gap:12px;align-items:center;height:108px;
-  padding:13px 15px;border-radius:18px;margin-bottom:10px;cursor:pointer;overflow:hidden;contain:layout style;
+/* 3.5.30: картки КОМПАКТНІШІ (просив власник: «максимально маленькі рамки уроків, але щоб нічого не заїзджало») 108 -> 94px */
+.card{position:relative;display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:10px;align-items:center;height:94px;
+  padding:10px 13px;border-radius:16px;margin-bottom:8px;cursor:pointer;overflow:hidden;contain:layout style;
   /* 3.5.23 (власник: «сделай, чтобы все рамки были темнее» + «все рамки
      одного размера... чтобы всё влезало, на друг друга не налазило»):
      ОДНАКОВА темніша рамка в усіх карток і ОДНАКОВА ФІКСОВАНА висота
@@ -124,7 +126,7 @@ main::-webkit-scrollbar{width:0;height:0;display:none}
 .card:hover{transform:translateY(-2px);border-color:rgba(139,92,246,.28);box-shadow:0 10px 34px -18px rgba(99,102,241,.5)}
 .card:hover .ic{transform:scale(1.07) rotate(-2deg)}
 main.still .card{animation:none!important}
-.ic{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;color:#fff;flex:none;
+.ic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;color:#fff;flex:none;
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),0 4px 12px rgba(0,0,0,.3);transition:transform .25s ease}
 .ic svg{display:block}
 .ic.pic{padding:0;overflow:hidden}
@@ -133,7 +135,7 @@ main.still .card{animation:none!important}
 /* 3.4.7: назва уроку НІКОЛИ не переноситься на другий рядок — довга назва
   («Українська культура») лишається одним акуратним рядком по центру картки;
   чіпи ЗАРАЗ/ДАЛІ не обрізаються (flex:none), обрізається лише сама назва */
-.card h3{display:flex;align-items:center;min-width:0;font-size:15px;font-weight:700;line-height:1.25;color:#f4f4f8}
+.card h3{display:flex;align-items:center;min-width:0;gap:7px;font-size:14.5px;font-weight:700;line-height:1.25;color:#f4f4f8}
 /* 3.5.13: назва уроку більше НЕ скорочується (просив власник) —
    чесний перенос на другий рядок, як на сайті */
 .card h3 .ln{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap} /* 3.5.26: назва — ЗАВЖДИ один рядок (просив власник), довга — акуратні крапки */
@@ -142,15 +144,24 @@ main.still .card{animation:none!important}
    старый дизайн… иконка, название урока; второй рядок — время и имя
    учителя; кнопка по центру между двумя рядками»). Сітка: іконка |
    контент (назва над мета) | кнопка; кнопка вертикально по центру. */
-.meta{display:flex;align-items:center;gap:11px;margin-top:5px;flex-wrap:wrap;max-height:40px;overflow:hidden}
+.meta{display:flex;align-items:center;gap:3px 9px;margin-top:4px;flex-wrap:wrap;max-height:34px;overflow:hidden}
+/* 3.5.30: час не стискається, вчитель — акуратний ellipsis; кабінет живе в рядку назви */
+.meta .tc:first-child{flex:none}
+.meta .tc:not(:first-child){flex:1 1 auto;min-width:0}
+/* 3.5.30: КАБІНЕТ уроку — крихітна скляна плашка В РЯДКУ НАЗВИ (тиждень офлайн = треба знати клас) */
+.rm-chip{flex:none;font-size:10px;font-weight:800;line-height:1;color:#ddd6fe;
+  background:rgba(139,92,246,.18);border:1px solid rgba(139,92,246,.34);border-radius:7px;
+  padding:3px 6px;margin-left:1px;letter-spacing:.3px;white-space:nowrap}
+body[data-theme="light"] .rm-chip{color:#5b21b6;background:rgba(124,58,237,.09);border-color:rgba(124,58,237,.28)}
+body[data-theme="glass"] .rm-chip{background:rgba(139,92,246,.26);border-color:rgba(165,140,255,.46)}
 .tc{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#9aa0b4;font-weight:600;white-space:nowrap;max-width:100%;min-width:0}
 /* 3.5.23: довге ім'я вчителя акуратно обрізається крапками, не налазить на край */
 .tc span{min-width:0;overflow:hidden;text-overflow:ellipsis}
 .tc svg{opacity:.75;flex:none}
 .card,.card *{user-select:none;-webkit-user-select:none;cursor:pointer}
 
-.b-join{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:#fff;
-  border:0;border-radius:13px;padding:10px 16px;cursor:pointer;white-space:nowrap;
+.b-join{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:#fff;
+  border:0;border-radius:13px;padding:8px 12px;cursor:pointer;white-space:nowrap;
   background:linear-gradient(135deg,#8b5cf6,#6366f1);box-shadow:0 8px 22px rgba(99,102,241,.28);transition:all .16s ease}
 .b-join:hover{transform:translateY(-1px);filter:brightness(1.14);box-shadow:0 10px 26px rgba(99,102,241,.45)}
 .b-join:active{transform:scale(.97)}
@@ -172,6 +183,9 @@ main.still .card{animation:none!important}
 .next-chip{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:800;letter-spacing:1px;
   color:#fbbf24;margin-right:2px;flex:none}
 .next-chip i{background:#fbbf24}
+/* 3.5.30: чіпи ЗАРАЗ/ДАЛІ переїхали в РЯДОК НАЗВИ (просив власник: «текст далі писался в рядку з назвою предмета») — другий рядок повністю віддаємо часу/вчителю/кабінету */
+.card h3 .now-chip,.card h3 .next-chip{font-size:8.5px;letter-spacing:.6px;gap:4px;margin-left:1px}
+.card h3 .now-chip i,.card h3 .next-chip i{width:5px;height:5px}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(.85)}50%{opacity:.45;transform:scale(1.12)}}
 .card.now{border-color:rgba(52,211,153,.5);box-shadow:0 0 0 1px rgba(52,211,153,.2),0 14px 36px rgba(52,211,153,.09)}
 .card.next{border-color:rgba(251,191,36,.5);box-shadow:0 0 0 1px rgba(251,191,36,.18),0 14px 36px rgba(251,191,36,.08)}
@@ -619,7 +633,7 @@ html.android #tbar,body.android #tbar{app-region:no-drag;-webkit-app-region:no-d
 /* ---------- мобільна розкладка (телефон/планшет) ---------- */
 body.mob #app{zoom:1!important}
 body.mob .view{padding:12px 13px 12px}
-body.mob #tbar{height:calc(44px + min(var(--fh-sat, env(safe-area-inset-top, 0px)), 38px));padding-top:min(var(--fh-sat, env(safe-area-inset-top, 0px)), 38px);padding-left:12px}
+body.mob #tbar{height:calc(38px + min(var(--fh-sat, env(safe-area-inset-top, 0px)), 38px));padding-top:min(var(--fh-sat, env(safe-area-inset-top, 0px)), 38px);padding-left:12px} /* 3.5.30: 44 -> 38px — шапка компактніша */
 body.mob .tb-name{font-size:14px}
 /* кнопки днів — на ВСЮ ширину екрана, рівно 5 колонок */
 body.mob nav{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding-bottom:2px}
@@ -1411,7 +1425,8 @@ body.glass-scroll *{backdrop-filter:none!important;-webkit-backdrop-filter:none!
 body.lite-glass #bnav,body.glass-scroll #bnav,
 body.lite-glass #tbar,body.glass-scroll #tbar{
   -webkit-backdrop-filter:blur(9px) saturate(160%)!important;backdrop-filter:blur(9px) saturate(160%)!important}
-body.lite-glass[data-theme="glass"] #bnav{background:radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.20),transparent 58%),linear-gradient(180deg,rgba(52,42,100,.70),rgba(26,19,56,.78))}
+/* 3.5.30: lite-glass (слабкий GPU, без блюра) — тінт густіший, щоб текст не просвічував */
+body.lite-glass[data-theme="glass"] #bnav{background:radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.22),transparent 58%),linear-gradient(180deg,rgba(46,37,92,.86),rgba(22,16,48,.92))}
 body.lite-glass[data-theme="glass"] .card,
 body.glass-scroll[data-theme="glass"] .card{background:rgba(22,20,42,.92)}
 body.lite-glass[data-theme="glass"] #drawer,
@@ -1701,7 +1716,8 @@ body[data-theme="light"] .bn-b.on{color:#6d28d9;background:transparent;box-shado
   height:calc(104px + var(--fh-sab, env(safe-area-inset-bottom, 0px)));
   background:linear-gradient(180deg,rgba(0,0,0,0) 0%,rgba(0,0,0,.10) 46%,rgba(0,0,0,.22) 78%,rgba(0,0,0,.30) 100%)}
 body[data-theme="light"] #bnavshade{background:linear-gradient(180deg,rgba(15,23,42,0) 0%,rgba(15,23,42,.05) 50%,rgba(15,23,42,.13) 100%)}
-body[data-theme="glass"] #bnavshade{background:linear-gradient(180deg,rgba(5,3,14,0) 0%,rgba(5,3,14,.12) 50%,rgba(5,3,14,.26) 100%)}
+/* 3.5.30: Liquid Glass — затемнення під панеллю СИЛЬНІШЕ (просив власник: «в теме Liquid Glass нет затемнения, текст за панелью читается») */
+body[data-theme="glass"] #bnavshade{background:linear-gradient(180deg,rgba(5,3,14,0) 0%,rgba(5,3,14,.16) 50%,rgba(5,3,14,.34) 100%)}
 body.gate-on #bnavshade{display:none}
 
 /* — «пилюля» активної вкладки — */
@@ -1724,7 +1740,7 @@ body[data-theme="glass"] .bn-b.bn-prev{color:#ddd2ff;background:rgba(139,92,246,
 .view.vin{animation:viewFlyIn var(--fh-navdur,.34s) cubic-bezier(.22,1,.36,1) both}
 @keyframes viewFlyIn{from{opacity:0;transform:translateX(var(--fh-navdir,0px))}to{opacity:1;transform:none}}
 /* стара вкладка стає нерухомим шаром поверх і плавно виїжджає в протилежний бік */
-.view.vout{position:fixed;left:0;right:0;top:calc(44px + min(var(--fh-sat, env(safe-area-inset-top, 0px)), 38px));bottom:0;z-index:6;
+.view.vout{position:fixed;left:0;right:0;top:calc(38px + min(var(--fh-sat, env(safe-area-inset-top, 0px)), 38px));bottom:0;z-index:6;
   display:flex!important;overflow:hidden;pointer-events:none;margin:0;
   animation:viewFlyOut var(--fh-navout,.2s) cubic-bezier(.55,.06,.68,.19) both}
 @keyframes viewFlyOut{from{opacity:1;transform:none}to{opacity:0;transform:translateX(calc(var(--fh-navdir,0px) * -0.42))}}
@@ -1743,9 +1759,11 @@ body[data-theme="light"] #bnav{background:radial-gradient(120% 90% at 50% 0%,rgb
    размывалось, так же как и во время тёмной темы»). Щільність .82/.90 —
    крізь скло видно лише відтінки карток, текст НЕ просвічує. */
 /* 3.5.29: Liquid Glass — так само прозоріша (блюр 7px, тінт легший) */
-body[data-theme="glass"] #bnav{background:radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.20),transparent 58%),linear-gradient(180deg,rgba(52,42,100,.68),rgba(26,19,56,.76));
-  -webkit-backdrop-filter:blur(7px) saturate(160%);backdrop-filter:blur(7px) saturate(160%);
-  border-color:rgba(139,92,246,.36);box-shadow:0 12px 34px rgba(0,0,0,.5),0 2px 10px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.14)}
+/* 3.5.30: Liquid Glass — СПРАВЖНЄ СКЛО (просив власник: «чтобы в теме Liquid Glass был Liquid Glass»):
+   глибокий блюр 22px + густий тінт — текст за панеллю більше не читається, але картки «плають» у склі */
+body[data-theme="glass"] #bnav{background:radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.24),transparent 58%),linear-gradient(180deg,rgba(46,37,92,.80),rgba(20,14,46,.88));
+  -webkit-backdrop-filter:blur(22px) saturate(175%);backdrop-filter:blur(22px) saturate(175%);
+  border-color:rgba(160,135,255,.40);box-shadow:0 12px 34px rgba(0,0,0,.5),0 2px 10px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.16),inset 0 -1px 1px rgba(139,92,246,.18)}
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
   #bnav{background:linear-gradient(180deg,rgba(44,35,84,.90),rgba(20,15,42,.95))}
 }
@@ -1828,7 +1846,10 @@ body.mob[data-theme="glass"] #drawer,body.mob[data-theme="glass"] .us-card,
 body.mob[data-theme="glass"] .fld input,body.mob[data-theme="glass"] .adm-backdrop{
   backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 body.mob[data-theme="glass"] #tbar{background:rgba(20,16,44,.86)}
-body.mob[data-theme="glass"] #bnav{background:radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.20),transparent 58%),linear-gradient(180deg,rgba(52,42,100,.72),rgba(26,19,56,.80))}
+/* 3.5.30: на телефоні блюр вимкнено заради FPS — тому тінт панелі ГУСТІШИЙ
+   (просив власник: «в теме Liquid Glass нет затемнения, через меню видно текст»):
+   текст за склом більше не читається, вигляд — щільне темне скло */
+body.mob[data-theme="glass"] #bnav{background:radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.22),transparent 58%),linear-gradient(180deg,rgba(44,35,90,.88),rgba(19,13,44,.93))}
 body.mob[data-theme="glass"] .modal,body.mob[data-theme="glass"] .ms-card,
 body.mob[data-theme="glass"] .us-card{background:rgba(26,22,54,.96)}
 body.mob[data-theme="glass"] .mback,body.mob[data-theme="glass"] #dback,
@@ -1853,3 +1874,89 @@ body.mob .card{box-shadow:0 2px 8px rgba(0,0,0,.16)}
 #agate .ag-code-in:focus{border-color:#8b5cf6}
 #agate .ag-code-go{padding:9px 16px;border-radius:11px;border:0;background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit}
 #agate .ag-code-go:disabled{opacity:.5}
+
+/* ============================================================
+   3.5.30 — ПЕРЕМИКАЧІ з ПИЛЮЛЕЮ (просив власник: «с красивенькой
+   анимацией с рамки Додаток переезжает в рамку Браузер», «в налаш-
+   вуваннях моїх групп так же», «на всех устройствах»).
+   Підсвітка активної опції — ОКРЕМИЙ елемент .seg-pill всередині
+   контейнера перемикача; при виборі іншої опції вона ПЛАВНО ЇЗДИТЬ
+   туди з пружною iOS-кривою. JS-двигун — в кінці ui.js (fhSegTo).
+   Контейнери: .seg-z (Запуск Zoom), .adm-seg (таби адмінки),
+   .su-opts (опції груп у майстрі), #tabs (дні Пн-Пт).
+   ============================================================ */
+.seg-z,.adm-seg,.su-opts,#tabs{position:relative}
+.seg-pill{position:absolute;left:0;top:0;z-index:0;border-radius:11px;pointer-events:none;opacity:0;
+  background:linear-gradient(135deg,#8b5cf6,#6366f1);
+  box-shadow:0 6px 18px rgba(99,102,241,.38),inset 0 1px 0 rgba(255,255,255,.25),inset 0 -1px 1px rgba(30,20,80,.25);
+  transition:transform .46s cubic-bezier(.3,1.22,.35,1),width .46s cubic-bezier(.3,1.22,.35,1),height .46s cubic-bezier(.3,1.22,.35,1),opacity .2s ease;
+  will-change:transform,width,height}
+.seg-pill.pon{opacity:1}
+/* спалах-пружинка при прибутті (ґрунтовно «жива» пілюля) */
+.seg-pill.arrive{animation:segArrive .34s cubic-bezier(.3,1.4,.4,1)}
+@keyframes segArrive{0%{filter:brightness(1.22)}100%{filter:brightness(1)}}
+/* опції: фон активної кнопки малює пілюля */
+.seg-z-b.on,.adm-seg-b.on,.su-opt.on,.tab.on{background:transparent!important;background-size:100% 100%!important;box-shadow:none!important;border-color:transparent!important}
+.seg-z-b,.adm-seg-b,.su-opt,.tab{position:relative;z-index:1}
+/* опції груп у майстрі — пілюля напівпрозора, як був градієнт .on */
+.su-opts .seg-pill{border-radius:14px;background:linear-gradient(135deg,rgba(139,92,246,.42),rgba(99,102,241,.30));box-shadow:0 8px 22px rgba(99,102,241,.30),inset 0 0 0 1px rgba(129,140,248,.55)}
+/* дні Пн-Пт */
+#tabs .seg-pill{border-radius:12px}
+body[data-theme="light"] .seg-pill{background:linear-gradient(135deg,#7c3aed,#6366f1)}
+body[data-theme="glass"] .seg-pill{background:linear-gradient(135deg,rgba(139,92,246,.72),rgba(99,102,241,.66));box-shadow:0 6px 20px rgba(124,58,237,.42),inset 0 1px 0 rgba(255,255,255,.28)}
+@media (prefers-reduced-motion:reduce){.seg-pill{transition:opacity .2s ease}}
+
+/* ============================================================
+   3.5.30 — LIQUID GLASS-КНОПКА (референс власника: скляна кнопка з
+   конічним обідком, спекулярними гранями й «фізичним» натисканням).
+   Застосовується до головних кнопок: Приєднатися, Зберегти,
+   Оберіть групи, b-mini. Фіолетовеbrand-тіло + справжнє скло.
+   @property не підтримується -> обідок лишається статичним (деградація м'яка).
+   ============================================================ */
+@property --lg-a1{syntax:"<angle>";inherits:false;initial-value:-75deg}
+@property --lg-a2{syntax:"<angle>";inherits:false;initial-value:-45deg}
+.b-join,.b-save,.b-groups-m,.b-mini{
+  --lg-bw:1.5px;
+  background:linear-gradient(-75deg,rgba(139,92,246,.30),rgba(139,92,246,.52) 50%,rgba(99,102,241,.30));
+  -webkit-backdrop-filter:blur(6px) saturate(160%);backdrop-filter:blur(6px) saturate(160%);
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,.30),
+    inset 0 -1px 1px rgba(255,255,255,.12),
+    inset 0 0 0.1em 0.25em rgba(255,255,255,.08),
+    0 0.25em 0.125em -0.125em rgba(0,0,0,.30),
+    0 8px 22px rgba(99,102,241,.30);
+  transition:all var(--lg-ht,.28s) cubic-bezier(.25,1,.5,1)}
+/* конічний обідок, що КРУТИТЬСЯ при наведенні (::before вільний) */
+.b-join::before,.b-save::before,.b-groups-m::before,.b-mini::before{content:'';position:absolute;z-index:0;inset:0;
+  border-radius:inherit;width:calc(100% + var(--lg-bw));height:calc(100% + var(--lg-bw));
+  top:calc(0% - var(--lg-bw)/2);left:calc(0% - var(--lg-bw)/2);padding:var(--lg-bw);box-sizing:border-box;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,.28)),
+    conic-gradient(from var(--lg-a1) at 50% 50%,rgba(255,255,255,.65),rgba(255,255,255,.08) 5% 40%,rgba(255,255,255,.6) 50%,rgba(255,255,255,.08) 60% 95%,rgba(255,255,255,.65));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;
+  transition:all .28s cubic-bezier(.25,1,.5,1),--lg-a1 .5s ease;pointer-events:none}
+.b-join:hover::before,.b-save:hover::before,.b-groups-m:hover::before,.b-mini:hover::before{--lg-a1:-125deg}
+/* внутрішній відблик, що перетікає (як у референса) */
+.b-join span::after,.b-save span::after,.b-groups-m span::after{content:'';display:block;position:absolute;
+  width:calc(100% - var(--lg-bw,1.5px));height:calc(100% - var(--lg-bw,1.5px));
+  top:calc(0% + var(--lg-bw,1.5px)/2);left:calc(0% + var(--lg-bw,1.5px)/2);box-sizing:border-box;border-radius:inherit;
+  background:linear-gradient(var(--lg-a2),rgba(255,255,255,0) 0%,rgba(255,255,255,.5) 40% 50%,rgba(255,255,255,0) 55%);
+  z-index:3;mix-blend-mode:screen;pointer-events:none;background-size:200% 200%;background-position:0% 50%;background-repeat:no-repeat;
+  transition:background-position calc(var(--lg-ht,.28s)*1.25) cubic-bezier(.25,1,.5,1),--lg-a2 calc(var(--lg-ht,.28s)*1.25) cubic-bezier(.25,1,.5,1)}
+.b-join:hover span::after,.b-save:hover span::after,.b-groups-m:hover span::after{background-position:25% 50%}
+.b-join:active span::after,.b-save:active span::after,.b-groups-m:active span::after{background-position:50% 15%;--lg-a2:-15deg}
+/* «фізичне» натискання: кнопка притоплюється, тінь стискається */
+.b-join:hover{transform:translateY(-1px);filter:brightness(1.10)}
+.b-join:active,.b-save:active,.b-groups-m:active,.b-mini:active{transform:scale(.965)}
+.b-join:active,.b-save:active,.b-groups-m:active{box-shadow:
+    inset 0 1px 1px rgba(255,255,255,.28),
+    inset 0 -1px 1px rgba(255,255,255,.10),
+    0 0.15em 0.05em -0.1em rgba(0,0,0,.30),
+    0 0 0.05em 0.1em inset rgba(255,255,255,.16),
+    0 4px 12px rgba(99,102,241,.26)}
+body[data-theme="light"] .b-join,body[data-theme="light"] .b-save,body[data-theme="light"] .b-groups-m,body[data-theme="light"] .b-mini{
+  background:linear-gradient(-75deg,rgba(255,255,255,.42),rgba(255,255,255,.66) 50%,rgba(255,255,255,.42))}
+@media (prefers-reduced-motion:reduce){
+  .b-join::before,.b-save::before,.b-groups-m::before,.b-mini::before{transition:none}
+}

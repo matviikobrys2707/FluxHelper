@@ -236,7 +236,7 @@ function validS(x) {
 })();
 
 // ---------------- версія + перший запуск ----------------
-const APP_VER = '3.5.29';                  // версія X.Y.Z — з version.h (див. main.cpp)
+const APP_VER = '3.5.30';                  // версія X.Y.Z — з version.h (див. main.cpp)
 /* 3.5.5: КАНАЛ ЗБІРКИ — 'beta' або 'release'. Бета-збірки підписують версію
    словом «beta» скрізь у інтерфейсі (профіль, «Про програму», вікно оновлення),
    релізні показують чистий номер. Перед релізом змінюємо тут і перезбираємо. */
@@ -441,6 +441,42 @@ function resolveLessons() {
       return { name: name, key: key, t: String(it.t || ''), e: String(it.e || ''), icon: icon, url: url, teacher: teacher, split: split, lbls: lbls };
     });
   });
+}
+
+/* ============================================================
+   3.5.30 — КАБІНЕТИ УРОКІВ (просив власник): ключ = normSubj(name);
+   '310' — весь клас; ['104','313'] — [група 1, група 2];
+   {mon:'310',wed:'315'} — по днях. Фізкультура/мистецтво — без кабінету.
+   ============================================================ */
+const FH_ROOMS = {
+  'зарубіжна література': '314',
+  'основи медіаграмотності': '108',
+  'англійська мова': ['104', '313'],
+  'українська мова': ['215', '216'],
+  'німецька мова': ['212', '309'],
+  'інформатика': ['103', '312'],
+  'трудове навчання': ['309', '106'],   /* г1 = Дівчата (309), г2 = Хлопці (106) */
+  'біологія': '111',
+  'історія україни': '316',
+  'географія': '316',
+  'хімія': '314',
+  'громадянська освіта': '112',
+  'фізика': '315',
+  'українська література': '216',
+  'алгебра': { mon: '310', wed: '315', thu: '310' },
+  'геометрія': { tue: '111', fri: '315' }
+};
+function roomFor(dk, l) {
+  try {
+    const r = FH_ROOMS[l.key];
+    if (!r) return null;
+    if (typeof r === 'string') return r;
+    if (Array.isArray(r)) {
+      const gi = (S && (S[l.key] === 1 || S[l.key] === 2)) ? S[l.key] : 1;
+      return gi === 2 ? r[1] : r[0];
+    }
+    return r[dk] || null;
+  } catch (e) { return null; }
 }
 
 // ---------------- хост (C++ вікно / Android) ----------------
@@ -962,17 +998,21 @@ function render(anim) {
        ЗАРАЗ/ДАЛІ переїхали в рядок мета — назві дістається ВСЯ ширина картки,
        довгі назви («Українська культура») лишаються одним красивим рядком */
     const h3 = el('h3'); const lnS = el('span', 'ln'); lnS.textContent = l.name;
-    /* 3.5.11: чіп ЗАРАЗ/ДАЛІ — у РЯДОК НАЗВИ; другий рядок повністю
-       віддаємо часу та імені вчителя (видно максимально). */
+    /* 3.5.30: чіпи ЗАРАЗ/ДАЛІ — У РЯДКУ НАЗВИ (1-в-1 з телефоном) */
     h3.appendChild(lnS);
+    if (i === nowIdx) h3.appendChild(el('span', 'now-chip', '<i></i>ЗАРАЗ'));
+    if (i === nextIdx) h3.appendChild(el('span', 'next-chip', '<i></i>ДАЛІ'));
+    /* 3.5.30: КАБІНЕТ — плашка з номером класу В РЯДКУ НАЗВИ (1-в-1 з телефоном) */
+    try {
+      const rm = roomFor(DAYDEFS[sel][0], l);
+      if (rm) h3.appendChild(el('span', 'rm-chip', rm));
+    } catch (eRm) {}
     mid.appendChild(h3);
 
     const meta = el('div', 'meta');
-    if (i === nowIdx) meta.appendChild(el('span', 'now-chip', '<i></i>ЗАРАЗ'));
-    if (i === nextIdx) meta.appendChild(el('span', 'next-chip', '<i></i>ДАЛІ'));
     const t1 = el('span', 'tc');
     t1.innerHTML = icon('clock', 12);
-    const tv = el('span'); tv.textContent = l.t + ' – ' + l.e;
+    const tv = el('span'); tv.textContent = l.t + '\u2013' + l.e;
     t1.appendChild(tv);
     meta.appendChild(t1);
     if (l.teacher) {
@@ -2672,6 +2712,12 @@ function updOpen() { return UPD.avail; }
 // пріоритет. Третій елемент пункта ('pc'/'android') — показувати лише
 // на одній платформі; без нього — на обох.
 const WHATS_NEW = {
+  '3.5.30': [
+    ['/', 'КАБІНЕТИ уроків на картках: у тиждень офлайн видно номер класу (для предметів із групами — кабінет ТВОЄЇ групи)', 'pc'],
+    ['/', 'Перемикачі з анімацією: «Додаток ↔ Браузер», групи, таби адмінки і дні тижня — підсвітка плавно ЇЗДИТЬ між опціями', 'pc'],
+    ['/', 'Кнопки в стилі Liquid Glass: скляне тіло, обідок, що крутиться при наведенні, «фізичне» натискання', 'pc'],
+    ['/', 'ЗАРАЗ/ДАЛІ переїхали в рядок назви уроку — час і вчитель більше ніколи не обрізаються', 'pc']
+  ],
   '3.5.29': [
     ['/', 'Тему Liquid Glass повністю перероблено за зразком iOS 26: живе прозоре скло, спекулярні відблиски на гранях, світні капсульні кнопки — усі кнопки, картки й модалки тепер справжнє «рідке скло»', 'pc'],
     ['✦', 'Функцію «Автоматичний вхід у Zoom» видалено з програми ПОВНІСТЮ — ні картки в налаштуваннях, ні фонового таймера; більше нічого не відкривається саме', 'pc'],
@@ -5442,3 +5488,59 @@ try { init(); } catch (err) {
   try { bootLoop(); } catch (e2) { hideBoot(); }
   document.body.innerHTML = '<p style="padding:30px;color:#fff">Помилка інтерфейсу: ' + err.message + '</p>';
 }
+
+/* ============================================================
+   3.5.30 — ДВИГУН ПЕРЕМИКАЧІВ (пілюля їздить між опціями) — 1-в-1
+   з телефоном. Контейнери: .seg-z / .adm-seg / .su-opts / #tabs.
+   ============================================================ */
+(function () {
+  var SEG_SEL = '.seg-z,.adm-seg,.su-opts,#tabs';
+  function pillFor(cont) {
+    var p = cont.__segPill;
+    if (!p || !p.isConnected) {
+      p = document.createElement('i');
+      p.className = 'seg-pill';
+      cont.__segPill = p;
+      cont.insertBefore(p, cont.firstChild);
+    }
+    return p;
+  }
+  function segTo(cont, instant) {
+    if (!cont || !cont.isConnected) return;
+    var on = cont.querySelector('.seg-z-b.on,.adm-seg-b.on,.su-opt.on,.tab.on');
+    var p = pillFor(cont);
+    if (!on) { p.classList.remove('pon'); return; }
+    p.classList.add('pon');
+    if (instant) p.style.transition = 'none';
+    p.style.width = on.offsetWidth + 'px';
+    p.style.height = on.offsetHeight + 'px';
+    p.style.transform = 'translate(' + on.offsetLeft + 'px,' + on.offsetTop + 'px)';
+    if (instant) { void p.offsetWidth; p.style.transition = ''; }
+    else { p.classList.remove('arrive'); void p.offsetWidth; p.classList.add('arrive'); }
+  }
+  window.fhSegTo = segTo;
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    var b = (t && t.closest) ? t.closest('.seg-z-b,.adm-seg-b,.su-opt,.tab') : null;
+    if (!b) return;
+    var cont = b.parentElement;
+    if (!cont || !(cont.matches && cont.matches(SEG_SEL))) return;
+    requestAnimationFrame(function () { try { segTo(cont, false); } catch (e1) {} });
+  }, true);
+  try {
+    new MutationObserver(function () {
+      var all = document.querySelectorAll(SEG_SEL);
+      for (var i = 0; i < all.length; i++) { try { segTo(all[i], true); } catch (e2) {} }
+    }).observe(document.body, { childList: true, subtree: true });
+  } catch (eMO) {}
+  addEventListener('resize', function () {
+    var all = document.querySelectorAll(SEG_SEL);
+    for (var i = 0; i < all.length; i++) { try { segTo(all[i], true); } catch (e3) {} }
+  });
+  function syncAll() {
+    var all = document.querySelectorAll(SEG_SEL);
+    for (var i = 0; i < all.length; i++) { try { segTo(all[i], true); } catch (e4) {} }
+  }
+  setTimeout(syncAll, 700);
+  setTimeout(syncAll, 1800);
+})();
