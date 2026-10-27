@@ -99,10 +99,14 @@
 
 "use strict";
 const LOGO = "data:image/png;base64,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";
-try{window.__fhDevInfo=null;}catch(e){window.__fhDevInfo=null;}
-/* налаштування груп з попереднього запуску підставляє main.cpp;
-   у сирому файлі (браузер/тести) плейсхолдер не визначений -> null */
-try{window.__FH_SETTINGS=null;}catch(e){window.__FH_SETTINGS=null;}
+try{window.__fhDevInfo=__DEVINFO_JSON__;}catch(e){window.__fhDevInfo=null;}
+/* 3.5.34 ФІКС «ВИКИДАЄ З АКАУНТА КОЖНОГО ПЕРЕЗАПУСКУ» + «майстер груп щоразу»:
+   у 3.5.33 збірка exe замінила весь вбудований js, і плейсхолдери
+   __SETTINGS_JSON__ / __DEVINFO_JSON__ ЗНИКЛИ з коду — хост більше не міг
+   підставити settings.json (групи) і профіль, тому ПК стартував «порожнім».
+   Тут канали хоста ВІДНОВЛЕНІ 1-в-1 як у 3.4.x: у сирому файлі (браузер/тести)
+   плейсхолдер не визначений -> ReferenceError -> catch -> null. */
+try{window.__FH_SETTINGS=__SETTINGS_JSON__;}catch(e){window.__FH_SETTINGS=null;}
 const SETTINGS0 = window.__FH_SETTINGS;
 
 // ---------------- Firebase Realtime Database ----------------
@@ -236,7 +240,7 @@ function validS(x) {
 })();
 
 // ---------------- версія + перший запуск ----------------
-const APP_VER = '3.5.33';                  // версія X.Y.Z — з version.h (див. main.cpp)
+const APP_VER = '3.5.34';                  // версія X.Y.Z — з version.h (див. main.cpp)
 /* 3.5.5: КАНАЛ ЗБІРКИ — 'beta' або 'release'. Бета-збірки підписують версію
    словом «beta» скрізь у інтерфейсі (профіль, «Про програму», вікно оновлення),
    релізні показують чистий номер. Перед релізом змінюємо тут і перезбираємо. */
@@ -2526,6 +2530,10 @@ function d1Tick() {
   if (window.FH_WEB) {
     if (tickBusy) { d1TickSched(); return; }
     tickBusy = true;
+    /* 3.5.34: на сайті налаштування акаунта перевіряються тим самим тіком
+       (через один — apiGetRow/бекенд важчий за мікроревізію) */
+    tickN++;
+    if (ACC.user && tickN % 2 === 0) { try { syncStsCheck(userKey(ACC.user)); } catch (eSSW) {} }
     d1Snap(function (j) {
       tickBusy = false;
       if (j) { d1NetUp(); try { d1Apply(JSON.parse(j)); } catch (ePW) {} }
@@ -2536,8 +2544,12 @@ function d1Tick() {
   }
   if (tickBusy) { d1TickSched(); return; }
   tickN++;
-  if (ACC.user && tickN % 2 === 0) { try { syncStsCheck(userKey(ACC.user)); } catch (eSS) {} }
-  const doChk = (tickN % 10 === 4);   /* чексум-страховка ~раз на 10 хв */
+  /* 3.5.34: налаштування акаунта (тема, групи, перемикачі) між пристроями —
+     теж ~5 с: перевірка sts (~10 байт) Кожний тік застосунка, на сайті — через один. */
+  if (ACC.user && (window.FH_WEB ? (tickN % 2 === 0) : true)) { try { syncStsCheck(userKey(ACC.user)); } catch (eSS) {} }
+  /* 3.5.34 РЕАЛЬНИЙ ЧАС (~5 с): тік тепер кожні 5 с поки застосунок на екрані
+     (у фоні — раз/хв). Мікрозапит ~30 байт; чексум-страховка рідшає — раз/10 хв. */
+  const doChk = (tickN % 120 === 4);   /* чексум-страховка ~раз на 10 хв */
   tickBusy = true;
   cfExec("SELECT key, json_extract(val,'$.rev') AS rev FROM _meta WHERE key IN ('snap','upd')", [], function (rows) {
     tickBusy = false;
@@ -2586,7 +2598,9 @@ function d1Tick() {
 }
 function d1TickSched() {
   clearTimeout(tickT);
-  tickT = setTimeout(d1Tick, document.hidden ? 300000 : 60000);
+  /* 3.5.34: зміни на сервері долітають максимум за ~5 с (власник: «спустя
+     секунд пять, ну максимум»). Веб — 8 с (знімок через бекенд — трохи важчий). */
+  tickT = setTimeout(d1Tick, document.hidden ? 60000 : (window.FH_WEB ? 8000 : 5000));
 }
 function d1TickStart() { tickN = 0; d1TickSched(); }
 function d1TickNow() { clearTimeout(tickT); tickT = setTimeout(d1Tick, 60); }
@@ -2667,12 +2681,17 @@ function d1UpdateCheck() {
     d1UpdLast = String(u.latest);
     let notes = u.notes;
     try { notes = (typeof notes === 'string') ? JSON.parse(notes) : notes; } catch (eN) { notes = []; }
+    /* 3.5.34 ФІКС «версія оновлення 30501 / оновлення нижче поточної»:
+       канал, у якому знайдено версію, ЇДЕ ДАЛІ в updCheck (раніше губився —
+       завантажувач шукав файл спершу в release і брав кореневий
+       FluxHelper.apk|exe сайту = стабільний 3.5.1, versionCode 30501). */
     updFromDb({ latest: u.latest, notes: Array.isArray(notes) ? notes : [],
-                apk_md5: u.apk_md5, exe_md5: u.exe_md5 });
+                apk_md5: u.apk_md5, exe_md5: u.exe_md5,
+                _pref: (u.channel === 'beta' || u.id === 2) ? 'versions/beta/' : 'versions/release/' });
   };
   if (window.FH_WEB) {
     const pick = function (j, pref) {
-      if (j && j.latest) { j._pref = pref; updFromDb({ latest: String(j.latest), notes: Array.isArray(j.notes) ? j.notes : [] }); }
+      if (j && j.latest) { j._pref = pref; updFromDb({ latest: String(j.latest), notes: Array.isArray(j.notes) ? j.notes : [], _pref: pref }); }
     };
     const done = function () {
       fetch('https://fluxhelper.pages.dev/versions/release/latest.json?cb=' + Date.now(), { cache: 'no-store' })
@@ -2829,6 +2848,15 @@ function updOpen() { return UPD.avail; }
 // пріоритет. Третій елемент пункта ('pc'/'android') — показувати лише
 // на одній платформі; без нього — на обох.
 const WHATS_NEW = {
+  '3.5.34': [
+    ['✦', 'ВИПРАВЛЕНО ВХІД: програма більше не вимагає авторизуватися і вибирати групи після кожного перезапуску — сесія зберігається і відновлюється сама (дефект зборки 3.5.33)', '/'],
+    ['✦', 'ВИПРАВЛЕНО ОНОВЛЕННЯ НА ТЕЛЕФОНІ: «версія оновлення 30501 нижча за поточну» — бета-версії тепер завантажуються з правильного каналу versions/beta, а не зі стабільного файлу сайту', '/'],
+    ['✦', 'LIQUID GLASS ВЕЗДЕ ОДНАКОВА: телефон/сайт/ПК — ті самі кольори, обідок, блик і скло (як у сніпеті-референсі); слабкі пристрої — полегшений режим автоматично', '/'],
+    ['✦', 'ФІКС «все поїхало» на ПК: верхні вкладки (Розклад/Налаштування/Адмін) знову по центру, тости внизу на місці, скло не ламає розкладку', '/'],
+    ['/', 'Анімації на ВСІХ версіях: пілюля-рамка плавно перелітає між групами, вкладками Розклад/Налаштування, перемикачами Додаток/Браузер — на ПК так само, як на телефоні; повторний клік по активній вкладці — без спалаху', '/'],
+    ['/', 'СИНХРОНІЗАЦІЯ В РЕАЛЬНОМУ ЧАСІ: зміни (розклад, тема, групи) долітають на інші пристрої за ~5 секунд — лічильник ревізій на сервері, повне завантаження тільки коли дані справді змінилися', '/'],
+    ['/', 'Програма після оновлення лишається на тому ж місці — ярлик і папка не зсуваються', '/'],
+  ],
   '3.5.33': [
     ['✦', 'РОЗУМНА СИНХРОНІЗАЦІЯ: програма більше не опитує базу «про запас» — один мікрозапит (~30 байт) раз на хвилину, а повний запит тільки коли розклад чи дані РЕАЛЬНО змінилися на сервері. Трафіку — у сотні разів менше', '/'],
     ['/', 'Розклад тепер приходить ЛИШЕ з Cloudflare (D1): звернень до Firebase за даними — нуль (ні розклад, ні предмети, ні вчителі, ні оновлення)', '/'],
@@ -3108,11 +3136,14 @@ function updCheck(latest, pref, md5) {
   if (UPD.avail || UPD.pending === latest) return;
   UPD.pending = latest;
   // 2.3.9: існування папки версії перевіряємо HEAD-запитом (тіло не качаємо).
-  // 3.4.4: канал беремо з fetchLatest (release -> beta); якщо невідомий —
-  // пробуємо обидва, щоб бета-оновлення доходило навіть через Firebase-фолбек.
+  // 3.4.4: канал беремо з fetchLatest / d1UpdateCheck; якщо невідомий —
+  // 3.5.34 ФІКС «оновлення нижче поточної (30501)»: для бета-акаунтів СПЕРШУ
+  // пробуємо beta (раніше першим ішов release, і кореневий файл сайту
+  // = стабільна 3.5.1 «перемагав» HEAD-перевірку, а завантажувач потім
+  // скачував саме його). Звичайні акаунти — як і раніше, тільки release.
   const heads = (pref && String(pref).indexOf('versions/') === 0)
     ? [String(pref)]
-    : ['versions/release/', 'versions/beta/'];
+    : (betaAllowed() ? ['versions/beta/', 'versions/release/'] : ['versions/release/']);
   /* 3.4.5: бета-канал — ЛИШЕ адмінам із перемикачем; звичайні акаунти і
      без входу — тільки релізні версії */
   const heads2 = betaAllowed() ? heads : heads.filter(function (p) { return String(p).indexOf('versions/beta/') !== 0; });
@@ -3139,8 +3170,10 @@ function updFromDb(u) {
       if (sk7 && sk7.ver === latest) { revealNow(); return; }
     } catch (e) {}
     UPD.test = false;
-    /* 3.4.5: exe_md5 з Firebase-фолбека теж іде в хост */
-    updCheck(latest, undefined, u.exe_md5);
+    /* 3.4.5: exe_md5 з Firebase-фолбека теж іде в хост; 3.5.34: канал (_pref)
+       більше НЕ губиться — інакше завантажувач шукав файл у release і
+       встановлював стабільну версію поверх бети (30501 < поточної) */
+    updCheck(latest, (u && u._pref) || undefined, u.exe_md5);
     return;
   }
   // ТЕСТОВЕ оновлення (режим розробника): update/test = {latest, notes[], tid}.
@@ -5222,6 +5255,20 @@ function init() {
   }
   // 3.3.1: кнопки «Розробника» (devRef/devNotif) знесено разом із вкладкою
   // кінець 2.7.2 хуків
+  /* 3.5.34 ФІКС «кожен перезапуск = вхід знову»: канал хоста
+     __AUTH_JSON__ (Credential Manager -> exe підставляє профіль при збірці
+     ui.html) ЗНИК у 3.5.33 разом із перезаписом усього вбудованого js.
+     Відновлено 1-в-1 як у 3.4.x: у браузері/на сайті ідентифікатор не
+     визначений -> ReferenceError -> catch -> null (не заважає). */
+  try {
+    const AH = __AUTH_JSON__;
+    if (AH && AH.sub && !ACC.user) {
+      const pA = { sub: String(AH.sub), name: String(AH.name || 'Користувач'), email: String(AH.email || ''), pic: String(AH.pic || '') };
+      if (AH.fid) pA.fid = String(AH.fid);
+      if (AH.tok) pA.tok = String(AH.tok);
+      authAccept(pA, true);   /* сесія вже в Credential Manager — fromHost */
+    }
+  } catch (eAH) {}
   // 2.7.6: акаунт із settings.json (хост підставляє після повернення зі сторінки
   // Google) — localStorage читається далі, вхід продовжується без перелогіну
   try {
@@ -5235,7 +5282,8 @@ function init() {
   if (!ANDROID) { try { localStorage.removeItem('fh_user'); } catch (ePc) {} }   // 3.4.0: сліди старих версій
   accBoot();
   // 2.7.6: помилка останнього входу — ПІСЛЯ accBoot (gateStart стирає agStat)
-  try { const AERR = ""; if (AERR) agFail(String(AERR)); } catch (e) {}
+  /* 3.5.34: канал хоста __AUTH_ERR__ відновлено (текст останньої помилки входу) */
+  try { const AERR = "__AUTH_ERR__"; if (AERR) agFail(String(AERR)); } catch (e) {}
   // вкладки в центрі титульної панелі
   const sg1 = byId('segSched'); if (sg1) sg1.onclick = function () { showMain(); };
   const sg2 = byId('segSetup'); if (sg2) sg2.onclick = function () { showSetup(); };
@@ -5648,7 +5696,9 @@ try { init(); } catch (err) {
       _ug.parentNode.insertBefore(_pn, _ug);
     }
   } catch (eUn) {}
-  var SEG_SEL = '.seg-z,.adm-seg,.su-opts,#tabs';
+  /* 3.5.34: + .tb-seg — верхні вкладки ПК (Розклад/Налаштування/Адмін) тепер
+     з такою самою їздячою пілюлею, як на телефоні (просив власник) */
+  var SEG_SEL = '.seg-z,.adm-seg,.su-opts,#tabs,.tb-seg';
   function pillFor(cont) {
     var p = cont.__segPill;
     if (!p || !p.isConnected) {
@@ -5659,33 +5709,63 @@ try { init(); } catch (err) {
     }
     return p;
   }
-  function segTo(cont, instant) {
+  function segTo(cont, instant, from) {
     if (!cont || !cont.isConnected) return;
     var on = cont.querySelector('.seg-z-b.on,.adm-seg-b.on,.su-opt.on,.tab.on');
+    if (!on && cont.classList && cont.classList.contains('tb-seg')) on = cont.querySelector('button.on');
     var p = pillFor(cont);
     if (!on) { p.classList.remove('pon'); return; }
     p.classList.add('pon');
+    /* 3.5.34 FLIP: клік запам'ятовує СТАРУ позицію пілюлі ще ДО перемикання
+       .on (фаза capture), тож навіть якщо спостерігач мутацій встигне зробити
+       миттєву пересинхронізацію — пілюля спершу миттєво стає на стару опцію
+       і ДАЛІ ПЛАВНО ЇДЕ до нової. Політ більше ніщо не з'їдає. */
+    if (!instant && from) {
+      p.style.transition = 'none';
+      p.style.width = from.w + 'px';
+      p.style.height = from.h + 'px';
+      p.style.transform = 'translate(' + from.x + 'px,' + from.y + 'px)';
+      void p.offsetWidth;
+      p.style.transition = '';
+    }
     if (instant) p.style.transition = 'none';
     p.style.width = on.offsetWidth + 'px';
     p.style.height = on.offsetHeight + 'px';
     p.style.transform = 'translate(' + on.offsetLeft + 'px,' + on.offsetTop + 'px)';
+    p.__x = on.offsetLeft; p.__y = on.offsetTop;
     if (instant) { void p.offsetWidth; p.style.transition = ''; }
-    else { p.classList.remove('arrive'); void p.offsetWidth; p.classList.add('arrive'); }
+    else {
+      /* 3.5.34: позначка «пілюля летить» — спостерігач мутацій 600 мс НЕ робить
+         миттєву пересинхронізацію поверх анімації */
+      p.__flyAt = Date.now();
+      p.classList.remove('arrive'); void p.offsetWidth; p.classList.add('arrive');
+    }
   }
   window.fhSegTo = segTo;
   document.addEventListener('click', function (e) {
     var t = e.target;
-    var b = (t && t.closest) ? t.closest('.seg-z-b,.adm-seg-b,.su-opt,.tab') : null;
+    var b = (t && t.closest) ? t.closest('.seg-z-b,.adm-seg-b,.su-opt,.tab,.tb-seg button') : null;
     if (!b) return;
     if (b.classList.contains('on')) return;   /* 3.5.32: активна опція — без спалаху пілюлі */
     var cont = b.parentElement;
     if (!cont || !(cont.matches && cont.matches(SEG_SEL))) return;
-    requestAnimationFrame(function () { try { segTo(cont, false); } catch (e1) {} });
+    /* 3.5.34: стара позиція пілюлі знімається ОДРАЗУ (capture — до будь-яких
+       змін .on) — звідси пілюля й почне політ */
+    var p0 = cont.__segPill;
+    var from = (p0 && p0.isConnected && p0.classList.contains('pon') && typeof p0.__x === 'number')
+      ? { x: p0.__x, y: p0.__y, w: p0.offsetWidth, h: p0.offsetHeight } : null;
+    requestAnimationFrame(function () { try { segTo(cont, false, from); } catch (e1) {} });
   }, true);
   try {
     new MutationObserver(function () {
       var all = document.querySelectorAll(SEG_SEL);
-      for (var i = 0; i < all.length; i++) { try { segTo(all[i], true); } catch (e2) {} }
+      for (var i = 0; i < all.length; i++) {
+        try {
+          var _p = all[i].__segPill;
+          if (_p && _p.__flyAt && Date.now() - _p.__flyAt < 600) continue;   /* 3.5.34: політ триває */
+          segTo(all[i], true);
+        } catch (e2) {}
+      }
     }).observe(document.body, { childList: true, subtree: true });
   } catch (eMO) {}
   addEventListener('resize', function () {

@@ -262,7 +262,7 @@ function validS(x) {
 // вічно вважав себе старішим. Тепер версію підставляє build.sh з манифеста
 // (2.4.1 -> versionName), а ПІСЛЯ завантаження Java-міст AndroidHost.ver()
 // віддає СПРАВЖНЮ версію встановленого пакета (PackageManager) — найнадійніше.
-let APP_VER = '3.5.33';              // X.Y.Z — підставляється при збірці з манифеста
+let APP_VER = '3.5.34';              // X.Y.Z — підставляється при збірці з манифеста
 try {
   if (window.AndroidHost && AndroidHost.ver) {
     const jv = AndroidHost.ver();
@@ -1774,6 +1774,10 @@ function d1Tick() {
   if (window.FH_WEB) {
     if (tickBusy) { d1TickSched(); return; }
     tickBusy = true;
+    /* 3.5.34: на сайті налаштування акаунта перевіряються тим самим тіком
+       (через один — apiGetRow/бекенд важчий за мікроревізію) */
+    tickN++;
+    if (ACC.user && tickN % 2 === 0) { try { syncStsCheck(userKey(ACC.user)); } catch (eSSW) {} }
     d1Snap(function (j) {
       tickBusy = false;
       if (j) { d1NetUp(); try { d1Apply(JSON.parse(j)); } catch (ePW) {} }
@@ -1784,8 +1788,12 @@ function d1Tick() {
   }
   if (tickBusy) { d1TickSched(); return; }
   tickN++;
-  if (ACC.user && tickN % 2 === 0) { try { syncStsCheck(userKey(ACC.user)); } catch (eSS) {} }
-  const doChk = (tickN % 10 === 4);   /* чексум-страховка ~раз на 10 хв */
+  /* 3.5.34: налаштування акаунта (тема, групи, перемикачі) між пристроями —
+     теж ~5 с: перевірка sts (~10 байт) Кожний тік застосунка, на сайті — через один. */
+  if (ACC.user && (window.FH_WEB ? (tickN % 2 === 0) : true)) { try { syncStsCheck(userKey(ACC.user)); } catch (eSS) {} }
+  /* 3.5.34 РЕАЛЬНИЙ ЧАС (~5 с): тік тепер кожні 5 с поки застосунок на екрані
+     (у фоні — раз/хв). Мікрозапит ~30 байт; чексум-страховка рідшає — раз/10 хв. */
+  const doChk = (tickN % 120 === 4);   /* чексум-страховка ~раз на 10 хв */
   tickBusy = true;
   cfExec("SELECT key, json_extract(val,'$.rev') AS rev FROM _meta WHERE key IN ('snap','upd')", [], function (rows) {
     tickBusy = false;
@@ -1834,7 +1842,9 @@ function d1Tick() {
 }
 function d1TickSched() {
   clearTimeout(tickT);
-  tickT = setTimeout(d1Tick, document.hidden ? 300000 : 60000);
+  /* 3.5.34: зміни на сервері долітають максимум за ~5 с (власник: «спустя
+     секунд пять, ну максимум»). Веб — 8 с (знімок через бекенд — трохи важчий). */
+  tickT = setTimeout(d1Tick, document.hidden ? 60000 : (window.FH_WEB ? 8000 : 5000));
 }
 function d1TickStart() { tickN = 0; d1TickSched(); }
 function d1TickNow() { clearTimeout(tickT); tickT = setTimeout(d1Tick, 60); }
@@ -1915,12 +1925,17 @@ function d1UpdateCheck() {
     d1UpdLast = String(u.latest);
     let notes = u.notes;
     try { notes = (typeof notes === 'string') ? JSON.parse(notes) : notes; } catch (eN) { notes = []; }
+    /* 3.5.34 ФІКС «версія оновлення 30501 / оновлення нижче поточної»:
+       канал, у якому знайдено версію, ЇДЕ ДАЛІ в updCheck (раніше губився —
+       завантажувач шукав файл спершу в release і брав кореневий
+       FluxHelper.apk сайту = стабільна 3.5.1, versionCode 30501). */
     updFromDb({ latest: u.latest, notes: Array.isArray(notes) ? notes : [],
-                apk_md5: u.apk_md5, exe_md5: u.exe_md5 });
+                apk_md5: u.apk_md5, exe_md5: u.exe_md5,
+                _pref: (u.channel === 'beta' || u.id === 2) ? 'versions/beta/' : 'versions/release/' });
   };
   if (window.FH_WEB) {
     const pick = function (j, pref) {
-      if (j && j.latest) { j._pref = pref; updFromDb({ latest: String(j.latest), notes: Array.isArray(j.notes) ? j.notes : [] }); }
+      if (j && j.latest) { j._pref = pref; updFromDb({ latest: String(j.latest), notes: Array.isArray(j.notes) ? j.notes : [], _pref: pref }); }
     };
     const done = function () {
       fetch('https://fluxhelper.pages.dev/versions/release/latest.json?cb=' + Date.now(), { cache: 'no-store' })
@@ -2037,6 +2052,15 @@ function parseNotes(txt) {
 // пріоритет. Третій елемент пункта ('pc'/'android') — показувати лише
 // на одній платформі; без нього — на обох.
 const WHATS_NEW = {
+  '3.5.34': [
+    ['✦', 'ВИПРАВЛЕНО ВХІД: програма більше не вимагає авторизуватися і вибирати групи після кожного перезапуску — сесія зберігається і відновлюється сама (дефект зборки 3.5.33)', '/'],
+    ['✦', 'ВИПРАВЛЕНО ОНОВЛЕННЯ НА ТЕЛЕФОНІ: «версія оновлення 30501 нижча за поточну» — бета-версії тепер завантажуються з правильного каналу versions/beta, а не зі стабільного файлу сайту', '/'],
+    ['✦', 'LIQUID GLASS ВЕЗДЕ ОДНАКОВА: телефон/сайт/ПК — ті самі кольори, обідок, блик і скло (як у сніпеті-референсі); слабкі пристрої — полегшений режим автоматично', '/'],
+    ['✦', 'ФІКС «все поїхало» на ПК: верхні вкладки (Розклад/Налаштування/Адмін) знову по центру, тости внизу на місці, скло не ламає розкладку', '/'],
+    ['/', 'Анімації на ВСІХ версіях: пілюля-рамка плавно перелітає між групами, вкладками Розклад/Налаштування, перемикачами Додаток/Браузер — на ПК так само, як на телефоні; повторний клік по активній вкладці — без спалаху', '/'],
+    ['/', 'СИНХРОНІЗАЦІЯ В РЕАЛЬНОМУ ЧАСІ: зміни (розклад, тема, групи) долітають на інші пристрої за ~5 секунд — лічильник ревізій на сервері, повне завантаження тільки коли дані справді змінилися', '/'],
+    ['/', 'Програма після оновлення лишається на тому ж місці — ярлик і папка не зсуваються', '/'],
+  ],
   '3.5.33': [
     ['✦', 'РОЗУМНА СИНХРОНІЗАЦІЯ: програма більше не опитує базу «про запас» — один мікрозапит (~30 байт) раз на хвилину, а повний запит тільки коли розклад чи дані РЕАЛЬНО змінилися на сервері. Трафіку — у сотні разів менше', '/'],
     ['/', 'Розклад тепер приходить ЛИШЕ з Cloudflare (D1): звернень до Firebase за даними — нуль (ні розклад, ні предмети, ні вчителі, ні оновлення)', '/'],
@@ -2327,11 +2351,14 @@ function updCheck(latest, pref) {
   if (!latest || verCmp(latest, APP_VER) <= 0) { revealNow(); return; }
   if (UPD.avail || UPD.pending === latest) return;
   UPD.pending = latest;
-  /* 3.4.4: КАНАЛ — із fetchLatest (release -> beta). Якщо pref невідомий,
-     шукаємо файл спершу в release, потім у beta (як у exe-версії). */
+  /* 3.4.4: КАНАЛ — із fetchLatest / d1UpdateCheck. Якщо pref невідомий —
+     3.5.34 ФІКС «оновлення нижче поточної (30501)»: для бета-акаунтів
+     СПЕРШУ пробуємо beta (раніше першим ішов release, і кореневий файл
+     сайту = стабільна 3.5.1 «перемагав» HEAD-перевірку). Звичайні акаунти
+     — як і раніше, тільки release. */
   const prefs = (pref && String(pref).indexOf('versions/') === 0)
     ? [String(pref)]
-    : ['versions/release/', 'versions/beta/'];
+    : (betaAllowed() ? ['versions/beta/', 'versions/release/'] : ['versions/release/']);
   /* 3.4.5: бета-канал — ЛИШЕ адмінам із перемикачем; звичайні акаунти і
      без входу — тільки релізні версії */
   const prefs2 = betaAllowed() ? prefs : prefs.filter(function (p) { return String(p).indexOf('versions/beta/') !== 0; });
@@ -2384,7 +2411,9 @@ function updFromDb(u) {
   // 2.2.2: тільки справжнє оновлення — фейкова розсилка всім прибрана
   if (latest && verCmp(latest, APP_VER) > 0) {
     UPD.test = false;
-    updCheck(latest);
+    /* 3.5.34: канал (_pref) більше НЕ губиться — інакше завантажувач шукав
+       файл у release і встановлював стабільну версію поверх бети (30501) */
+    updCheck(latest, (u && u._pref) || undefined);
     return;
   }
   revealNow();
@@ -5927,7 +5956,9 @@ try { init(); } catch (err) {
       _ug.parentNode.insertBefore(_pn, _ug);
     }
   } catch (eUn) {}
-  var SEG_SEL = '.seg-z,.adm-seg,.su-opts,#tabs';
+  /* 3.5.34: + .tb-seg — верхні вкладки ПК (Розклад/Налаштування/Адмін) тепер
+     з такою самою їздячою пілюлею, як на телефоні (просив власник) */
+  var SEG_SEL = '.seg-z,.adm-seg,.su-opts,#tabs,.tb-seg';
   function pillFor(cont) {
     var p = cont.__segPill;
     if (!p || !p.isConnected) {
@@ -5938,36 +5969,66 @@ try { init(); } catch (err) {
     }
     return p;
   }
-  function segTo(cont, instant) {
+  function segTo(cont, instant, from) {
     if (!cont || !cont.isConnected) return;
     var on = cont.querySelector('.seg-z-b.on,.adm-seg-b.on,.su-opt.on,.tab.on');
+    if (!on && cont.classList && cont.classList.contains('tb-seg')) on = cont.querySelector('button.on');
     var p = pillFor(cont);
     if (!on) { p.classList.remove('pon'); return; }
     p.classList.add('pon');
+    /* 3.5.34 FLIP: клік запам'ятовує СТАРУ позицію пілюлі ще ДО перемикання
+       .on (фаза capture), тож навіть якщо спостерігач мутацій встигне зробити
+       миттєву пересинхронізацію — пілюля спершу миттєво стає на стару опцію
+       і ДАЛІ ПЛАВНО ЇДЕ до нової. Політ більше ніщо не з'їдає. */
+    if (!instant && from) {
+      p.style.transition = 'none';
+      p.style.width = from.w + 'px';
+      p.style.height = from.h + 'px';
+      p.style.transform = 'translate(' + from.x + 'px,' + from.y + 'px)';
+      void p.offsetWidth;
+      p.style.transition = '';
+    }
     if (instant) p.style.transition = 'none';
     p.style.width = on.offsetWidth + 'px';
     p.style.height = on.offsetHeight + 'px';
     p.style.transform = 'translate(' + on.offsetLeft + 'px,' + on.offsetTop + 'px)';
+    p.__x = on.offsetLeft; p.__y = on.offsetTop;
     if (instant) { void p.offsetWidth; p.style.transition = ''; }
-    else { p.classList.remove('arrive'); void p.offsetWidth; p.classList.add('arrive'); }
+    else {
+      /* 3.5.34: позначка «пілюля летить» — спостерігач мутацій 600 мс НЕ робить
+         миттєву пересинхронізацію поверх анімації */
+      p.__flyAt = Date.now();
+      p.classList.remove('arrive'); void p.offsetWidth; p.classList.add('arrive');
+    }
   }
   window.fhSegTo = segTo;
   /* клік по опції → пілюля їде ОДРАЗ (клас .on ставить власний обробник) */
   document.addEventListener('click', function (e) {
     var t = e.target;
-    var b = (t && t.closest) ? t.closest('.seg-z-b,.adm-seg-b,.su-opt,.tab') : null;
+    var b = (t && t.closest) ? t.closest('.seg-z-b,.adm-seg-b,.su-opt,.tab,.tb-seg button') : null;
     if (!b) return;
     if (b.classList.contains('on')) return;   /* 3.5.32: активна опція — без спалаху пілюлі */
     var cont = b.parentElement;
     if (!cont || !(cont.matches && cont.matches(SEG_SEL))) return;
-    requestAnimationFrame(function () { try { segTo(cont, false); } catch (e1) {} });
+    /* 3.5.34: стара позиція пілюлі знімається ОДРАЗУ (capture — до будь-яких
+       змін .on) — звідси пілюля й почне політ */
+    var p0 = cont.__segPill;
+    var from = (p0 && p0.isConnected && p0.classList.contains('pon') && typeof p0.__x === 'number')
+      ? { x: p0.__x, y: p0.__y, w: p0.offsetWidth, h: p0.offsetHeight } : null;
+    requestAnimationFrame(function () { try { segTo(cont, false, from); } catch (e1) {} });
   }, true);
   /* перерендери (gRows перебудовується, адмін-таби перемальовуються) —
     MutationObserver синхронізує пілюлі без миттєвого стрибка */
   try {
     new MutationObserver(function () {
       var all = document.querySelectorAll(SEG_SEL);
-      for (var i = 0; i < all.length; i++) { try { segTo(all[i], true); } catch (e2) {} }
+      for (var i = 0; i < all.length; i++) {
+        try {
+          var _p = all[i].__segPill;
+          if (_p && _p.__flyAt && Date.now() - _p.__flyAt < 600) continue;   /* 3.5.34: політ триває */
+          segTo(all[i], true);
+        } catch (e2) {}
+      }
     }).observe(document.body, { childList: true, subtree: true });
   } catch (eMO) {}
   addEventListener('resize', function () {

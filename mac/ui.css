@@ -1573,24 +1573,28 @@ body[data-theme="glass"] .rm-chip{background:rgba(139,92,246,.26);border-color:r
 .seg-pill.arrive{animation:segArrive .34s cubic-bezier(.3,1.4,.4,1)}
 @keyframes segArrive{0%{filter:brightness(1.22)}100%{filter:brightness(1)}}
 /* 3.5.31: двері .on віддає пілюлі ТІЛЬКИ з body.segjs — без JS усе як було */
-body.segjs .seg-z-b.on,body.segjs .adm-seg-b.on,body.segjs .su-opt.on,body.segjs .tab.on{background:transparent!important;background-size:100% 100%!important;box-shadow:none!important;border-color:transparent!important;animation:none!important}
+body.segjs .seg-z-b.on,body.segjs .adm-seg-b.on,body.segjs .su-opt.on,body.segjs .tab.on,body.segjs .tb-seg button.on{background:transparent!important;background-size:100% 100%!important;box-shadow:none!important;border-color:transparent!important;animation:none!important}
 .seg-z-b,.adm-seg-b,.su-opt,.tab{position:relative;z-index:1}
+.tb-seg button{position:relative;z-index:1}
 /* 3.5.31: пілюля = ТОЧНА КОПІЯ активного стану (стандартна тема) */
 #tabs .seg-pill{border-radius:12px;background:linear-gradient(135deg,#8b5cf6,#6366f1,#8b5cf6);background-size:220% 100%;box-shadow:0 8px 22px rgba(99,102,241,.30);animation:tabg 3.4s ease infinite}
 .seg-z .seg-pill{background:linear-gradient(135deg,#8b5cf6,#6366f1);box-shadow:0 6px 18px rgba(99,102,241,.38)}
 .adm-seg .seg-pill{background:linear-gradient(135deg,#7c3aed,#6366f1);box-shadow:0 4px 14px rgba(124,58,237,.35)}
 .su-opts .seg-pill{border-radius:14px;background:linear-gradient(135deg,rgba(139,92,246,.32),rgba(99,102,241,.22));box-shadow:0 8px 22px rgba(99,102,241,.28),inset 0 0 0 1px rgba(129,140,248,.55)}
+/* 3.5.34: пілюля верхніх вкладок ПК = точна копія .on кожної теми */
+.tb-seg .seg-pill{border-radius:9px}
 /* світла тема — копія світлого .on */
 body[data-theme="light"] #tabs .seg-pill{background:linear-gradient(135deg,#7c3aed 0%,#6366f1 100%);background-size:100% 100%;animation:none;box-shadow:0 8px 22px rgba(124,58,237,.38)}
 body[data-theme="light"] .su-opts .seg-pill{background:linear-gradient(135deg,rgba(139,92,246,.18),rgba(99,102,241,.12));box-shadow:0 3px 12px rgba(124,58,237,.2),inset 0 0 0 1px rgba(124,58,237,.45)}
+body[data-theme="light"] .tb-seg .seg-pill{background:linear-gradient(135deg,#7c3aed,#6366f1);box-shadow:0 3px 10px rgba(124,58,237,.32)}
 /* акцентні теми (ocean/sunset/forest/aurora) — копія їх .on */
 :is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) #tabs .seg-pill{background:linear-gradient(135deg,var(--ac1),var(--ac2));background-size:100% 100%;animation:none;box-shadow:0 4px 14px var(--acShadow)}
 :is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .seg-z .seg-pill{background:linear-gradient(135deg,var(--ac1),var(--ac2));box-shadow:0 6px 18px var(--acShadow)}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .adm-seg .seg-pill{background:linear-gradient(135deg,var(--ac1),var(--ac2));box-shadow:0 4px 14px var(--acShadow)}
+:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .adm-seg .seg-pill,:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .tb-seg .seg-pill{background:linear-gradient(135deg,var(--ac1),var(--ac2));box-shadow:0 4px 14px var(--acShadow)}
 :is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .su-opts .seg-pill{background:var(--acSoft);box-shadow:inset 0 0 0 1px var(--ac1)}
 /* Liquid Glass — повний редизайн (лише тема glass) */
 body[data-theme="glass"] #tabs .seg-pill{background:linear-gradient(135deg,rgba(139,92,246,.72),rgba(99,102,241,.66));background-size:100% 100%;animation:none;box-shadow:0 6px 20px rgba(124,58,237,.42),inset 0 1px 0 rgba(255,255,255,.28)}
-body[data-theme="glass"] .seg-z .seg-pill,body[data-theme="glass"] .adm-seg .seg-pill{background:linear-gradient(135deg,rgba(139,92,246,.72),rgba(99,102,241,.66));box-shadow:0 6px 20px rgba(124,58,237,.42),inset 0 1px 0 rgba(255,255,255,.28)}
+body[data-theme="glass"] .seg-z .seg-pill,body[data-theme="glass"] .adm-seg .seg-pill,body[data-theme="glass"] .tb-seg .seg-pill{background:linear-gradient(135deg,rgba(139,92,246,.72),rgba(99,102,241,.66));box-shadow:0 6px 20px rgba(124,58,237,.42),inset 0 1px 0 rgba(255,255,255,.28)}
 body[data-theme="glass"] .su-opts .seg-pill{background:linear-gradient(135deg,rgba(139,92,246,.55),rgba(99,102,241,.44));box-shadow:0 6px 20px rgba(124,58,237,.38),inset 0 1px 0 rgba(255,255,255,.24)}
 @media (prefers-reduced-motion:reduce){.seg-pill{transition:opacity .2s ease}}
 
@@ -1793,9 +1797,7 @@ body[data-theme="glass"] .adm-seg-b,
 body[data-theme="glass"] .tb-wbtn,
 body[data-theme="glass"] .modal,
 body[data-theme="glass"] .us-card,
-body[data-theme="glass"] #toast,
 body[data-theme="glass"] #tabs,
-body[data-theme="glass"] .tb-seg,
 body[data-theme="glass"] .seg-z,
 body[data-theme="glass"] .adm-seg,
 body[data-theme="glass"] .su-opts,
@@ -1803,6 +1805,8 @@ body[data-theme="glass"] #bnav,
 body[data-theme="glass"] #drawer{
   position:relative;
 }
+/* 3.5.34 ФІКС «все поїхало»: .tb-seg/#toast більше НЕ роблять position:relative
+   (обідок працює і на absolute/fixed — центрування тайтлбара ціле) */
 body[data-theme="glass"] .card::after,
 body[data-theme="glass"] .tab::after,
 body[data-theme="glass"] .b-join::after,
@@ -1811,7 +1815,7 @@ body[data-theme="glass"] .b-groups::after,
 body[data-theme="glass"] .b-groups-m::after,
 body[data-theme="glass"] .b-mini::after,
 body[data-theme="glass"] .us-btn::after,
-body[data-theme="glass"] .bn-btn::after,body[data-theme="glass"] .bn-b,
+body[data-theme="glass"] .bn-btn::after,body[data-theme="glass"] .bn-b::after,
 body[data-theme="glass"] .su-opt::after,
 body[data-theme="glass"] .m-item::after,
 body[data-theme="glass"] .ms-row::after,
@@ -1856,7 +1860,7 @@ body[data-theme="glass"] .b-groups::before,
 body[data-theme="glass"] .b-groups-m::before,
 body[data-theme="glass"] .b-mini::before,
 body[data-theme="glass"] .us-btn::before,
-body[data-theme="glass"] .bn-btn::before,body[data-theme="glass"] .bn-b,
+body[data-theme="glass"] .bn-btn::before,body[data-theme="glass"] .bn-b::before,
 body[data-theme="glass"] .su-opt::before,
 body[data-theme="glass"] .m-item::before,
 body[data-theme="glass"] .ms-row::before,
@@ -1938,7 +1942,7 @@ body[data-theme="glass"] .b-groups:hover::after,
 body[data-theme="glass"] .b-groups-m:hover::after,
 body[data-theme="glass"] .b-mini:hover::after,
 body[data-theme="glass"] .us-btn:hover::after,
-body[data-theme="glass"] .bn-btn:hover::after,body[data-theme="glass"] .bn-b,
+body[data-theme="glass"] .bn-btn:hover::after,body[data-theme="glass"] .bn-b:hover::after,
 body[data-theme="glass"] .su-opt:hover::after,
 body[data-theme="glass"] .m-item:hover::after,
 body[data-theme="glass"] .ms-row:hover::after,
@@ -1954,7 +1958,7 @@ body[data-theme="glass"] .b-groups:hover::before,
 body[data-theme="glass"] .b-groups-m:hover::before,
 body[data-theme="glass"] .b-mini:hover::before,
 body[data-theme="glass"] .us-btn:hover::before,
-body[data-theme="glass"] .bn-btn:hover::before,body[data-theme="glass"] .bn-b,
+body[data-theme="glass"] .bn-btn:hover::before,body[data-theme="glass"] .bn-b:hover::before,
 body[data-theme="glass"] .su-opt:hover::before,
 body[data-theme="glass"] .m-item:hover::before,
 body[data-theme="glass"] .seg-z-b:hover::before,
@@ -1986,7 +1990,7 @@ body[data-theme="glass"] .b-groups:active::after,
 body[data-theme="glass"] .b-groups-m:active::after,
 body[data-theme="glass"] .b-mini:active::after,
 body[data-theme="glass"] .us-btn:active::after,
-body[data-theme="glass"] .bn-btn:active::after,body[data-theme="glass"] .bn-b,
+body[data-theme="glass"] .bn-btn:active::after,body[data-theme="glass"] .bn-b:active::after,
 body[data-theme="glass"] .su-opt:active::after,
 body[data-theme="glass"] .m-item:active::after,
 body[data-theme="glass"] .seg-z-b:active::after,
@@ -2001,7 +2005,7 @@ body[data-theme="glass"] .b-groups:active::before,
 body[data-theme="glass"] .b-groups-m:active::before,
 body[data-theme="glass"] .b-mini:active::before,
 body[data-theme="glass"] .us-btn:active::before,
-body[data-theme="glass"] .bn-btn:active::before,body[data-theme="glass"] .bn-b,
+body[data-theme="glass"] .bn-btn:active::before,body[data-theme="glass"] .bn-b:active::before,
 body[data-theme="glass"] .su-opt:active::before,
 body[data-theme="glass"] .m-item:active::before,
 body[data-theme="glass"] .seg-z-b:active::before,
@@ -2030,9 +2034,9 @@ body[data-theme="glass"] .tb-wbtn:active::before{
   body[data-theme="glass"] .us-btn::after,
   body[data-theme="glass"] .us-btn:hover::after,
   body[data-theme="glass"] .us-btn:active::after,
-  body[data-theme="glass"] .bn-btn::after,body[data-theme="glass"] .bn-b,
-  body[data-theme="glass"] .bn-btn:hover::after,body[data-theme="glass"] .bn-b,
-  body[data-theme="glass"] .bn-btn:active::after,body[data-theme="glass"] .bn-b,
+  body[data-theme="glass"] .bn-btn::after,body[data-theme="glass"] .bn-b:active::after,
+  body[data-theme="glass"] .bn-btn:hover::after,body[data-theme="glass"] .bn-b:active::after,
+  body[data-theme="glass"] .bn-btn:active::after,body[data-theme="glass"] .bn-b:active::after,
   body[data-theme="glass"] .su-opt::after,
   body[data-theme="glass"] .su-opt:hover::after,
   body[data-theme="glass"] .su-opt:active::after,
@@ -2055,7 +2059,7 @@ body[data-theme="glass"] .tb-wbtn:active::before{
   body[data-theme="glass"] .b-mini::before,
   body[data-theme="glass"] .b-mini:active::before,
   body[data-theme="glass"] .us-btn::before,
-  body[data-theme="glass"] .bn-btn::before,body[data-theme="glass"] .bn-b,
+  body[data-theme="glass"] .bn-btn::before,body[data-theme="glass"] .bn-b::before,
   body[data-theme="glass"] .su-opt::before,
   body[data-theme="glass"] .m-item::before,
   body[data-theme="glass"] .seg-z-b::before,

@@ -1838,27 +1838,30 @@ body[data-theme="glass"] #offl .offl-card{background:linear-gradient(165deg,rgba
    = просідання fps на скролі. Рішення: на body.mob блюр вимкнено
    ПОВНІСТЮ (вигляд тримають тінт/бордери — як у lite-glass),
    фон стає scroll-attach, важкі тіні полегшено. ПК не чіпали. */
-body.mob[data-theme="glass"]{background-attachment:scroll}
-body.mob[data-theme="glass"] #tbar,body.mob[data-theme="glass"] #bnav,
-body.mob[data-theme="glass"] .modal,body.mob[data-theme="glass"] .ms-card,
-body.mob[data-theme="glass"] .mback,body.mob[data-theme="glass"] #dback,
-body.mob[data-theme="glass"] #drawer,body.mob[data-theme="glass"] .us-card,
-body.mob[data-theme="glass"] .fld input,body.mob[data-theme="glass"] .adm-backdrop{
+/* 3.5.34: важкий «mob без скла» тепер ЛИШЕ для слабких GPU (body.lite-glass,
+   вмикає watchdog). Звичайний телефон = той самий Liquid Glass, що й на ПК
+   (просив власник: «чтобы тема везде была одинаковая»). */
+body.mob.lite-glass[data-theme="glass"]{background-attachment:scroll}
+body.mob.lite-glass[data-theme="glass"] #tbar,body.mob.lite-glass[data-theme="glass"] #bnav,
+body.mob.lite-glass[data-theme="glass"] .modal,body.mob.lite-glass[data-theme="glass"] .ms-card,
+body.mob.lite-glass[data-theme="glass"] .mback,body.mob.lite-glass[data-theme="glass"] #dback,
+body.mob.lite-glass[data-theme="glass"] #drawer,body.mob.lite-glass[data-theme="glass"] .us-card,
+body.mob.lite-glass[data-theme="glass"] .fld input,body.mob.lite-glass[data-theme="glass"] .adm-backdrop{
   backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
-body.mob[data-theme="glass"] #tbar{background:rgba(20,16,44,.86)}
+body.mob.lite-glass[data-theme="glass"] #tbar{background:rgba(20,16,44,.86)}
 /* 3.5.30: на телефоні блюр вимкнено заради FPS — тому тінт панелі ГУСТІШИЙ
    (просив власник: «в теме Liquid Glass нет затемнения, через меню видно текст»):
    текст за склом більше не читається, вигляд — щільне темне скло */
-body.mob[data-theme="glass"] #bnav{background:radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.22),transparent 58%),linear-gradient(180deg,rgba(44,35,90,.88),rgba(19,13,44,.93))}
-body.mob[data-theme="glass"] .modal,body.mob[data-theme="glass"] .ms-card,
-body.mob[data-theme="glass"] .us-card{background:rgba(26,22,54,.96)}
-body.mob[data-theme="glass"] .mback,body.mob[data-theme="glass"] #dback,
-body.mob[data-theme="glass"] .adm-backdrop{background:rgba(8,5,26,.86)}
-body.mob[data-theme="glass"] #drawer{background:rgba(16,15,30,.97)}
-body.mob[data-theme="glass"] .card{background:rgba(22,20,42,.92)}
+body.mob.lite-glass[data-theme="glass"] #bnav{background:radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.22),transparent 58%),linear-gradient(180deg,rgba(44,35,90,.88),rgba(19,13,44,.93))}
+body.mob.lite-glass[data-theme="glass"] .modal,body.mob.lite-glass[data-theme="glass"] .ms-card,
+body.mob.lite-glass[data-theme="glass"] .us-card{background:rgba(26,22,54,.96)}
+body.mob.lite-glass[data-theme="glass"] .mback,body.mob.lite-glass[data-theme="glass"] #dback,
+body.mob.lite-glass[data-theme="glass"] .adm-backdrop{background:rgba(8,5,26,.86)}
+body.mob.lite-glass[data-theme="glass"] #drawer{background:rgba(16,15,30,.97)}
+body.mob.lite-glass[data-theme="glass"] .card{background:rgba(22,20,42,.92)}
 /* тост і оверлеї — без блюру в будь-якій темі (телефон) */
-body.mob #toast,body.mob #inst,body.mob .adm-backdrop,
-body.mob[data-theme="glass"] #toast{
+body.mob.lite-glass #toast,body.mob #inst,body.mob .adm-backdrop,
+body.mob.lite-glass[data-theme="glass"] #toast{
   backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 body.mob #toast{background:rgba(32,26,66,.96)}
 body.mob #inst{background:rgba(3,3,7,.86)}
@@ -1965,3 +1968,565 @@ body[data-theme="glass"] #agate{background:
     radial-gradient(700px 460px at 10% -8%, rgba(168,85,247,.5), transparent 60%),
     radial-gradient(760px 520px at 94% 6%, rgba(56,189,248,.34), transparent 58%),
     linear-gradient(160deg,#0b0820 0%,#120e30 48%,#180d2a 100%)}
+
+/* ============================================================
+   3.5.34 — LIQUID GLASS НА ТЕЛЕФОНІ = ТОЧНИЙ РЕФЕРЕНС (1-в-1 з ПК).
+   Просив власник: «чтобы тема Liquid Glass везде была: на телефоне,
+   на сайте — одинаковые цвета». Рецепти ті самі, що на ПК:
+   @property --angle-1/-2, conic-обідок (mask-composite:exclude),
+   блик screen-blend, blur(clamp), hover scale(0.975), active rotate3d.
+   Стани (.on/.now/пілюля) і lite-glass (слабкі GPU) НЕ ЗАТЬКНУТІ.
+   ============================================================ */
+@property --angle-1/-2,
+   конічний обідок через conic-gradient + mask-composite: exclude,
+   глянцевий блик span::after із mix-blend-mode: screen,
+   backdrop-filter: blur(clamp(1px, 0.125em, 4px)),
+   hover = scale(0.975) + --angle-1:-125deg, натискання =
+   rotate3d(1,0,0,25deg), @media (hover:none)/(pointer:coarse)).
+   Раніше — власна інтерпретація «iOS 26» (фіолетове скло,
+   translateY) — ЗАМІНЕНО на матеріал 1-в-1 із референсу.
+   ТІЛЬКИ тема glass: стандартна/світла/акцентні — не торкнуто.
+   ============================================================ */
+@property --angle-1{syntax:"<angle>";inherits:false;initial-value:-75deg}
+@property --angle-2{syntax:"<angle>";inherits:false;initial-value:-45deg}
+body[data-theme="glass"]{
+  --lg-t:400ms;
+  --lg-e:cubic-bezier(0.25,1,0.5,1);
+  --lg-bw:clamp(1px,0.0625em,4px);
+  --lg-glass-bg:linear-gradient(-75deg,rgba(255,255,255,.05),rgba(255,255,255,.2),rgba(255,255,255,.05));
+  --lg-glass-sh:
+    inset 0 .125em .125em rgba(0,0,0,.05),
+    inset 0 -.125em .125em rgba(255,255,255,.5),
+    0 .25em .125em -.125em rgba(0,0,0,.2),
+    0 0 .1em .25em inset rgba(255,255,255,.2),
+    0 0 0 0 rgba(255,255,255,1);
+  --lg-glass-sh-hov:
+    inset 0 .125em .125em rgba(0,0,0,.05),
+    inset 0 -.125em .125em rgba(255,255,255,.5),
+    0 .15em .05em -.1em rgba(0,0,0,.25),
+    0 0 .05em .1em inset rgba(255,255,255,.5),
+    0 0 0 0 rgba(255,255,255,1);
+  --lg-glass-sh-act:
+    inset 0 .125em .125em rgba(0,0,0,.05),
+    inset 0 -.125em .125em rgba(255,255,255,.5),
+    0 .125em .125em -.125em rgba(0,0,0,.2),
+    0 0 .1em .25em inset rgba(255,255,255,.2),
+    0 .225em .05em 0 rgba(0,0,0,.05),
+    0 .25em 0 0 rgba(255,255,255,.75),
+    inset 0 .25em .05em 0 rgba(0,0,0,.15);
+  --lg-rim:conic-gradient(from var(--angle-1) at 50% 50%,
+      rgba(0,0,0,.5),rgba(0,0,0,0) 5% 40%,rgba(0,0,0,.5) 50%,
+      rgba(0,0,0,0) 60% 95%,rgba(0,0,0,.5)),
+    linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,.5));
+  --lg-gloss:linear-gradient(var(--angle-2),
+      rgba(255,255,255,0) 0%,rgba(255,255,255,.5) 20% 30%,rgba(255,255,255,0) 55%);
+}
+
+/* ---------- ТІЛО СКЛА (матеріал референсу, світлий варіант) ---------- */
+body[data-theme="glass"] .card,
+body[data-theme="glass"] .tab,
+body[data-theme="glass"] .b-join,
+body[data-theme="glass"] .b-save,
+body[data-theme="glass"] .b-groups,
+body[data-theme="glass"] .b-groups-m,
+body[data-theme="glass"] .b-mini,body[data-theme="glass"] .dv-inst,
+body[data-theme="glass"] .us-btn,
+body[data-theme="glass"] .bn-btn,body[data-theme="glass"] .bn-b,
+body[data-theme="glass"] .su-opt,
+body[data-theme="glass"] .su-opt-b,
+body[data-theme="glass"] .m-item,
+body[data-theme="glass"] .ms-row,
+body[data-theme="glass"] .seg-z-b,
+body[data-theme="glass"] .adm-seg-b,
+body[data-theme="glass"] .tb-wbtn,
+body[data-theme="glass"] .su-sec,
+body[data-theme="glass"] .set-card,
+body[data-theme="glass"] .sw-card,
+body[data-theme="glass"] .c-info,
+body[data-theme="glass"] .modal,
+body[data-theme="glass"] .ms-card,
+body[data-theme="glass"] .us-card,
+body[data-theme="glass"] #toast,
+body[data-theme="glass"] #tabs,
+body[data-theme="glass"] .tb-seg,
+body[data-theme="glass"] .seg-z,
+body[data-theme="glass"] .adm-seg,
+body[data-theme="glass"] .su-opts,
+body[data-theme="glass"] #bnav,
+body[data-theme="glass"] #drawer{
+  background:var(--lg-glass-bg);
+  box-shadow:var(--lg-glass-sh);
+  -webkit-backdrop-filter:blur(clamp(1px,.125em,4px));
+  backdrop-filter:blur(clamp(1px,.125em,4px));
+  transition:all var(--lg-t) var(--lg-e);
+  -webkit-tap-highlight-color:rgba(0,0,0,0);
+}
+/* текст — легка тінь референсу */
+body[data-theme="glass"] .card span,
+body[data-theme="glass"] .tab span,
+body[data-theme="glass"] .b-join span,
+body[data-theme="glass"] .b-save span,
+body[data-theme="glass"] .b-groups span,
+body[data-theme="glass"] .b-groups-m span,
+body[data-theme="glass"] .b-mini span,
+body[data-theme="glass"] .us-btn span,
+body[data-theme="glass"] .bn-btn span{
+  text-shadow:0 .12em .05em rgba(0,0,0,.1);
+  transition:all var(--lg-t) var(--lg-e);
+}
+body[data-theme="glass"] .bn-b span{
+  text-shadow:0 .12em .05em rgba(0,0,0,.1);
+  transition:all var(--lg-t) var(--lg-e);
+}
+
+/* ---------- ОБІДОК: conic-gradient + mask-composite: exclude ---------- */
+body[data-theme="glass"] .card,
+body[data-theme="glass"] .tab,
+body[data-theme="glass"] .b-join,
+body[data-theme="glass"] .b-save,
+body[data-theme="glass"] .b-groups,
+body[data-theme="glass"] .b-groups-m,
+body[data-theme="glass"] .b-mini,body[data-theme="glass"] .dv-inst,
+body[data-theme="glass"] .us-btn,
+body[data-theme="glass"] .bn-btn,body[data-theme="glass"] .bn-b,
+body[data-theme="glass"] .su-opt,
+body[data-theme="glass"] .m-item,
+body[data-theme="glass"] .ms-row,
+body[data-theme="glass"] .seg-z-b,
+body[data-theme="glass"] .adm-seg-b,
+body[data-theme="glass"] .tb-wbtn,
+body[data-theme="glass"] .modal,
+body[data-theme="glass"] .ms-card,
+body[data-theme="glass"] .us-card,
+body[data-theme="glass"] #tabs,
+body[data-theme="glass"] .seg-z,
+body[data-theme="glass"] .adm-seg,
+body[data-theme="glass"] .su-opts{
+  position:relative;
+}
+/* 3.5.34: на телефоні #bnav/#drawer — FIXED (нижня панель і шухляда):
+   mac-правило position:relative тут НЕ застосовується */
+body[data-theme="glass"] #bnav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(12px + var(--fh-sab, env(safe-area-inset-bottom, 0px)))}
+body[data-theme="glass"] #drawer{position:fixed;top:0;left:0;bottom:0}
+/* 3.5.34 ФІКС «всё поехало» на ПК: .tb-seg (абсолютне центрування в тайтлбарі)
+   і #toast (fixed внизу) БІЛЬШЕ не примусово роблять position:relative —
+   pseudo-елементи обідку працюють і на position:absolute/fixed, а
+   центрування тайтлбара більше не ламається */
+body[data-theme="glass"] .tb-seg{position:absolute}
+body[data-theme="glass"] #toast{position:fixed}
+body[data-theme="glass"] .card::after,
+body[data-theme="glass"] .tab::after,
+body[data-theme="glass"] .b-join::after,
+body[data-theme="glass"] .b-save::after,
+body[data-theme="glass"] .b-groups::after,
+body[data-theme="glass"] .b-groups-m::after,
+body[data-theme="glass"] .b-mini::after,
+body[data-theme="glass"] .us-btn::after,
+body[data-theme="glass"] .bn-btn::after,body[data-theme="glass"] .bn-b::after,
+body[data-theme="glass"] .su-opt::after,
+body[data-theme="glass"] .m-item::after,
+body[data-theme="glass"] .ms-row::after,
+body[data-theme="glass"] .seg-z-b::after,
+body[data-theme="glass"] .adm-seg-b::after,
+body[data-theme="glass"] .tb-wbtn::after,
+body[data-theme="glass"] .modal::after,
+body[data-theme="glass"] .ms-card::after,
+body[data-theme="glass"] .us-card::after,
+body[data-theme="glass"] #toast::after,
+body[data-theme="glass"] #tabs::after,
+body[data-theme="glass"] .tb-seg::after,
+body[data-theme="glass"] .seg-z::after,
+body[data-theme="glass"] .adm-seg::after,
+body[data-theme="glass"] .su-opts::after,
+body[data-theme="glass"] #bnav::after,
+body[data-theme="glass"] #drawer::after{
+  content:'';
+  position:absolute;
+  z-index:1;
+  inset:0;
+  border-radius:inherit;
+  width:calc(100% + var(--lg-bw));
+  height:calc(100% + var(--lg-bw));
+  top:calc(0% - var(--lg-bw)/2);
+  left:calc(0% - var(--lg-bw)/2);
+  padding:var(--lg-bw);
+  box-sizing:border-box;
+  background:var(--lg-rim);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+  pointer-events:none;
+  transition:all var(--lg-t) var(--lg-e),--angle-1 500ms ease;
+}
+/* ---- БЛИК: span::after референсу -> ::before елемента (screen) ---- */
+body[data-theme="glass"] .card::before,
+body[data-theme="glass"] .tab::before,
+body[data-theme="glass"] .b-join::before,
+body[data-theme="glass"] .b-save::before,
+body[data-theme="glass"] .b-groups::before,
+body[data-theme="glass"] .b-groups-m::before,
+body[data-theme="glass"] .b-mini::before,
+body[data-theme="glass"] .us-btn::before,
+body[data-theme="glass"] .bn-btn::before,body[data-theme="glass"] .bn-b::before,
+body[data-theme="glass"] .su-opt::before,
+body[data-theme="glass"] .m-item::before,
+body[data-theme="glass"] .ms-row::before,
+body[data-theme="glass"] .seg-z-b::before,
+body[data-theme="glass"] .adm-seg-b::before,
+body[data-theme="glass"] .tb-wbtn::before,
+body[data-theme="glass"] .modal::before,
+body[data-theme="glass"] .ms-card::before,
+body[data-theme="glass"] .us-card::before,
+body[data-theme="glass"] #toast::before,
+body[data-theme="glass"] #tabs::before,
+body[data-theme="glass"] .tb-seg::before,
+body[data-theme="glass"] .seg-z::before,
+body[data-theme="glass"] .adm-seg::before,
+body[data-theme="glass"] .su-opts::before,
+body[data-theme="glass"] #bnav::before,
+body[data-theme="glass"] #drawer::before{
+  content:'';
+  display:block;
+  position:absolute;
+  z-index:3;
+  width:calc(100% - var(--lg-bw));
+  height:calc(100% - var(--lg-bw));
+  top:calc(0% + var(--lg-bw)/2);
+  left:calc(0% + var(--lg-bw)/2);
+  box-sizing:border-box;
+  border-radius:inherit;
+  overflow:clip;
+  mix-blend-mode:screen;
+  pointer-events:none;
+  background:var(--lg-gloss);
+  background-size:200% 200%;
+  background-position:0% 50%;
+  background-repeat:no-repeat;
+  transition:background-position calc(var(--lg-t)*1.25) var(--lg-e),--angle-2 calc(var(--lg-t)*1.25) var(--lg-e);
+}
+
+/* ---------- HOVER: scale(0.975) + обідок ловить світло ---------- */
+body[data-theme="glass"] .card:hover,
+body[data-theme="glass"] .tab:hover,
+body[data-theme="glass"] .b-join:hover,
+body[data-theme="glass"] .b-save:hover,
+body[data-theme="glass"] .b-groups:hover,
+body[data-theme="glass"] .b-groups-m:hover,
+body[data-theme="glass"] .b-mini:hover,
+body[data-theme="glass"] .us-btn:hover,
+body[data-theme="glass"] .bn-btn:hover,body[data-theme="glass"] .bn-b,
+body[data-theme="glass"] .su-opt:hover,
+body[data-theme="glass"] .m-item:hover,
+body[data-theme="glass"] .ms-row:hover,
+body[data-theme="glass"] .seg-z-b:hover,
+body[data-theme="glass"] .adm-seg-b:hover,
+body[data-theme="glass"] .tb-wbtn:hover{
+  transform:scale(0.975);
+  -webkit-backdrop-filter:blur(.01em);
+  backdrop-filter:blur(.01em);
+}
+body[data-theme="glass"] .card:hover,
+body[data-theme="glass"] .tab:hover,
+body[data-theme="glass"] .b-join:hover,
+body[data-theme="glass"] .b-save:hover,
+body[data-theme="glass"] .b-groups:hover,
+body[data-theme="glass"] .b-groups-m:hover,
+body[data-theme="glass"] .b-mini:hover,
+body[data-theme="glass"] .us-btn:hover,
+body[data-theme="glass"] .bn-btn:hover,body[data-theme="glass"] .bn-b,
+body[data-theme="glass"] .su-opt:hover,
+body[data-theme="glass"] .m-item:hover,
+body[data-theme="glass"] .ms-row:hover,
+body[data-theme="glass"] .seg-z-b:hover,
+body[data-theme="glass"] .adm-seg-b:hover,
+body[data-theme="glass"] .tb-wbtn:hover{
+  box-shadow:var(--lg-glass-sh-hov);
+}
+body[data-theme="glass"] .card:hover::after,
+body[data-theme="glass"] .tab:hover::after,
+body[data-theme="glass"] .b-join:hover::after,
+body[data-theme="glass"] .b-save:hover::after,
+body[data-theme="glass"] .b-groups:hover::after,
+body[data-theme="glass"] .b-groups-m:hover::after,
+body[data-theme="glass"] .b-mini:hover::after,
+body[data-theme="glass"] .us-btn:hover::after,
+body[data-theme="glass"] .bn-btn:hover::after,body[data-theme="glass"] .bn-b:hover::after,
+body[data-theme="glass"] .su-opt:hover::after,
+body[data-theme="glass"] .m-item:hover::after,
+body[data-theme="glass"] .ms-row:hover::after,
+body[data-theme="glass"] .seg-z-b:hover::after,
+body[data-theme="glass"] .adm-seg-b:hover::after,
+body[data-theme="glass"] .tb-wbtn:hover::after{
+  --angle-1:-125deg;
+}
+body[data-theme="glass"] .card:hover::before,
+body[data-theme="glass"] .b-join:hover::before,
+body[data-theme="glass"] .b-save:hover::before,
+body[data-theme="glass"] .b-groups:hover::before,
+body[data-theme="glass"] .b-groups-m:hover::before,
+body[data-theme="glass"] .b-mini:hover::before,
+body[data-theme="glass"] .us-btn:hover::before,
+body[data-theme="glass"] .bn-btn:hover::before,body[data-theme="glass"] .bn-b:hover::before,
+body[data-theme="glass"] .su-opt:hover::before,
+body[data-theme="glass"] .m-item:hover::before,
+body[data-theme="glass"] .seg-z-b:hover::before,
+body[data-theme="glass"] .adm-seg-b:hover::before,
+body[data-theme="glass"] .tb-wbtn:hover::before{
+  background-position:25% 50%;
+}
+/* блик/тінь під пальцем — референс */
+body[data-theme="glass"] .card:active,
+body[data-theme="glass"] .b-join:active,
+body[data-theme="glass"] .b-save:active,
+body[data-theme="glass"] .b-groups:active,
+body[data-theme="glass"] .b-groups-m:active,
+body[data-theme="glass"] .b-mini:active,
+body[data-theme="glass"] .us-btn:active,
+body[data-theme="glass"] .bn-btn:active,body[data-theme="glass"] .bn-b,
+body[data-theme="glass"] .su-opt:active,
+body[data-theme="glass"] .m-item:active,
+body[data-theme="glass"] .seg-z-b:active,
+body[data-theme="glass"] .adm-seg-b:active,
+body[data-theme="glass"] .tb-wbtn:active{
+  transform:rotate3d(1,0,0,25deg);
+  box-shadow:var(--lg-glass-sh-act);
+}
+body[data-theme="glass"] .card:active::after,
+body[data-theme="glass"] .b-join:active::after,
+body[data-theme="glass"] .b-save:active::after,
+body[data-theme="glass"] .b-groups:active::after,
+body[data-theme="glass"] .b-groups-m:active::after,
+body[data-theme="glass"] .b-mini:active::after,
+body[data-theme="glass"] .us-btn:active::after,
+body[data-theme="glass"] .bn-btn:active::after,body[data-theme="glass"] .bn-b:active::after,
+body[data-theme="glass"] .su-opt:active::after,
+body[data-theme="glass"] .m-item:active::after,
+body[data-theme="glass"] .seg-z-b:active::after,
+body[data-theme="glass"] .adm-seg-b:active::after,
+body[data-theme="glass"] .tb-wbtn:active::after{
+  --angle-1:-75deg;
+}
+body[data-theme="glass"] .card:active::before,
+body[data-theme="glass"] .b-join:active::before,
+body[data-theme="glass"] .b-save:active::before,
+body[data-theme="glass"] .b-groups:active::before,
+body[data-theme="glass"] .b-groups-m:active::before,
+body[data-theme="glass"] .b-mini:active::before,
+body[data-theme="glass"] .us-btn:active::before,
+body[data-theme="glass"] .bn-btn:active::before,body[data-theme="glass"] .bn-b:active::before,
+body[data-theme="glass"] .su-opt:active::before,
+body[data-theme="glass"] .m-item:active::before,
+body[data-theme="glass"] .seg-z-b:active::before,
+body[data-theme="glass"] .adm-seg-b:active::before,
+body[data-theme="glass"] .tb-wbtn:active::before{
+  background-position:50% 15%;
+  --angle-2:-15deg;
+}
+/* ---------- ТАЧ: фіксовані кути (як у референсі) ---------- */
+@media (hover:none) and (pointer:coarse){
+  body[data-theme="glass"] .card::after,
+  body[data-theme="glass"] .card:hover::after,
+  body[data-theme="glass"] .card:active::after,
+  body[data-theme="glass"] .b-join::after,
+  body[data-theme="glass"] .b-join:hover::after,
+  body[data-theme="glass"] .b-join:active::after,
+  body[data-theme="glass"] .b-save::after,
+  body[data-theme="glass"] .b-save:hover::after,
+  body[data-theme="glass"] .b-save:active::after,
+  body[data-theme="glass"] .b-groups::after,
+  body[data-theme="glass"] .b-groups:hover::after,
+  body[data-theme="glass"] .b-groups:active::after,
+  body[data-theme="glass"] .b-mini::after,
+  body[data-theme="glass"] .b-mini:hover::after,
+  body[data-theme="glass"] .b-mini:active::after,
+  body[data-theme="glass"] .us-btn::after,
+  body[data-theme="glass"] .us-btn:hover::after,
+  body[data-theme="glass"] .us-btn:active::after,
+  body[data-theme="glass"] .bn-btn::after,body[data-theme="glass"] .bn-b:active::after,
+  body[data-theme="glass"] .bn-btn:hover::after,body[data-theme="glass"] .bn-b:active::after,
+  body[data-theme="glass"] .bn-btn:active::after,body[data-theme="glass"] .bn-b:active::after,
+  body[data-theme="glass"] .su-opt::after,
+  body[data-theme="glass"] .su-opt:hover::after,
+  body[data-theme="glass"] .su-opt:active::after,
+  body[data-theme="glass"] .m-item::after,
+  body[data-theme="glass"] .m-item:hover::after,
+  body[data-theme="glass"] .m-item:active::after,
+  body[data-theme="glass"] .seg-z-b::after,
+  body[data-theme="glass"] .adm-seg-b::after,
+  body[data-theme="glass"] .tab::after,
+  body[data-theme="glass"] .tab:hover::after,
+  body[data-theme="glass"] .tab:active::after{
+    --angle-1:-75deg;
+  }
+  body[data-theme="glass"] .card::before,
+  body[data-theme="glass"] .card:active::before,
+  body[data-theme="glass"] .b-join::before,
+  body[data-theme="glass"] .b-join:active::before,
+  body[data-theme="glass"] .b-save::before,
+  body[data-theme="glass"] .b-save:active::before,
+  body[data-theme="glass"] .b-mini::before,
+  body[data-theme="glass"] .b-mini:active::before,
+  body[data-theme="glass"] .us-btn::before,
+  body[data-theme="glass"] .bn-btn::before,body[data-theme="glass"] .bn-b::before,
+  body[data-theme="glass"] .su-opt::before,
+  body[data-theme="glass"] .m-item::before,
+  body[data-theme="glass"] .seg-z-b::before,
+  body[data-theme="glass"] .tab::before{
+    --angle-2:-45deg;
+  }
+}
+
+/* ---------- СТАН «УВІМКНЕНО» — як був (пілюля/акцент), тільки скло
+   довкола лишається матеріалом референсу. Активні опції/вкладки мають
+   читатися — їхній фон дають ранні правила (.on/.seg-pill). ---------- */
+
+/* ---------- СЛАБКІ ПРИСТРОЇ (lite-glass): скло без блюра ---------- */
+body.lite-glass[data-theme="glass"] .card,
+body.lite-glass[data-theme="glass"] .tab,
+body.lite-glass[data-theme="glass"] .b-join,
+body.lite-glass[data-theme="glass"] .b-save,
+body.lite-glass[data-theme="glass"] .b-groups,
+body.lite-glass[data-theme="glass"] .b-groups-m,
+body.lite-glass[data-theme="glass"] .b-mini,
+body.lite-glass[data-theme="glass"] .us-btn,
+body.lite-glass[data-theme="glass"] .bn-btn,
+body.lite-glass[data-theme="glass"] .su-opt,
+body.lite-glass[data-theme="glass"] .m-item,
+body.lite-glass[data-theme="glass"] .ms-row,
+body.lite-glass[data-theme="glass"] .modal,
+body.lite-glass[data-theme="glass"] .us-card,
+body.lite-glass[data-theme="glass"] #toast,
+body.lite-glass[data-theme="glass"] #tabs,
+body.lite-glass[data-theme="glass"] #bnav,
+body.lite-glass[data-theme="glass"] #drawer{
+  -webkit-backdrop-filter:none;backdrop-filter:none;
+  background:rgba(255,255,255,.14);
+}
+body.lite-glass[data-theme="glass"] .card::before,
+body.lite-glass[data-theme="glass"] .b-join::before,
+body.lite-glass[data-theme="glass"] .b-save::before,
+body.lite-glass[data-theme="glass"] .b-mini::before,
+body.lite-glass[data-theme="glass"] .us-btn::before,
+body.lite-glass[data-theme="glass"] .bn-btn::before{display:none}
+
+/* ---------- СПРАВЖНЄ ЗАЛОМЛЕННЯ (як .glass-filter референсу:
+   blur + SVG-дисплейсмент + saturate(150%)) — тільки Chromium ---------- */
+body.lg-ok[data-theme="glass"]:not(.lite-glass) .card{
+  -webkit-backdrop-filter:blur(clamp(1px,.125em,4px)) url(#lgDisp) saturate(150%);
+  backdrop-filter:blur(clamp(1px,.125em,4px)) url(#lgDisp) saturate(150%)}
+body.lg-ok[data-theme="glass"]:not(.lite-glass) .tab,
+body.lg-ok[data-theme="glass"]:not(.lite-glass) #tabs,
+body.lg-ok[data-theme="glass"]:not(.lite-glass) .modal,
+body.lg-ok[data-theme="glass"]:not(.lite-glass) .us-card,
+body.lg-ok[data-theme="glass"]:not(.lite-glass) #bnav,
+body.lg-ok[data-theme="glass"]:not(.lite-glass) #drawer,
+body.lg-ok[data-theme="glass"]:not(.lite-glass) #toast{
+  -webkit-backdrop-filter:blur(clamp(1px,.125em,4px)) url(#lgDisp) saturate(150%);
+  backdrop-filter:blur(clamp(1px,.125em,4px)) url(#lgDisp) saturate(150%)}
+@media (prefers-reduced-motion:reduce){
+  body[data-theme="glass"] .card,
+  body[data-theme="glass"] .tab,
+  body[data-theme="glass"] .b-join,
+  body[data-theme="glass"] .b-save,
+  body[data-theme="glass"] .b-groups,
+  body[data-theme="glass"] .b-groups-m,
+  body[data-theme="glass"] .b-mini,
+  body[data-theme="glass"] .us-btn,
+  body[data-theme="glass"] .bn-btn,body[data-theme="glass"] .bn-b,
+  body[data-theme="glass"] .su-opt,
+  body[data-theme="glass"] .m-item,
+  body[data-theme="glass"] .tb-wbtn,
+  body[data-theme="glass"] .card::after,
+  body[data-theme="glass"] .card::before{transition:none}
+}
+
+/* ---------- 3.5.33 ДОДАТОК: специфічність і дрібні правила ---------- */
+/* ізоляція: блик (screen) змішується ЛИШЕ зі своїм склом */
+body[data-theme="glass"] .card,
+body[data-theme="glass"] .b-join,
+body[data-theme="glass"] .b-save,
+body[data-theme="glass"] .b-groups,
+body[data-theme="glass"] .b-groups-m,
+body[data-theme="glass"] .b-mini,body[data-theme="glass"] .dv-inst,
+body[data-theme="glass"] .us-btn,
+body[data-theme="glass"] .bn-btn,body[data-theme="glass"] .bn-b,
+body[data-theme="glass"] .su-opt,
+body[data-theme="glass"] .m-item,
+body[data-theme="glass"] .ms-row,
+body[data-theme="glass"] .modal,
+body[data-theme="glass"] .ms-card,
+body[data-theme="glass"] .us-card,
+body[data-theme="glass"] #toast{isolation:isolate}
+/* первинна кнопка: перемагаємо старі :not(:disabled)-правила */
+body[data-theme="glass"] .b-save:hover:not(:disabled),
+body[data-theme="glass"] .b-save:active:not(:disabled){
+  -webkit-backdrop-filter:blur(.01em);backdrop-filter:blur(.01em)}
+body[data-theme="glass"] .b-save:hover:not(:disabled){
+  transform:scale(0.975);box-shadow:var(--lg-glass-sh-hov)}
+body[data-theme="glass"] .b-save:hover:not(:disabled)::after{--angle-1:-125deg}
+body[data-theme="glass"] .b-save:hover:not(:disabled)::before{background-position:25% 50%}
+body[data-theme="glass"] .b-save:active:not(:disabled){
+  transform:rotate3d(1,0,0,25deg);box-shadow:var(--lg-glass-sh-act)}
+body[data-theme="glass"] .b-save:active:not(:disabled)::after{--angle-1:-75deg}
+body[data-theme="glass"] .b-save:active:not(:disabled)::before{background-position:50% 15%;--angle-2:-15deg}
+/* фіолетові hover-фони старих блоків геть — матеріал лишається склом */
+body[data-theme="glass"] .m-item:hover,
+body[data-theme="glass"] .ms-row:hover,
+body[data-theme="glass"] .su-opt:hover{background:var(--lg-glass-bg)}
+/* рамка «Оновлення»/перемикачі: скло референсу без старого блюру 22px */
+body[data-theme="glass"] .modal,
+body[data-theme="glass"] .us-card{
+  border-color:transparent}
+/* toast/поле — як у референсі (нейтральне скло) */
+body[data-theme="glass"] .fld input:focus{
+  border-color:rgba(255,255,255,.45);
+  box-shadow:inset 0 .125em .125em rgba(0,0,0,.05),inset 0 -.125em .125em rgba(255,255,255,.5),0 0 0 3px rgba(255,255,255,.14)}
+
+
+/* ---------- 3.5.34: ТЕЛЕФОН — шапка і нижня панель з матеріалу референсу ---------- */
+body[data-theme="glass"] #tbar,
+body[data-theme="glass"] #drawer{
+  background:var(--lg-glass-bg);
+  box-shadow:var(--lg-glass-sh);
+  -webkit-backdrop-filter:blur(clamp(1px,.125em,4px));
+  backdrop-filter:blur(clamp(1px,.125em,4px));
+  transition:all var(--lg-t) var(--lg-e);
+}
+body[data-theme="glass"] #tbar::after,
+body[data-theme="glass"] #drawer::after{
+  content:'';
+  position:absolute;
+  z-index:1;
+  inset:0;
+  border-radius:inherit;
+  width:calc(100% + var(--lg-bw));
+  height:calc(100% + var(--lg-bw));
+  top:calc(0% - var(--lg-bw)/2);
+  left:calc(0% - var(--lg-bw)/2);
+  padding:var(--lg-bw);
+  box-sizing:border-box;
+  background:var(--lg-rim);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+  pointer-events:none;
+  transition:all var(--lg-t) var(--lg-e),--angle-1 500ms ease;
+}
+body[data-theme="glass"] #tbar{position:relative}
+body[data-theme="glass"] #tbar > *{position:relative;z-index:2}
+
+/* ---------- 3.5.34: КОНТРАСТ ТЕКСТУ НА СКЛІ (телефон, лише glass) ----------
+   Скло референсу світліше за старий фон — приглушений текст потрібно
+   підсвітити, щоб рядки залишалися читабельними (1-в-1 з ПК). */
+body[data-theme="glass"] .card .meta{color:rgba(235,236,248,.82)}
+body[data-theme="glass"] .card .meta .tc svg{opacity:.9}
+body[data-theme="glass"] .bn-b{color:rgba(226,228,244,.92)}
+body[data-theme="glass"] .bn-b .bn-l{color:inherit}
+body[data-theme="glass"] .bn-b.on{color:#fff}
+body[data-theme="glass"] .su-name,body[data-theme="glass"] .su-item b{color:#eef0fa}
+body[data-theme="glass"] .su-item span,body[data-theme="glass"] .su-body span{color:rgba(232,234,248,.78)}
+body[data-theme="glass"] .m-item b,body[data-theme="glass"] .m-item .ms-t{color:#eef0fa}
+body[data-theme="glass"] .m-item span,body[data-theme="glass"] .ms-row span{color:rgba(232,234,248,.78)}
+body[data-theme="glass"] .dw-row span,body[data-theme="glass"] .drawer .dw-l{color:rgba(232,234,248,.85)}
