@@ -262,7 +262,7 @@ function validS(x) {
 // вічно вважав себе старішим. Тепер версію підставляє build.sh з манифеста
 // (2.4.1 -> versionName), а ПІСЛЯ завантаження Java-міст AndroidHost.ver()
 // віддає СПРАВЖНЮ версію встановленого пакета (PackageManager) — найнадійніше.
-let APP_VER = '3.5.32';              // X.Y.Z — підставляється при збірці з манифеста
+let APP_VER = '3.5.33';              // X.Y.Z — підставляється при збірці з манифеста
 try {
   if (window.AndroidHost && AndroidHost.ver) {
     const jv = AndroidHost.ver();
@@ -1572,8 +1572,7 @@ function refreshNotifUI() {
 }
 
 // ---------------- Firebase: кеш + ліміти + live-оновлення ----------------
-const FETCH_GAP = 180000;          // не частіше ніж раз на 3 хв (економія лімітів)
-let lastFetchTs = 0, dbBusy = false, es = null, pollTimer = 0, evT = 0, cacheTs = 0, dbOnline = false;
+let cacheTs = 0, dbOnline = false;   // 3.5.33: старі лічильники Firebase-полінгу знято
 function applyDb(db, fromCache) {
   if (!db || typeof db !== 'object') return false;
   let changed = false;
@@ -1694,41 +1693,282 @@ function applyDb(db, fromCache) {
    бачив вбудований розклад, який через 2-3 с «стрибав» на базовий. Якщо
    відповідь приходить ще під час сплеша — applyDb малює базу завчасно. */
 // ================================================================
-// 3.5.27 — БАЗА ПЕРЕНЕСЕНА НА CLOUDFLARE D1 (власник: «вся база даних
-// на cloudflare d1, firebase не видаляти»). D1 = ДЖЕРЕЛО ІСТИНИ:
-//   subjects / subject_links / teachers / schedule / weeks / app_update
-//   + VIEW v_snap_full — ОДНИМ запитом віддає весь документ у форматі
-//   Firebase (ієрархія subjects/teachers/schedule/weeks 1-в-1).
-// ТРАНСПОРТ:
-//   • Застосунки (Android/Windows) — cfExec() (токен у Java/C++ мосту).
-//   • Сайт — FluxHelper Backend /api/pub (без токенів у клієнті).
-//   • Фолбек: Firebase REST (як було) — поки D1-транспорт недоступний.
-// Firebase НЕ ВИДАЛЯЄТЬСЯ: старі клієнти читають /update звідти, і
-// оновлення до 3.5.27 теж приходять через Firebase.
+// 3.5.33 — РОЗУМНА СИНХРОНІЗАЦІЯ (власник: «убери сканирование каждую
+// секунду — оно сожрёт весь трафик; обращайся только тогда, когда данные
+// реально изменились; максимально минимизируй запросы, кэшируй данные»).
+// CLOUDFLARE D1 = ЄДИНИЙ канал даних. Firebase ЗНЯТО з читання даних:
+// розклад/предмети/вчителі/тижні/оновлення — 0 запитів на Firebase.
+// ЗАМІСТЬ старих pollD1 (5 с) + pollSchedule (2.5 с) + pollSubjects (15 с)
+// + netWatchPing (4 с) + syncWatch (5 с) + watchUpdate (25 с) + SSE:
+//   • ОДИН мікро-запит кожні 60 с (екран видно) / 5 хв (фон):
+//       SELECT key, json_extract(val,'$.rev') AS rev FROM _meta
+//       WHERE key IN ('snap','upd')                  — відповідь ~30 байт;
+//     + для акаунта кожен 2-й тік — SELECT sts FROM users (~10 байт);
+//   • rev('snap') змінився -> ОДИН повний знімок -> applyDb (перемальовує
+//     лише те, що справді змінилось);
+//   • rev('upd') змінився  -> перевірка app_update -> модалка версії;
+//   • кожен 10-й тік — чексум-страховка (~25 байт): ловить зміни, зроблені
+//     поза застосунком (сайт-адмінка пише у Firebase-дзеркало);
+//   • повернення у вікно — миттєвий тік; «без змін» = 30 байт і спить далі;
+//   • старт малюється з fh_cache миттєво + перший знімок ще під час сплеша;
+//   • іконки — вбудовані SVG, мережі не потребують взагалі.
+// АДМІН-ЗАПИСИ: застосунки пишуть НАПРЯМУ в D1 і піднімають rev('snap')
+// (миттєве оновлення всіх пристроїв), потім — дзеркало Firebase для
+// старих версій; сайт пише у Firebase, звідки його ловить чексум.
 // ================================================================
 var FH_DB_API = (typeof BACKEND === 'string' && BACKEND) ? BACKEND : 'https://fluxhelper-backend.onrender.com';
-let d1OkN = 0, d1FailN = 0, d1T = 0, d1Busy = false, d1UpdLast = '', d1UpdT = 0;
+let d1OkN = 0, d1FailN = 0, d1UpdLast = '', d1UpdT = 0;
+let schedLast = '', subLast = '', tchLast = '';
+let metaRev = { snap: 0, upd: 0 }, metaHave = false, metaHealed = false, chkLast = '';
+let tickT = 0, tickBusy = false, tickN = 0;
 function d1Healthy() { return d1OkN > 0 && d1FailN < 3; }
+function d1NetUp() {
+  d1FailN = 0; d1OkN++;
+  try { hideNetErr(); } catch (eNU) {}
+  try { fhNet.down = false; } catch (eNU2) {}
+}
+function d1NetDown() {
+  d1FailN++;
+  try { showNetErr(); } catch (eND) {}
+  try { fhNet.down = true; } catch (eND2) {}
+}
+
 function d1Snap(cb) {
+  if (window.FH_WEB) {
+    /* 3.5.33: сайт — знімок через FluxHelper Backend (D1 на боці сервера,
+       без токенів у браузері). 4 маленькі запити, не частіше ніж тік. */
+    const ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
+    if (ctrl) setTimeout(function () { try { ctrl.abort(); } catch (eA) {} }, 9000);
+    Promise.all(['schedule', 'subjects', 'teachers', 'weeks'].map(function (p) {
+      return fetch(FH_DB_API + '/api/pub?path=' + p, { cache: 'no-store', signal: ctrl ? ctrl.signal : undefined })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .catch(function () { return null; });
+    })).then(function (res) {
+      for (let i = 0; i < res.length; i++) {
+        if (!res[i] || !res[i].ok || !res[i].data) { cb(null); return; }
+      }
+      cb(JSON.stringify({ schedule: res[0].data, subjects: res[1].data, teachers: res[2].data, weeks: res[3].data }));
+    });
+    return;
+  }
   if (cfOk()) {
     cfExec('SELECT json FROM v_snap_full', [], function (rows) {
       cb(rows && rows[0] && rows[0].json ? rows[0].json : null);
     });
-    return;
   }
-  const ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
-  if (ctrl) setTimeout(function () { try { ctrl.abort(); } catch (eA) {} }, 8000);
-  Promise.all(['schedule', 'subjects', 'teachers', 'weeks'].map(function (p) {
-    return fetch(FH_DB_API + '/api/pub?path=' + p, { cache: 'no-store', signal: ctrl ? ctrl.signal : undefined })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .catch(function () { return null; });
-  })).then(function (res) {
-    for (let i = 0; i < res.length; i++) {
-      if (!res[i] || !res[i].ok || !res[i].data) { cb(null); return; }
-    }
-    cb(JSON.stringify({ schedule: res[0].data, subjects: res[1].data, teachers: res[2].data, weeks: res[3].data }));
+}
+
+/* 3.5.33: повний знімок тягнеться ЛИШЕ коли ревізія змінилась */
+function d1FetchSnap() {
+  d1Snap(function (j) {
+    if (j) {
+      d1NetUp();
+      try { d1Apply(JSON.parse(j)); } catch (eP) {}
+    } else d1NetDown();
   });
 }
+
+/* --- мікро-тік синхронізації (єдиний цикл живих даних) --- */
+function d1Tick() {
+  clearTimeout(tickT); tickT = 0;
+  if (window.FH_WEB) {
+    if (tickBusy) { d1TickSched(); return; }
+    tickBusy = true;
+    d1Snap(function (j) {
+      tickBusy = false;
+      if (j) { d1NetUp(); try { d1Apply(JSON.parse(j)); } catch (ePW) {} }
+      else d1NetDown();
+      d1TickSched();
+    });
+    return;
+  }
+  if (tickBusy) { d1TickSched(); return; }
+  tickN++;
+  if (ACC.user && tickN % 2 === 0) { try { syncStsCheck(userKey(ACC.user)); } catch (eSS) {} }
+  const doChk = (tickN % 10 === 4);   /* чексум-страховка ~раз на 10 хв */
+  tickBusy = true;
+  cfExec("SELECT key, json_extract(val,'$.rev') AS rev FROM _meta WHERE key IN ('snap','upd')", [], function (rows) {
+    tickBusy = false;
+    if (!rows) { d1NetDown(); d1TickSched(); return; }
+    d1NetUp();
+    let snapRev = null, updRev = null;
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i]; if (!r || !r.key) continue;
+      const rv = parseInt(r.rev, 10) || 0;
+      if (r.key === 'snap') snapRev = rv;
+      if (r.key === 'upd') updRev = rv;
+    }
+    if (snapRev === null && updRev === null) {
+      /* _meta ще без rev-рядків (стара база) — самовідновлення один раз,
+         далі працює чексум-страховка */
+      if (!metaHealed) {
+        metaHealed = true;
+        cfExec("INSERT INTO _meta (key,val) VALUES ('snap','{\"rev\":1}') ON CONFLICT(key) DO NOTHING", [], null);
+        cfExec("INSERT INTO _meta (key,val) VALUES ('upd','{\"rev\":1}') ON CONFLICT(key) DO NOTHING", [], null);
+      }
+    } else if (!metaHave) {
+      metaRev.snap = (snapRev === null) ? 0 : snapRev;
+      metaRev.upd = (updRev === null) ? 0 : updRev;
+      metaHave = true;
+    } else {
+      if (snapRev !== null && snapRev !== metaRev.snap) {
+        metaRev.snap = snapRev;
+        d1FetchSnap();
+      }
+      if (updRev !== null && updRev !== metaRev.upd) {
+        metaRev.upd = updRev;
+        clearTimeout(d1UpdT);
+        d1UpdateCheck();
+      }
+    }
+    if (doChk) {
+      cfExec("SELECT (SELECT COUNT(*) FROM schedule) || ':' || IFNULL((SELECT SUM(length(title)+length(t_start)+length(t_end)) FROM schedule),0) || ':' || (SELECT COUNT(*) FROM subject) || ':' || IFNULL((SELECT SUM(length(name)+length(COALESCE(teacher1,''))+length(COALESCE(teacher2,''))+length(COALESCE(zoom1,''))+length(COALESCE(zoom2,''))+length(COALESCE(icon,''))+length(COALESCE(group1,''))+length(COALESCE(group2,''))) FROM subject),0) || ':' || IFNULL((SELECT val FROM _meta WHERE key='weeks'),'') AS chk", [], function (rc) {
+        const chk = (rc && rc[0] && rc[0].chk) ? String(rc[0].chk) : '';
+        if (!chk) return;
+        if (!chkLast) { chkLast = chk; return; }
+        if (chk !== chkLast) d1FetchSnap();   /* успішний apply оновить chkLast */
+      });
+    }
+    d1TickSched();
+  });
+}
+function d1TickSched() {
+  clearTimeout(tickT);
+  tickT = setTimeout(d1Tick, document.hidden ? 300000 : 60000);
+}
+function d1TickStart() { tickN = 0; d1TickSched(); }
+function d1TickNow() { clearTimeout(tickT); tickT = setTimeout(d1Tick, 60); }
+
+/* --- підняття ревізії після адмін-запису (миттєве оновлення всіх) --- */
+function d1BumpSnap() {
+  if (window.FH_WEB || !cfOk()) return;
+  try {
+    cfExec("INSERT INTO _meta (key,val) VALUES ('snap','{\"rev\":1}') ON CONFLICT(key) DO UPDATE SET val = json_set(val,'$.rev',COALESCE(json_extract(val,'$.rev'),0)+1)", [], null);
+  } catch (eB) {}
+}
+
+/* --- прямі записи адмінки в D1 (застосунки). Сайт пише у Firebase --- */
+function d1UpsertSubject(name, fields, cb) {
+  if (window.FH_WEB || !cfOk()) { if (cb) cb(false); return; }
+  cfExec('INSERT INTO subject (name) VALUES (?) ON CONFLICT(name) DO NOTHING', [name], function (r0) {
+    if (r0 === null) { if (cb) cb(false); return; }
+    const sets = [], ps = [];
+    for (let i = 0; i < fields.length; i++) {
+      if (fields[i][1] !== undefined) { sets.push(fields[i][0] + '=?'); ps.push(fields[i][1]); }
+    }
+    if (!sets.length) { if (cb) cb(true); return; }
+    ps.push(name);
+    cfExec('UPDATE subject SET ' + sets.join(', ') + ' WHERE name=?', ps, function (r1) {
+      if (cb) cb(!!r1);
+    });
+  });
+}
+function d1SaveDay(dk, arr, cb) {
+  if (window.FH_WEB || !cfOk()) { if (cb) cb(false); return; }
+  let bad = 0, left = arr.length + 1;
+  const step = function () { if (--left <= 0 && cb) cb(bad === 0); };
+  cfExec('DELETE FROM schedule WHERE day=?', [dk], function (rd) {
+    if (rd === null) bad++;
+    step();
+    if (!arr.length) { if (bad === 0) d1BumpSnap(); return; }
+    arr.forEach(function (it, i) {
+      cfExec('SELECT id FROM subject WHERE lower(name)=lower(?)', [it.s], function (rows) {
+        if (!rows) { bad++; step(); return; }
+        const insRow = function (sid) {
+          cfExec('INSERT INTO schedule (day, pos, subject_id, title, t_start, t_end) VALUES (?,?,?,?,?,?) ' +
+                 'ON CONFLICT(day,pos) DO UPDATE SET subject_id=excluded.subject_id, title=excluded.title, t_start=excluded.t_start, t_end=excluded.t_end',
+                 [dk, i + 1, sid, it.s, it.t, it.e], function (r2) {
+            if (!r2) bad++;
+            step();
+          });
+        };
+        if (rows[0]) { insRow(rows[0].id); return; }
+        cfExec('INSERT INTO subject (name) VALUES (?)', [String(it.s).toLowerCase()], function (r3) {
+          if (r3 === null) { bad++; step(); return; }
+          cfExec('SELECT id FROM subject WHERE lower(name)=lower(?)', [it.s], function (rows2) {
+            if (!rows2 || !rows2[0]) { bad++; step(); return; }
+            insRow(rows2[0].id);
+          });
+        });
+      });
+    });
+    if (bad === 0) d1BumpSnap();
+  });
+}
+function d1SaveWeeks(inverted, cb) {
+  if (window.FH_WEB || !cfOk()) { if (cb) cb(false); return; }
+  cfExec("UPDATE _meta SET val=? WHERE key='weeks'", [JSON.stringify({ inverted: inverted ? 1 : 0, flips: inverted ? [WK_ANCHOR] : 0 })], function (r) {
+    if (r) d1BumpSnap();
+    if (cb) cb(!!r);
+  });
+}
+
+/* 3.5.27: перевірка оновлень з D1 (app_update: id=1 release, id=2 beta).
+   ВЛАСНИК 26.10: бета — ЛИШЕ адмінам із перемикачем «Бета-версії»;
+   звичайні акаунти отримують тільки останній реліз, навіть якщо бета новіша.
+   3.5.33: виклик ЛИШЕ коли rev('upd') змінився або раз на 15 хв; на сайті —
+   легкий статичний latest.json (бекенд /api/update важить десятки МБ). */
+function d1UpdateCheck() {
+  const use = function (u) {
+    if (!u || u.latest === undefined || u.latest === null) return;
+    if (String(u.latest) === d1UpdLast) return;   /* без змін — не турбуємо updFromDb */
+    d1UpdLast = String(u.latest);
+    let notes = u.notes;
+    try { notes = (typeof notes === 'string') ? JSON.parse(notes) : notes; } catch (eN) { notes = []; }
+    updFromDb({ latest: u.latest, notes: Array.isArray(notes) ? notes : [],
+                apk_md5: u.apk_md5, exe_md5: u.exe_md5 });
+  };
+  if (window.FH_WEB) {
+    const pick = function (j, pref) {
+      if (j && j.latest) { j._pref = pref; updFromDb({ latest: String(j.latest), notes: Array.isArray(j.notes) ? j.notes : [] }); }
+    };
+    const done = function () {
+      fetch('https://fluxhelper.pages.dev/versions/release/latest.json?cb=' + Date.now(), { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+        .then(function (j) { pick(j, 'versions/release/'); });
+    };
+    if (typeof betaAllowed === 'function' && betaAllowed()) {
+      fetch('https://fluxhelper.pages.dev/versions/beta/latest.json?cb=' + Date.now(), { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+        .then(function (j) { if (j && j.latest) pick(j, 'versions/beta/'); else done(); });
+    } else done();
+  } else if (cfOk()) {
+    /* ДВА КАНАЛИ в app_update — вибір за роллю (betaAllowed):
+       адмін + бета-перемикач -> новіша з (release, beta); решта -> release */
+    cfExec('SELECT id, channel, latest, apk_md5, exe_md5, notes FROM app_update ORDER BY id', [], function (rows) {
+      if (!rows || !rows.length) return;
+      let rel = null, bet = null;
+      for (let i = 0; i < rows.length; i++) {
+        const r = rows[i];
+        if (!r || !r.latest) continue;
+        if (r.channel === 'beta' || r.id === 2) { if (!bet) bet = r; }
+        else if (!rel) rel = r;
+      }
+      let pick = rel;
+      if (bet && betaAllowed()) {
+        pick = (!rel || verCmp(normVer(bet.latest), normVer(rel.latest)) > 0) ? bet : rel;
+      }
+      if (pick) use(pick);
+    });
+  }
+  clearTimeout(d1UpdT);
+  d1UpdT = setTimeout(d1UpdateCheck, 900000);
+}
+
+/* 3.5.33: перший знімок — ще під час сплеша (старт миттєвий, дані вже з D1) */
+function pubEarly() {
+  try {
+    if (window.FH_WEB) return;   /* 3.5.33: сайт — webProbe тягне знімок одразу після ініту */
+    d1Snap(function (j) {
+      if (!j) return;
+      try {
+        const doc = JSON.parse(j);
+        if (doc && (doc.schedule || doc.subjects)) { d1OkN = Math.max(d1OkN, 1); d1Apply(doc); }
+      } catch (e5) {}
+    });
+  } catch (e6) {}
+}
+
 function d1Apply(doc) {
   let ch = false;
   if (doc.schedule !== undefined && doc.schedule !== null) {
@@ -1749,202 +1989,8 @@ function d1Apply(doc) {
   }
   return ch;
 }
-function pollD1() {
-  if (!document.hidden && !d1Busy) {
-    d1Busy = true;
-    d1Snap(function (j) {
-      d1Busy = false;
-      if (j) {
-        d1FailN = 0; d1OkN++;
-        /* Firebase SSE більше не потрібен, поки D1 живий */
-        if (d1OkN === 1 && es) { try { es.close(); } catch (e1) {} es = null; }
-        try { d1Apply(JSON.parse(j)); } catch (e2) {}
-      } else {
-        d1FailN++;
-        /* D1 впав 3 рази підряд — прокидаємо Firebase-фолбек */
-        if (d1FailN === 3) { try { doFetch(true); } catch (e3) {} try { startLive(); } catch (e4) {} }
-      }
-    });
-  }
-  clearTimeout(d1T);
-  d1T = setTimeout(pollD1, document.hidden ? 20000 : 5000);
-}
-/* 3.5.27: перевірка оновлень з D1 (app_update: id=1 release, id=2 beta).
-   ВЛАСНИК 26.10: бета — ЛИШЕ адмінам із перемикачем «Бета-версії»;
-   звичайні акаунти отримують тільки останній реліз, навіть якщо бета новіша. */
-function d1UpdateCheck() {
-  const use = function (u) {
-    if (!u || u.latest === undefined || u.latest === null) return;
-    if (String(u.latest) === d1UpdLast) return;   /* без змін — не турбуємо updFromDb */
-    d1UpdLast = String(u.latest);
-    let notes = u.notes;
-    try { notes = (typeof notes === 'string') ? JSON.parse(notes) : notes; } catch (eN) { notes = []; }
-    updFromDb({ latest: u.latest, notes: Array.isArray(notes) ? notes : [],
-                apk_md5: u.apk_md5, exe_md5: u.exe_md5 });
-  };
-  if (cfOk()) {
-    /* 3.5.27: ДВА КАНАЛИ в app_update — вибір за роллю (betaAllowed):
-       адмін + бета-перемикач -> новіша з (release, beta); решта -> release */
-    cfExec('SELECT id, channel, latest, apk_md5, exe_md5, notes FROM app_update ORDER BY id', [], function (rows) {
-      if (!rows || !rows.length) return;
-      let rel = null, bet = null;
-      for (let i = 0; i < rows.length; i++) {
-        const r = rows[i];
-        if (!r || !r.latest) continue;
-        if (r.channel === 'beta' || r.id === 2) { if (!bet) bet = r; }
-        else if (!rel) rel = r;
-      }
-      let pick = rel;
-      if (bet && betaAllowed()) {
-        pick = (!rel || verCmp(normVer(bet.latest), normVer(rel.latest)) > 0) ? bet : rel;
-      }
-      if (pick) use(pick);
-    });
-  } else {
-    fetch(FH_DB_API + '/api/update', { cache: 'no-store' })
-      .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
-      .then(function (j) { if (j && j.latest !== undefined) use(j); });
-  }
-  clearTimeout(d1UpdT);
-  d1UpdT = setTimeout(d1UpdateCheck, 300000);
-}
-function pubEarly() {
-  /* 3.5.27: D1 перший — розклад малюється ще під час сплеша */
-  try {
-    if (cfOk()) {
-      cfExec('SELECT json FROM v_snap_full', [], function (rows) {
-        const j = rows && rows[0] && rows[0].json;
-        if (j) {
-          try {
-            const doc = JSON.parse(j);
-            if (doc && doc.schedule) { d1OkN = Math.max(d1OkN, 1); d1Apply(doc); return; }
-          } catch (e5) {}
-        }
-        fbPubEarly();
-      });
-      return;
-    }
-    fetch(FH_DB_API + '/api/pub?path=schedule', { cache: 'no-store' })
-      .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
-      .then(function (w) {
-        if (w && w.ok && w.data) {
-          const s = JSON.stringify(w.data);
-          if (schedLast === '') schedLast = s;
-          if (!DBD.schedule || JSON.stringify(DBD.schedule) !== s) { applyDb({ schedule: w.data }); dbOnline = true; }
-          d1OkN = Math.max(d1OkN, 1);   /* бекенд живий — D1-шлях вважаємо робочим */
-          return;
-        }
-        fbPubEarly();
-      });
-  } catch (e6) { fbPubEarly(); }
-}
-function fbPubEarly() {
-  try {
-    fetch(DB_URL + '/schedule.json?cb=' + Date.now(), { cache: 'no-store' })
-      .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
-      .then(function (j) {
-        if (!j || typeof j !== 'object') return;
-        const s = JSON.stringify(j);
-        if (schedLast === '') schedLast = s;   /* поллінг не сче першим застосування дублем */
-        if (!DBD.schedule || JSON.stringify(DBD.schedule) !== s) { applyDb({ schedule: j }); }
-      });
-  } catch (e) {}
-}
-function doFetch(force) {
-  if (d1Healthy() && !force) return;   /* 3.5.27: D1 — основне джерело */
-  if (dbBusy) return;
-  if (!force && Date.now() - lastFetchTs < FETCH_GAP) return;
-  dbBusy = true;
-  fetch(DB_URL + '/.json', { cache: 'no-store' })
-    .then(function (r) { return r.ok ? r.json() : null; })
-    .then(function (j) {
-      dbBusy = false;
-      if (j && typeof j === 'object') { lastFetchTs = Date.now(); applyDb(j); }
-    })
-    .catch(function () { dbBusy = false; });
-}
-function startLive() {
-  if (d1Healthy()) return;   /* 3.5.27: D1 живий — Firebase SSE не потрібен */
-  if (es) return;
-  try {
-    es = new EventSource(DB_URL + '/.json?alt=sse');
-    es.onmessage = function (ev) {
-      try {
-        const m = JSON.parse(ev.data);
-        if (!m || m.type !== 'put') return;
-        if (m.path && (String(m.path).indexOf('/stats/') === 0 || String(m.path).indexOf('/update/devices/') === 0)) return;
-        if (!m.path || m.path === '/') { if (m.data) { lastFetchTs = Date.now(); applyDb(m.data); } }
-        else { clearTimeout(evT); evT = setTimeout(function () { doFetch(true); }, 900); }
-      } catch (e) {}
-    };
-    es.onerror = function () {
-      if (es) { es.close(); es = null; }
-      if (!pollTimer) pollTimer = setInterval(function () { if (!document.hidden) doFetch(false); }, 300000);
-    };
-  } catch (e) { es = null; }
-}
 
-// --- ЖИВЕ ОНОВЛЕННЯ РОЗКЛАДУ (2.1.0) -----------------------------------
-// Раніше зміни розкладу з редактора доходили лише через SSE (який на частині
-// пристроїв мовчки падає) або повний doFetch раз на 3 хв -> доводилось
-// перезаходити. Тепер: легкий поллінг /schedule кожні 2.5 с (тільки коли
-// екран видно) + предмети/вчителі раз на 15 с. Зміна з'являється на всіх
-// телефонах/ПК за 1-2 секунди БЕЗ перезапуску програми.
-let schedLast = '', poolSchedT = 0, subLast = '', tchLast = '', subT = 0;
-function pollSchedule() {
-  /* 3.5.27: D1 — основне джерело; Firebase-поллінг спить, поки D1 здоровий,
-     і сам прокидається (revive у pollD1), якщо D1 падає */
-  if (d1Healthy()) { clearTimeout(poolSchedT); poolSchedT = setTimeout(pollSchedule, 30000); return; }
-  if (document.hidden) return;   // екран не видно — не палимо батарею/квоти
-  fetch(DB_URL + '/schedule.json?cb=' + Date.now(), { cache: 'no-store' })
-    .then(function (r) { return r.ok ? r.json() : null; })
-    .catch(function () { return null; })
-    .then(function (j) {
-      if (!j || typeof j !== 'object') return;
-      const s = JSON.stringify(j);
-      if (s !== schedLast) {
-        /* 3.5.24: ПЕРШИЙ фетч теж застосовується — раніше перший результат
-           викидався (if (!first)), тож свіжий розклад доїжджав лише з другої
-           хвилі; applyDb і так не перемальовує, якщо нічого не змінилось */
-        schedLast = s;
-        applyDb({ schedule: j }); dbOnline = true;
-      }
-    });
-  clearTimeout(poolSchedT);
-  poolSchedT = setTimeout(pollSchedule, 2500);
-}
-function pollSubjects() {
-  if (d1Healthy()) { clearTimeout(subT); subT = setTimeout(pollSubjects, 30000); return; }   /* 3.5.27: D1 — основне джерело */
-  if (document.hidden) { subT = setTimeout(pollSubjects, 15000); return; }
-  Promise.all([
-    fetch(DB_URL + '/subjects.json?cb=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }),
-    fetch(DB_URL + '/teachers.json?cb=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
-  ]).then(function (res) {
-    const sj = res[0], tj = res[1];
-    if (sj && typeof sj === 'object') {
-      const s = JSON.stringify(sj);
-      if (s !== subLast) {
-        /* 3.5.24: ФІКС «СТАРІ ІКОНКИ НА САЙТІ» — перший фетч предметів більше
-           НЕ викидається. Раніше перший результат pollSubjects ігнорувався
-           (if (!first)), а doFetch (повна /.json — важкий) на телефоні часто
-           не встигав/падав -> предмети лишалися вбудовані/кешовані тижнями
-           (іконки «EN/UA/DE», bookf/filmf), хоча в адмінці вже давно нові */
-        subLast = s;
-        applyDb({ subjects: sj });
-      }
-    }
-    if (tj && typeof tj === 'object') {
-      const s2 = JSON.stringify(tj);
-      if (s2 !== tchLast) {
-        /* 3.5.24: перший фетч вчителів теж застосовується */
-        tchLast = s2;
-        applyDb({ teachers: tj });
-      }
-    }
-  });
-  clearTimeout(subT);
-  subT = setTimeout(pollSubjects, 15000);
-}
+/* 3.4.10: фоновий нагляд за інтернетом — 3.5.33: ПАСИВНИЙ (без запитів) */
 
 // ---------------- система оновлень ----------------
 // Firebase /update = { latest: "X.Y.Z", notes: ["+ ...", "- ..."] } — пише deploy-скрипт.
@@ -1991,6 +2037,14 @@ function parseNotes(txt) {
 // пріоритет. Третій елемент пункта ('pc'/'android') — показувати лише
 // на одній платформі; без нього — на обох.
 const WHATS_NEW = {
+  '3.5.33': [
+    ['✦', 'РОЗУМНА СИНХРОНІЗАЦІЯ: програма більше не опитує базу «про запас» — один мікрозапит (~30 байт) раз на хвилину, а повний запит тільки коли розклад чи дані РЕАЛЬНО змінилися на сервері. Трафіку — у сотні разів менше', '/'],
+    ['/', 'Розклад тепер приходить ЛИШЕ з Cloudflare (D1): звернень до Firebase за даними — нуль (ні розклад, ні предмети, ні вчителі, ні оновлення)', '/'],
+    ['/', 'Дані кешуються: старт — миттєво з кеша, іконки — вбудовані (мережу не чіпають), повторних завантажень немає', '/'],
+    ['/', 'Зміна адміном розкладу/предметів/тижнів долітає на всі пристрої автоматично (ревізія в базі) — без перезапуску програми', '/'],
+    ['/', 'Тема Liquid Glass перероблена ТОЧНО за референсом: обідок conic-gradient із mask-composite, що крутиться при наведенні, спекулярний блик (mix-blend-mode: screen), hover — scale(0.975), натискання — rotate3d(25°), blur через clamp', '/'],
+    ['/', 'Фікс «пакет недействителен»: APK качається з сервера Cloudflare з перевіркою цілісності; якщо інсталятор усе одно свариться — один раз видали стару версію і постав нову (дані підхопляться з акаунта)', '/'],
+  ],
   '3.5.32': [
     ['✦', 'ТЕМА LIQUID GLASS — тепер РІДКЕ СКЛО ВЕЗДЕ: картки уроків, вкладки, перемикачі, рамки, модалки, шапка і нижня панель — скляне тіло, обідок, спекулярні відблиски', 'phone'],
     ['/', 'КАБІНЕТ уроку — акуратна плашка з нормальним відступом від назви; ЗАРАЗ (зелена рамочка) і ДАЛІ (жовта рамочка) — красиві бейджі, ДАЛІ після номера кабінету', 'phone'],
@@ -2597,22 +2651,40 @@ function needOnline(fn) {
 let netBusy = false;
 /* 3.5.18: САЙТ — без екрана помилки: невдалий запуск бази = тихий
    повтор кожні 3 с, доки розклад не приїде. */
+function webUpdCheck() {
+  /* 3.5.33: оновлення на сайті — ЛЕГКИЙ статичний latest.json
+     (бекенд /api/update важить десятки МБ — більше НЕ викликається) */
+  const pick = function (j, pref) {
+    if (j && j.latest) { j._pref = pref; updFromDb({ latest: String(j.latest), notes: Array.isArray(j.notes) ? j.notes : [] }); }
+  };
+  const rel = function () {
+    fetch('https://fluxhelper.pages.dev/versions/release/latest.json?cb=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+      .then(function (j) { pick(j, 'versions/release/'); });
+  };
+  if (typeof betaAllowed === 'function' && betaAllowed()) {
+    fetch('https://fluxhelper.pages.dev/versions/beta/latest.json?cb=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+      .then(function (j) { if (j && j.latest) pick(j, 'versions/beta/'); else rel(); });
+  } else rel();
+}
 function webProbe() {
-  fetch(DB_URL + '/.json', { cache: 'no-store' })
-    .then(function (r) { return r.ok ? r.json() : null; })
-    .catch(function () { return null; })
-    .then(function (j) {
-      if (j && typeof j === 'object') {
-        lastFetchTs = Date.now();
-        applyDb(j);
-        hideNetErr();
-        updFromDb(j.update);
-        return;
-      }
-      setTimeout(webProbe, 3000);
-    });
+  /* 3.5.33: сайт — D1 через бекенд /api/pub; Firebase не викликається */
+  d1Snap(function (j) {
+    if (j) {
+      d1NetUp();
+      try { d1Apply(JSON.parse(j)); } catch (eP) {}
+      hideNetErr();
+      webUpdCheck();
+      return;
+    }
+    d1NetDown();
+    setTimeout(webProbe, 3000);
+  });
 }
 function netProbe(retry) {
+  /* 3.5.33: стартова перевірка — D1 (Cloudflare) = ЄДИНЕ джерело.
+     Firebase з канал даних знято повністю (0 запитів). */
   if (window.FH_WEB) { webProbe(); return; }
   if (netBusy) return;
   netBusy = true;
@@ -2621,25 +2693,18 @@ function netProbe(retry) {
     if (s) s.textContent = 'перевіряємо з\u2019єднання…';
     if (r) r.disabled = true;
   }
-  let ac = null, to = null;
-  try { if (typeof AbortController === 'function') ac = new AbortController(); } catch (e) {}
-  if (ac) to = setTimeout(function () { try { ac.abort(); } catch (e) {} }, 9000);
-  fetch(DB_URL + '/.json', { cache: 'no-store', signal: ac ? ac.signal : undefined })
-    .then(function (r) { if (!r.ok) throw 0; return r.json(); })
-    .then(function (j) {
-      netBusy = false;
-      if (to) clearTimeout(to);
-      if (!j || typeof j !== 'object') throw 0;
-      lastFetchTs = Date.now();
-      applyDb(j);
+  d1Snap(function (j) {
+    netBusy = false;
+    if (j) {
+      d1NetUp();
+      try { d1Apply(JSON.parse(j)); } catch (eP) {}
       hideNetErr();
-      updFromDb(j.update);        // модалка оновлення АБО показ головного
-    })
-    .catch(function () {
-      netBusy = false;
-      if (to) clearTimeout(to);
+      d1UpdateCheck();            // модалка оновлення АБО показ головного
+    } else {
+      d1NetDown();
       showNetErr();
-    });
+    }
+  });
 }
 
 /* =================================================================
@@ -2652,20 +2717,9 @@ function netProbe(retry) {
    ================================================================= */
 let netWatchT = 0, netWatchBusy = false, netWatchFails = 0, netWatchGraceT = 0;
 function netWatchPing() {
-  if (navigator.onLine === false) return Promise.resolve(false);
-  return new Promise(function (res) {
-    let done = false, ac = null;
-    try { if (typeof AbortController === 'function') ac = new AbortController(); } catch (eAC) {}
-    const to = setTimeout(function () {
-      if (done) return;
-      done = true;
-      try { if (ac) ac.abort(); } catch (eAB) {}
-      res(false);
-    }, 4500);
-    fetch(DB_URL + '/schedule.json?cb=' + Date.now(), { cache: 'no-store', signal: ac ? ac.signal : undefined })
-      .then(function (r) { if (done) return; done = true; clearTimeout(to); res(!!r.ok); })
-      .catch(function () { if (done) return; done = true; clearTimeout(to); res(false); });
-  });
+  /* 3.5.33: ПАСИВНО — navigator.onLine БЕЗ мережевих запитів (власник:
+     мінімум трафіку). Живість бази показують тіки синхронізації. */
+  return Promise.resolve(navigator.onLine !== false);
 }
 function netWatchShow() {
   if (typeof dataVerified === 'undefined' || !dataVerified) return;   // лише після старту
@@ -2681,7 +2735,7 @@ function netWatchHide() {
   const neH = byId('neterr');
   if (neH && !neH.classList.contains('hidden')) {
     hideNetErr();
-    try { doFetch(true); } catch (eDF) {}   // свіжі дані одразу після повернення мережі
+    try { d1TickNow(); } catch (eDF) {}   // 3.5.33: свіжі дані одразу після повернення мережі
   }
   netWatchFails = 0;
 }
@@ -4044,71 +4098,46 @@ function syncPull(force, cb) {   // 3.4.4: cb(dec) — 'ok' | 'master' | 'offlin
     }
   });
 }
-/* 2.8.6: РЕАЛЬНИЙ ЧАС — кожні 5 с запит ТІЛЬКИ ts (мікро-відповідь); повний
-   знімок тягнемо лише коли він чужий і новіший. Тема/групи/звуки/підтвердження
-   з ПК доїжджають на телефон за кілька секунд самі. Вимкнена синхронізація —
-   годинник стоїть. 3.4.15: 8 с -> 5 с (просив власник — «в реальному часі»)
-   + миттєве підтягування щойно застосунок повертається з фону. */
+/* 2.8.6 → 3.5.33: РЕАЛЬНИЙ ЧАС без Firebase-опитування.
+   Раніше syncWatchTick щосекунди читав update/web/<uid> з Firebase
+   (власник: «обращается на Firebase» + трафік). Тепер стан акаунта
+   дивиться d1Tick: SELECT sts FROM users (~10 байт) кожні 2 хв +
+   миттєво після повернення у вікно. Сайт іде через бекенд (/api/sync),
+   застосунки — прямо в D1. */
 let syncWatchT = 0;
-function syncWatchStop() { clearTimeout(syncWatchT); syncWatchT = 0; }
-function syncWatchTick() {
-  syncWatchT = 0;
-  if (!ACC.user) return;
-  const k = userKey(ACC.user);
-  if (!k) {   // 3.4.8: fid ще не здобуто — годинник НЕ гасне, чекає наступного тіка
-    if (ACC.user && !syncWatchT) syncWatchT = setTimeout(syncWatchTick, 5000);
-    return;
-  }   // 2.8.9: лише за Firebase UID
-  /* 3.5.3: ДЗЕРКАЛО ВЕБ-ВЕРСІЇ (update/web/<uid>) — зміни, зроблені на сайті
-     на айфоні, доїжджають на ПК/телефон у той самий 5-секундний цикл, що й D1.
-     3.5.5: опитуємо навіть КОЛИ синк вимкнено — але тільки за перемикачем:
-     як тільки синк увімкнули на іншому пристрої, тут він сам відновиться. */
-  fetch(DB_URL + fbEnc('update/web/' + k) + '.json?cb=' + Date.now(), { cache: 'no-store' })
-    .then(function (r) { return r.ok ? r.json() : null; })
-    .catch(function () { return null; })
-    .then(function (j) {
-      if (!ACC.user || !j || typeof j !== 'object') { if (ACC.user && !syncWatchT) syncWatchT = setTimeout(syncWatchTick, 5000); return; }
-      if (!ACC.sync) {
-        const svOn = !(j.sync === 0 || j.sync === false || j.sync === '0');
-        if (typeof j.sync === 'undefined' || !svOn) { if (!syncWatchT) syncWatchT = setTimeout(syncWatchTick, 5000); return; }
-        ACC.sync = true;
-        try { localStorage.setItem('fh_sync', '1'); } catch (eSY6) {}
-        const sc6 = byId('acSync'); if (sc6) sc6.checked = true;
-        refreshAccUI();
-      }
-      if ((j.g || j.n || j.th) && (parseInt(j.t, 10) || 0) > syncLastTs) {
-        try { syncApply(j, false); } catch (eWM) {}
-      }
-      if (!syncWatchT) syncWatchT = setTimeout(syncWatchTick, 5000);
-    });
+function syncStsCheck(k) {
+  if (!ACC.user || !k) return;
   cfExec('SELECT sts FROM users WHERE user_id=?', [k], function (rows) {
     if (!ACC.user) return;
-    /* 2.9.1: D1 відповіла, а рядка НЕМА -> аккаунт видалили з бази.
-       Підтверджуємо повторним запитом і викидаємо з акаунта. */
     /* 3.4.8: D1 відповіла, а рядка НЕМА. Рядок БАЧИЛИ раніше -> аккаунт
        справді видалили (підтвердження + викид). НЕ БАЧИЛИ -> новий акаунт
        ще реєструється: ДОГАНЯЄМО реєстрацію, ніякого викиду. */
     if (rows && !rows[0]) {
       if (fhRowKnown(k)) { confirmAccountGone(); }
       else { usersUpsert(ACC.user, null); }
-      if (ACC.user && !syncWatchT) syncWatchT = setTimeout(syncWatchTick, 5000);
       return;
     }
     if (rows && rows[0]) fhRowSeen(k);   // 3.4.8: рядок підтверджено
     if (rows && rows[0]) {
       const ts = parseInt(rows[0].sts, 10) || 0;
       if (ts > syncLastTs && ACC.sync) {
+        // чужий новіший знімок — тягнемо повністю (syncApply сам оминає свій запис)
         cfExec('SELECT settings FROM users WHERE user_id=?', [k], function (rows2) {
           if (rows2 && rows2[0] && ACC.user) { try { syncApply(JSON.parse(rows2[0].settings), false); } catch (e) {} }
         });
       }
     }
-    if (ACC.user && !syncWatchT) syncWatchT = setTimeout(syncWatchTick, 5000);
   });
+}
+function syncWatchStop() { clearTimeout(syncWatchT); syncWatchT = 0; }
+function syncWatchTick() {
+  /* 3.5.33: миттєве підтягування налаштувань (без самопланування —
+     циклом керує d1Tick) */
+  if (ACC.user) { try { syncStsCheck(userKey(ACC.user)); } catch (eSW) {} }
 }
 function syncWatchStart() {
   syncWatchStop();
-  if (ACC.user) syncWatchT = setTimeout(syncWatchTick, 5000);
+  if (ACC.user) { try { syncStsCheck(userKey(ACC.user)); } catch (eSW2) {} }
 }
 /* 3.4.15: МИТТЄВЕ ПІДТЯГУВАННЯ при поверненні з фону/перемиканні вікон —
    налаштування (тема, звуки, підтвердження, групи), змінені на іншому
@@ -4542,14 +4571,28 @@ function admSaveSched() {
   const arr = draft.filter(function (r) { return normSubj(r.s) && r.t && r.e; })
     .map(function (r) { return { s: admName(normSubj(r.s)), t: r.t, e: r.e }; });
   const dk = DAYDEFS[ADM.day][0];
-  dbPut('schedule/' + dk, arr.length ? arr : null, function (ok) {
-    if (!ok) { toast('Не вдалося зберегти — немає зв’язку з базою'); return; }
+  /* 3.5.33: застосунок пише НАПРЯМУ в Cloudflare D1 (джерело істини) і
+     піднімає rev — всі пристрої оновлюються миттєво; Firebase-дзеркало
+     лишається для старих версій. Сайт пише у Firebase, як і було. */
+  const admSchedDone = function () {
     if (!DBD.schedule) DBD.schedule = {};
     DBD.schedule[dk] = arr;
     ADM.draft = null;
     if (typeof render === 'function') render(false);
     admRender();
     toast(skip ? 'Розклад оновлено ✓ (порожні рядки пропущено)' : 'Розклад оновлено ✓');
+  };
+  if (window.FH_WEB) {
+    dbPut('schedule/' + dk, arr.length ? arr : null, function (ok) {
+      if (!ok) { toast('Не вдалося зберегти — немає зв’язку з базою'); return; }
+      admSchedDone();
+    });
+    return;
+  }
+  d1SaveDay(dk, arr, function (ok) {
+    if (!ok) { toast('Не вдалося зберегти — немає зв’язку з базою'); return; }
+    try { dbPut('schedule/' + dk, arr.length ? arr : null, null); } catch (eM) {}
+    admSchedDone();
   });
 }
 
@@ -4674,17 +4717,34 @@ function admSaveSubj() {
     if (tc) obj.tc = tc;
     if (l0) obj.link = l0;
     if (Array.isArray(old.lbl) && old.lbl.length === 2) obj.lbl = [String(old.lbl[0]), String(old.lbl[1])];
-    dbPut('subjects/' + key, obj, function (ok1) {
-      dbPut('teachers/' + key, null, function () {   // спільний режим: групових учителів нема
-        if (ok1 === false) { toast('Не вдалося зберегти — немає зв’язку з базою'); return; }
-        if (!DBD.subjects) DBD.subjects = {};
-        DBD.subjects[key] = obj;
-        if (DBD.teachers) delete DBD.teachers[key];
-        ADM.draft = null;
-        admModalClose();
-        admRender();
-        toast('Збережено в базі ✓');
+    /* 3.5.33: D1 (apps) + Firebase-дзеркало; сайт — Firebase */
+    const admSubjOneDone = function () {
+      if (!DBD.subjects) DBD.subjects = {};
+      DBD.subjects[key] = obj;
+      if (DBD.teachers) delete DBD.teachers[key];
+      ADM.draft = null;
+      admModalClose();
+      admRender();
+      toast('Збережено в базі ✓');
+    };
+    if (window.FH_WEB) {
+      dbPut('subjects/' + key, obj, function (ok1) {
+        dbPut('teachers/' + key, null, function () {
+          if (ok1 === false) { toast('Не вдалося зберегти — немає зв’язку з базою'); return; }
+          admSubjOneDone();
+        });
       });
+      return;
+    }
+    d1UpsertSubject(key, [
+      ['group1', null], ['group2', null],
+      ['teacher1', obj.tc || null], ['teacher2', null],
+      ['zoom1', obj.link || null], ['zoom2', null],
+      ['icon', obj.icon !== undefined ? obj.icon : (old.icon || null)]
+    ], function (ok) {
+      if (!ok) { toast('Не вдалося зберегти — немає зв’язку з базою'); return; }
+      try { dbPut('subjects/' + key, obj, null); dbPut('teachers/' + key, null, null); } catch (eM1) {}
+      admSubjOneDone();
     });
   } else {
     let lbl;
@@ -4696,21 +4756,40 @@ function admSaveSubj() {
     const t1 = g('adT1'), t2 = g('adT2'), l1 = g('adL1'), l2 = g('adL2');
     obj.lbl = lbl;
     if (l1 || l2) obj.links = [null, l1 || null, l2 || null];
-    dbPut('subjects/' + key, obj, function (ok1) {
-      dbPut('teachers/' + key, [null, t1 || null, t2 || null], function (ok2) {
-        if (ok1 === false && ok2 === false) { toast('Не вдалося зберегти — немає зв’язку з базою'); return; }
-        if (!DBD.subjects) DBD.subjects = {};
-        DBD.subjects[key] = obj;
-        if (!DBD.teachers) DBD.teachers = {};
-        DBD.teachers[key] = { '1': t1 || undefined, '2': t2 || undefined };
-        if (!DBD.teachers[key]['1']) delete DBD.teachers[key]['1'];
-        if (!DBD.teachers[key]['2']) delete DBD.teachers[key]['2'];
-        if (!DBD.teachers[key]['1'] && !DBD.teachers[key]['2']) delete DBD.teachers[key];
-        ADM.draft = null;
-        admModalClose();
-        admRender();
-        toast('Збережено в базі ✓');
+    const admSubjTwoDone = function () {
+      if (!DBD.subjects) DBD.subjects = {};
+      DBD.subjects[key] = obj;
+      if (!DBD.teachers) DBD.teachers = {};
+      DBD.teachers[key] = { '1': t1 || undefined, '2': t2 || undefined };
+      if (!DBD.teachers[key]['1']) delete DBD.teachers[key]['1'];
+      if (!DBD.teachers[key]['2']) delete DBD.teachers[key]['2'];
+      if (!DBD.teachers[key]['1'] && !DBD.teachers[key]['2']) delete DBD.teachers[key];
+      ADM.draft = null;
+      admModalClose();
+      admRender();
+      toast('Збережено в базі ✓');
+    };
+    if (window.FH_WEB) {
+      dbPut('subjects/' + key, obj, function (ok1) {
+        dbPut('teachers/' + key, [null, t1 || null, t2 || null], function (ok2) {
+          if (ok1 === false && ok2 === false) { toast('Не вдалося зберегти — немає зв’язку з базою'); return; }
+          admSubjTwoDone();
+        });
       });
+      return;
+    }
+    /* 3.5.33: групи/вчителі/Zoom пишуться в таблицю subject напряму */
+    const l1v = (obj.links && obj.links[1]) ? obj.links[1] : null;
+    const l2v = (obj.links && obj.links[2]) ? obj.links[2] : null;
+    d1UpsertSubject(key, [
+      ['group1', obj.lbl ? obj.lbl[0] : null], ['group2', obj.lbl ? obj.lbl[1] : null],
+      ['teacher1', t1 || null], ['teacher2', t2 || null],
+      ['zoom1', l1v], ['zoom2', l2v],
+      ['icon', obj.icon !== undefined ? obj.icon : (old.icon || null)]
+    ], function (ok) {
+      if (!ok) { toast('Не вдалося зберегти — немає зв’язку з базою'); return; }
+      try { dbPut('subjects/' + key, obj, null); dbPut('teachers/' + key, [null, t1 || null, t2 || null], null); } catch (eM2) {}
+      admSubjTwoDone();
     });
   }
 }
@@ -4727,13 +4806,24 @@ function admCreateSubj() {
   const e2 = byId('adNewSubj');
   const nm = e2 ? String(e2.value || '').trim().toLowerCase() : '';
   if (!nm) { toast('Введи назву предмета'); return; }
-  dbPut('subjects/' + nm, { lbl: ['1-ша група', '2-ша група'] }, function (ok) {
-    if (!ok) { toast('Не вдалося додати — немає зв’язку з базою'); return; }
+  const admCreateDone = function () {
     if (!DBD.subjects) DBD.subjects = {};
     DBD.subjects[nm] = { lbl: ['1-ша група', '2-ша група'] };
     admModalClose();
     admRender();
     toast('Предмет додано ✓');
+  };
+  if (window.FH_WEB) {
+    dbPut('subjects/' + nm, { lbl: ['1-ша група', '2-ша група'] }, function (ok) {
+      if (!ok) { toast('Не вдалося додати — немає зв’язку з базою'); return; }
+      admCreateDone();
+    });
+    return;
+  }
+  d1UpsertSubject(nm, [['group1', '1-ша група'], ['group2', '2-ша група']], function (ok) {
+    if (!ok) { toast('Не вдалося додати — немає зв’язку з базою'); return; }
+    try { dbPut('subjects/' + nm, { lbl: ['1-ша група', '2-ша група'] }, null); } catch (eM3) {}
+    admCreateDone();
   });
 }
 
@@ -4813,15 +4903,24 @@ function admPickIcon(key) {
 function admSaveIcon(nm) {
   const key = ADM.pick;
   if (!key) return;
-  dbPut('subjects/' + key + '/icon', nm === 'bookf' ? null : nm, function (ok) {
-    if (!ok) { toast('Не вдалося зберегти іконку'); return; }
+  /* 3.5.33: іконка — прямо в D1 subject.icon (+ дзеркало Firebase) */
+  const admIconDone = function () {
     if (!DBD.subjects) DBD.subjects = {};
     if (!DBD.subjects[key]) DBD.subjects[key] = {};
-    if (nm === 'bookf') delete DBD.subjects[key].icon; else DBD.subjects[key].icon = nm;
+      if (nm === 'bookf') delete DBD.subjects[key].icon; else DBD.subjects[key].icon = nm;
     ADM.draft = null;
     admModalClose();
     admRender();
     toast('Іконку оновлено ✓');
+  };
+  if (window.FH_WEB) {
+    dbPut('subjects/' + key + '/icon', nm === 'bookf' ? null : nm, function (ok) { if (!ok) { toast('Не вдалося зберегти іконку'); return; } admIconDone(); });
+    return;
+  }
+  d1UpsertSubject(key, [['icon', nm === 'bookf' ? null : nm]], function (ok2) {
+    if (!ok2) { toast('Не вдалося зберегти іконку'); return; }
+    try { dbPut('subjects/' + key + '/icon', nm === 'bookf' ? null : nm, null); } catch (eM4) {}
+    admIconDone();
   });
 }
 
@@ -4904,8 +5003,7 @@ function admRenderWeeks() {
 }
 function admWkSwap() {
   const newInv = !WEEKS_INVERTED;
-  dbPut('weeks', { inverted: newInv ? 1 : 0, flips: newInv ? [WK_ANCHOR] : 0 }, function (ok) {
-    if (!ok) { toast('Не вдалося зберегти — немає зв’язку з базою'); return; }
+  const wkSaveDone = function () {
     WEEKS_INVERTED = newInv;
     DBW = newInv ? [WK_ANCHOR] : [];
     if (typeof pushNotifSched === 'function') pushNotifSched();
@@ -4913,6 +5011,18 @@ function admWkSwap() {
     const today = new Date();
     const curTy = wkType(wkIso(wkMonday(today)));
     toast('Порядок тижнів змінено! Поточний тиждень: ' + (curTy === 'on' ? 'ОНЛАЙН' : 'ОФЛАЙН') + ' ✓');
+  };
+  if (window.FH_WEB) {
+    dbPut('weeks', { inverted: newInv ? 1 : 0, flips: newInv ? [WK_ANCHOR] : 0 }, function (ok) {
+      if (!ok) { toast('Не вдалося зберегти — немає зв’язку з базою'); return; }
+      wkSaveDone();
+    });
+    return;
+  }
+  d1SaveWeeks(newInv, function (ok) {
+    if (!ok) { toast('Не вдалося зберегти — немає зв’язку з базою'); return; }
+    try { dbPut('weeks', { inverted: newInv ? 1 : 0, flips: newInv ? [WK_ANCHOR] : 0 }, null); } catch (eM5) {}
+    wkSaveDone();
   });
 }
 function admWkFlip(monIso) {
@@ -5490,29 +5600,22 @@ function init() {
   applyScale();
   window.addEventListener('resize', applyScale);
 
-  // живі дані + ОБОВ'ЯЗКОВА мережева перевірка (без інтернету — інтерфейсу немає)
-  // 3.5.10: pubEarly — легкий /schedule.json летить ПЕРШИМ (ще під час сплеша),
-  // щоб базовий розклад був готовий до появи екрана, без «стрибка» даних
+// живі дані (3.5.33 — РОЗУМНА СИНХРОНІЗАЦІЯ): перший знімок D1 летить
+  // ще ДО появи екрана (сплеш), далі — ЄДИНИЙ цикл мікро-ревізій: раз на
+  // хвилину ~30 байт, повний запит ЛИШЕ коли дані справді змінились.
+  // Firebase у каналі даних — 0 запитів (ні розклад, ні предмети,
+  // ні оновлення, ні «перевірка зв'язку»).
   pubEarly();
-  doFetch(false);
-  startLive();
-  pollSchedule();
-  pollSubjects();
-  pollD1();          /* 3.5.27: D1 — основне джерело бази */
-  d1UpdateCheck();   /* 3.5.27: оновлення з D1 app_update (Firebase — фолбек) */
+  d1TickStart();
+  d1UpdateCheck();
   pushNotifSched();
   netProbe(false);
-  netWatchStart();   // 3.4.10: фоновий нагляд за інтернетом
-  document.addEventListener('visibilitychange', function () {
-    if (!document.hidden) { clearTimeout(poolSchedT); poolSchedT = setTimeout(pollSchedule, 300); }
-  });
+  netWatchStart();   // 3.4.10: пасивний нагляд за мережею (без запитів)
 
-  // авто-стеження за версією: SSE + тихий опитування /update кожні 25 с
-  // + перевірка одразу після повернення у вікно — «Доступне оновлення»
-  // з'являється САМО, щойно версія на сервері зміниться
-  setInterval(watchUpdate, 25000);
+  // оновлення стежиться через rev('upd') у d1Tick; після повернення у
+  // вікно — миттєвий тік: зміни, зроблені поки програма була у фоні
   document.addEventListener('visibilitychange', function () {
-    if (!document.hidden) { liveTick(true); watchUpdate(); doFetch(false); }
+    if (!document.hidden) { liveTick(true); d1TickNow(); }
   });
 
   // на телефоні одразу просимо дозвіл на сповіщення
