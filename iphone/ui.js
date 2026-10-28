@@ -268,7 +268,7 @@ function validS(x) {
 // вічно вважав себе старішим. Тепер версію підставляє build.sh з манифеста
 // (2.4.1 -> versionName), а ПІСЛЯ завантаження Java-міст AndroidHost.ver()
 // віддає СПРАВЖНЮ версію встановленого пакета (PackageManager) — найнадійніше.
-let APP_VER = '3.5.40';              // X.Y.Z — підставляється при збірці з манифеста
+let APP_VER = '3.5.41';              // X.Y.Z — підставляється при збірці з манифеста
 try {
   if (window.AndroidHost && AndroidHost.ver) {
     const jv = AndroidHost.ver();
@@ -1055,7 +1055,8 @@ function render(anim) {
          (та рівно 12:35) — кабінет лишається. */
       const _stM = (function (t) { const m = /^\s*(\d{1,2}):(\d{2})/.exec(String(t || '')); return m ? ((+m[1]) * 60 + (+m[2])) : 0; })(l.t);
       const rm = (_stM > 755) ? null : roomFor(DAYDEFS[sel][0], l);
-      if (rm) h3.appendChild(el('span', 'rm-chip', rm));
+      /* 3.5.41: перед номером кабінету — знак № (просив власник) */
+      if (rm) h3.appendChild(el('span', 'rm-chip', '№' + rm));
     } catch (eRm) {}
     if (i === nowIdx) h3.appendChild(el('span', 'now-chip', '<i></i>ЗАРАЗ'));
     if (i === nextIdx) h3.appendChild(el('span', 'next-chip', '<i></i>ДАЛІ'))
@@ -2147,6 +2148,14 @@ function parseNotes(txt) {
 // пріоритет. Третій елемент пункта ('pc'/'android') — показувати лише
 // на одній платформі; без нього — на обох.
 const WHATS_NEW = {
+  '3.5.41': [
+    ['✦', 'ВХІД ЧЕРЕЗ GOOGLE — виправлено «заходить через раз»: програма більше не засинає під час входу, підтвердження підхоплюється миттєво щойно ви повернулись', '/'],
+    ['✦', 'РОЗКЛАД: бейдж «ДАЛІ» і «ЗАРАЗ» — тепер красиві закруглені рамочки з відступом від назви (на ПК були квадратами)', '/'],
+    ['✦', 'РОЗКЛАД: перед номером кабінету — знак №, одразу видно, що це номер', '/'],
+    ['✦', 'НИЖНЯ ПАНЕЛЬ ТЕЛЕФОНА: трохи темніша (і в темній, і в світлій темі)', '/'],
+    ['✦', 'СВІТЛА ТЕМА: «Мої групи» та «Акаунт» — точь-в-точь як у темній: одна рівна рамка, пункти всередині розділені лініями, без «розкиданих» плашок', '/'],
+    ['✦', 'НАЛАШТУВАННЯ ПК: рамка «Сповіщення» тепер тієї ж висоти, що й сусідні картки', '/'],
+  ],
   '3.5.40': [
     ['✦', 'ТРАФІК СЕРВЕРА: передачу між користувачами через сервер ЗНЯТО — дані тепер ідуть напряму в базу (Render більше не з\'їдає ліміт 5 ГБ)', '/'],
     ['✦', 'ФІКС КРАШУ: після виходу з акаунта кнопка «Увійти через Google» більше не ламає програму — вхід тепер через браузер', '/'],
@@ -3352,14 +3361,27 @@ function rmConfirmNo() {
   setAgStat('Вхід скасовано — акаунт залишено невизначеним.', 'err');
   const g3 = byId('agGo'); if (g3) g3.disabled = false;
 }
+let authKick = null;
 function authPollDb(st) {
   // 2.8.1: канал входу — сайт пише профіль у Firebase auth_cb/<state>,
-  // програма опитує цей ключ, поки не прийде профіль (до 4 хв)
+  // програма опитує цей ключ, поки не прийде профіль.
+  // 3.5.41 ФІКС «входить через раз» (головна скарга власника): поки
+  // користувач сидить у браузері, Android ЗАМОРОЖУЄ процес застосунку —
+  // таймери стоять, а старий ліміт 4 хв рахував СТІННИЙ час і встигав
+  // вичерпатись ще ДО повернення в програму (вхід «не заходить»).
+  // ТЕПЕР: ліміт — 10 хв АКТИВНОГО очікування; час, поки пристрій спав,
+  // не рахується (стрибок годинника між тіками > 10 с = були у фризі),
+  // а щойно застосунок знову на екрані (visibilitychange/focus/дотик —
+  // див. слухачі біля resumeAuthPoll) опитування стріляє МИТТЄВО.
   clearTimeout(authPollT);
+  authKick = null;
   if (!st) return;
-  const t0 = Date.now();
+  let lastTick = Date.now(), awake = lastTick;
   const tick = function () {
     if (ACC.user || agState !== st) return;
+    const now = Date.now();
+    if (now - lastTick > 10000) awake = now;   // повернулись із «заморозки» — ліміт заново
+    lastTick = now;
     fetch(DB_URL + '/update/auth_cb/' + st + '.json', { cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (j) {
@@ -3372,19 +3394,21 @@ function authPollDb(st) {
           dbDel('/update/auth_cb/' + st);
           /* 3.5.38: після ЯВНОГО виходу вхід вимагає підтвердження */
           rememberIsOut(u2.sub, function (outRm) { if (outRm) rmAskConfirm(u2); else authAccept(u2); });
-        } else if (Date.now() - t0 < 240000) {
+        } else if (Date.now() - awake < 600000) {
           authPollT = setTimeout(tick, 1500);
         } else {
           agState = '';
+          authKick = null;
           setAgStat('Час входу вийшов. Натисни «Увійти через Google» ще раз.', 'err');
           const g3 = byId('agGo'); if (g3) g3.disabled = false;
         }
       })
       .catch(function () {
-        if (!ACC.user && agState === st && Date.now() - t0 < 240000) authPollT = setTimeout(tick, 2500);
+        if (!ACC.user && agState === st && Date.now() - awake < 600000) authPollT = setTimeout(tick, 2500);
       });
   };
   tick();
+  authKick = tick;
 }
 function authStart() {
   if (agState) return;
@@ -3401,15 +3425,29 @@ function authStart() {
      Credential Manager після явного виходу з акаунта ПАДАВ (краш програми;
      скарга власника 28.10). Браузерна сторінка входу auth.html пише профіль
      в Firebase auth_cb/<state> — authPollDb його підхопить і доукладе вхід.
-     На сайті AndroidHost.login — GIS-попап webhost.js, там усе працює. */
+     На сайті AndroidHost.login — GIS-попап webhost.js, там усе працює.
+     3.5.41: якщо в хмарі _meta.auth_oneclick = '1' — auth.html ОДРАЗУ
+     переадресовує на сторінку вибору акаунта Google (топ-рівневий редірект,
+     жодних спливаних вікон — працює на всіх телефонах, як у ChatGPT).
+     Прапорець вмикається ТІЛЬКИ після того, як власник додать redirect URI
+     в Google Cloud Console; поки що 0 — кнопка на сторінці входу. */
   if (ANDROID) {
-    let opened = false;
-    try { AndroidHost.open(SITE_URL + 'auth.html#s=' + encodeURIComponent(st) + '&prompt=select_account'); opened = true; } catch (eO) {}
-    if (opened) { authPollDb(st); return; }
-    agState = '';
-    try { localStorage.removeItem('fh_auth_state'); } catch (eLR2) {}
-    setAgStat('Не вдалося відкрити вхід. Спробуй ще раз.', 'err');
-    const g2b = byId('agGo'); if (g2b) g2b.disabled = false;
+    let openedOnce = false;
+    const openAuth = function (oc) {
+      if (openedOnce) return; openedOnce = true;
+      try {
+        AndroidHost.open(SITE_URL + 'auth.html#s=' + encodeURIComponent(st) + '&prompt=select_account' + (oc ? '&oneclick=1' : ''));
+        authPollDb(st);
+        return;
+      } catch (eO) {}
+      agState = '';
+      try { localStorage.removeItem('fh_auth_state'); } catch (eLR2) {}
+      setAgStat('Не вдалося відкрити вхід. Спробуй ще раз.', 'err');
+      const g2b = byId('agGo'); if (g2b) g2b.disabled = false;
+    };
+    try { cfExec("SELECT v FROM _meta WHERE k='auth_oneclick'", [], function (rows) { openAuth(!!(rows && rows[0] && String(rows[0].v) === '1')); }); }
+    catch (eCf) { openAuth(false); }
+    setTimeout(function () { openAuth(false); }, 2600);   // база мовчить → відкриваємо за старим потоком
     return;
   }
   try { AndroidHost.login(st); authPollDb(st); }
@@ -3671,6 +3709,7 @@ function authAccept(u) {
   try { localStorage.removeItem('fh_auth_state'); } catch (e) {}
   clearTimeout(agT);
   clearTimeout(authPollT);
+  authKick = null;
   agState = '';
   gateHide();          // 2.8.0: вхід підтверджено — відкриваємо програму
   authReady = true;
@@ -5740,6 +5779,17 @@ function init() {
       }
     } catch (e) {}
   })();
+  /* 3.5.41: МИТТЄВЕ опитування auth_cb щойно застосунок знову на екрані —
+     «повернувся в програму» = вхід підтверджується за 1-2 с (фікс «входить
+     через раз»: заморожені у фоні таймери більше не вирішують долю входу) */
+  try {
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible' && authKick) { try { authKick(); } catch (eK1) {} }
+    }, false);
+    window.addEventListener('focus', function () { if (authKick) { try { authKick(); } catch (eK2) {} } }, false);
+    window.addEventListener('pageshow', function () { if (authKick) { try { authKick(); } catch (eK3) {} } }, false);
+    document.addEventListener('touchstart', function () { if (authKick) { try { authKick(); } catch (eK4) {} } }, { passive: true });
+  } catch (eKick) {}
   // підтвердження заходу на урок
   // запуск Zoom: через додаток (zoommtg) або через браузер (Zoom Web)
   const zA = byId('zApp'), zW = byId('zWeb');

@@ -325,7 +325,18 @@ h2 {
   'use strict';
   var h = {}, seg = (location.hash || '').replace(/^#/, '').split('&');
   for (var i = 0; i < seg.length; ++i) { var kv = seg[i].split('='); if (kv[0]) h[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1] || ''); }
-  var STATE = h.s || '', PORT = h.p || '', HINT = h.h || '';
+  /* 3.5.41: ВХІД В ОДИН КЛІК — auth.html може ОДРАЗУ переадресовувати на
+     сторінку вибору акаунта Google (топ-рівнева навігація — не спливане
+     вікно, тому працює на всіх телефонах і ніде не блокується).
+     • Застосунок додає &oneclick=1 ЛИШЕ коли в D1 (_meta.auth_oneclick='1').
+     • Прапорець можна вмикати лише після того, як у Google Cloud Console
+       → APIs & Services → Credentials → цей Web-клієнт → «Authorized
+       redirect URIs» додано https://fluxhelper.pages.dev/auth.html
+       (інакше Google покаже помилку redirect_uri_mismatch).
+     • Повернення з Google: хеш містить #access_token=...&state=... —
+       сторінка сама завершує вхід (профіль → auth_cb/<state>). */
+  var GH = h.access_token || h.error ? h : null;
+  var STATE = h.s || (GH ? (h.state || '') : ''), PORT = h.p || '', HINT = h.h || '';
   /* 3.5.40: FH_BACKEND (Render) більше не використовується — вхід іде
    напряму: identitytoolkit (Web key публічний) + Firebase auth_cb */
   var FB_KEY = 'AIzaSyCDWpF3QTMEFBN9ravDxH_woKnBpcMRDvI';   /* публічний Firebase Web API key */
@@ -336,6 +347,29 @@ h2 {
 
   function setStat(t, cls) { stat.className = 'ag-stat' + (cls ? ' ' + cls : ''); stat.innerHTML = t || ''; }
   function busy(on, txt) { go.disabled = !!on; goT.textContent = txt; }
+
+  /* ===== 3.5.41: ПОВЕРНЕННЯ З GOOGLE (oneclick-редірект) =====
+     токен уже в хеші — одразу тягнемо профіль і передаємо в програму,
+     ніякої кнопки користувач більше не тискає */
+  if (GH) {
+    if (GH.error === 'access_denied') setStat('Вхід скасовано. Поверніться у FluxHelper і натисніть «Увійти через Google» ще раз.', 'err');
+    else if (!GH.access_token) setStat('Google не підтвердив вхід. Поверніться у FluxHelper і спробуйте ще раз.', 'err');
+    else gotToken({ access_token: String(GH.access_token) });
+    return;
+  }
+
+  /* ===== 3.5.41: ONECLICK — миттєва переадресація на вибір акаунта ===== */
+  if (STATE && h.oneclick === '1') {
+    var ru = location.origin + '/auth.html';
+    var gu = 'https://accounts.google.com/o/oauth2/v2/auth?client_id=' + encodeURIComponent(GIS_CLIENT) +
+      '&redirect_uri=' + encodeURIComponent(ru) +
+      '&response_type=token&scope=' + encodeURIComponent('openid email profile') +
+      '&prompt=select_account&state=' + encodeURIComponent(STATE) +
+      (HINT && HINT.indexOf('@') > 0 ? '&login_hint=' + encodeURIComponent(HINT) : '');
+    setStat('<span class="spin"></span>Відкриваю Google…');
+    try { location.replace(gu); } catch (eR) { location.href = gu; }
+    return;
+  }
 
   /* ===== 3.4.12: ЖИВІСТЬ СТОРІНКИ ВХОДУ =====
      Програма (ПК) чекає відповідь на локальному слухачі 127.0.0.1. Раніше,
@@ -408,13 +442,25 @@ h2 {
       });
     }
     /* 3.5.24: ПРЯМИЙ канал у Firebase RTDB — застосунки опитують
-       update/auth_cb/<state> і підхоплюють профіль за 1-2 с */
+       update/auth_cb/<state> і підхоплюють профіль за 1-2 с.
+       3.5.41: до 3 спроб — слабка мережа на старих телефонах більше не
+       зриває передачу профілю (одна невдала спроба не «вбиває» вхід). */
     chan(function () {
-      fetch('https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app/update/auth_cb/' + encodeURIComponent(STATE) + '.json', {
-        method: 'PUT', cache: 'no-store',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ d: prof, t: Date.now() })
-      }).then(function (r) { fin(!!r && r.ok); }).catch(function () { fin(false); });
+      var putUrl = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app/update/auth_cb/' + encodeURIComponent(STATE) + '.json';
+      var tries = 0;
+      var tryPut = function () {
+        fetch(putUrl, {
+          method: 'PUT', cache: 'no-store',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ d: prof, t: Date.now() })
+        }).then(function (r) {
+          if (r && r.ok) { fin(true); return; }
+          throw new Error('put');
+        }).catch(function () {
+          if (++tries < 3) setTimeout(tryPut, 700); else fin(false);
+        });
+      };
+      tryPut();
     });
   }
 
