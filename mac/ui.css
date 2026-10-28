@@ -2172,3 +2172,92 @@ body[data-theme="glass"] .us-card{
 body[data-theme="glass"] .fld input:focus{
   border-color:rgba(255,255,255,.45);
   box-shadow:inset 0 .125em .125em rgba(0,0,0,.05),inset 0 -.125em .125em rgba(255,255,255,.5),0 0 0 3px rgba(255,255,255,.14)}
+
+/* ============================================================
+   3.5.35 — ПЛАВНЕ ПЕРЕТЕКАННЯ ТЕМИ (просив власник: «смена темы
+   тоже чтобы с анимацией перемещалась») — клас html.theme-morph
+   вмикається в applyTheme() на ~700 мс під час зміни теми.
+   ============================================================ */
+html.theme-morph body, html.theme-morph body *{
+  transition:background-color .55s ease,background .55s ease,color .55s ease,
+             border-color .55s ease,box-shadow .55s ease,fill .55s ease,stroke .55s ease!important}
+
+/* ============================================================
+   3.5.35 — КНОПКА АКАУНТА (вгорі): активний стан + анімація входу
+   (просив власник: «она фиолетовым подсвечивается... и анимация
+   типа переключения на неё»)
+   ============================================================ */
+.tb-acc.on{background:linear-gradient(135deg,rgba(139,92,246,.92),rgba(99,102,241,.86));
+  border-color:rgba(255,255,255,.30);box-shadow:0 6px 20px rgba(124,58,237,.42),inset 0 1px 0 rgba(255,255,255,.25)}
+.tb-acc.on:hover{background:linear-gradient(135deg,rgba(139,92,246,.97),rgba(99,102,241,.92))}
+.tb-acc.on .tb-acc-t b{color:#fff}
+.tb-acc.on .tb-acc-t span{color:rgba(255,255,255,.78)}
+.tb-acc.accpop{animation:accPop .5s cubic-bezier(.3,1.4,.4,1)}
+@keyframes accPop{0%{transform:scale(.84);filter:brightness(1.45)}60%{transform:scale(1.04)}100%{transform:scale(1);filter:brightness(1)}}
+
+/* ============================================================
+   3.5.35 — ПЕРЕМИКАЧІ «МОЇ ГРУПИ» (налаштування, .seg) у двигуні
+   пілюлі: рамка ПЛАВНО перелітає між «1-ша група» і «2-га група»,
+   1-в-1 як у перемикача «Додаток/Браузер»
+   ============================================================ */
+.seg{position:relative;overflow:hidden}
+.seg button{position:relative;z-index:1}
+.seg .seg-pill{border-radius:8px}
+body.segjs .seg button.on{background:transparent!important;box-shadow:none!important;color:#fff!important}
+body.segjs .seg button.on:hover{background:transparent!important}
+body[data-theme="glass"] .seg .seg-pill{background:linear-gradient(135deg,rgba(139,92,246,.72),rgba(99,102,241,.66));
+  box-shadow:0 6px 20px rgba(124,58,237,.42),inset 0 1px 0 rgba(255,255,255,.28)}
+
+/* ============================================================
+   3.5.35 — LIQUID GLASS: ЧИСТИЙ РЕДИЗАЙН
+   Просив власник: «понедельник, вторник — выглядят некрасиво, они
+   как-то соединены». Тепер вкладки днів = ОДНЕ спільне скло (#tabs),
+   а кожна вкладка — прозора; єдиний акцент = пілюля, що плавно їздить.
+   ============================================================ */
+body[data-theme="glass"] .tab{
+  background:transparent!important;border-color:transparent!important;box-shadow:none!important;
+  -webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+body[data-theme="glass"] .tab::before,body[data-theme="glass"] .tab::after{content:none!important}
+body[data-theme="glass"] .tab{color:#c6cbe0;text-shadow:none}
+body[data-theme="glass"] .tab.on{color:#fff!important}
+body[data-theme="glass"] .tab .today-dot{box-shadow:0 0 8px rgba(110,231,183,.9)}
+/* м'якше скло контейнера вкладок — менше «піни», більше прозорості */
+body[data-theme="glass"] #tabs{-webkit-backdrop-filter:blur(clamp(1px,.125em,4px)) saturate(150%);backdrop-filter:blur(clamp(1px,.125em,4px)) saturate(150%)}
+
+/* ============================================================
+   3.5.35 — LIQUID GLASS: ТЕМНІ ТОСТИ
+   Просив власник: «чтобы во время темы Liquid Glass оно было,
+   например, тёмное. Чтобы не было вот этого фиолетовое, немного
+   розового, а просто тёмное... немножечко светлее, чем обычная
+   стандартная тема, но темнее, чем вот эта сейчас»
+   ============================================================ */
+body[data-theme="glass"]{
+  --toast-bg:rgba(21,23,33,.90);--toast-bd:rgba(255,255,255,.16);--toast-tx:#eef0f7;--toast-sh:rgba(0,0,0,.55)}
+body[data-theme="glass"] #toast{
+  background:rgba(21,23,33,.90)!important;
+  border-color:rgba(255,255,255,.16)!important;
+  color:#eef0f7!important;
+  box-shadow:0 18px 44px rgba(0,0,0,.55),0 2px 10px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.10)!important;
+  -webkit-backdrop-filter:blur(18px) saturate(140%);backdrop-filter:blur(18px) saturate(140%)}
+body[data-theme="glass"] #toast svg{color:#c9cdff!important}
+/* блик і обідок на темному — стримані */
+body[data-theme="glass"] #toast::after{opacity:.35}
+body[data-theme="glass"] #toast::before{opacity:.6}
+
+/* ============================================================
+   3.5.35 — НАЛАШТУВАННЯ ПК: КОМПАКТНА СІТКА
+   Просив власник: «из-за того, что рамка оповещения очень огромная,
+   рамка копирования ссылки тоже очень большая... сделай ровненько».
+   Тепер у рядку: Копіювання | Запуск Zoom | Захід на урок (три
+   КОМПАКТНІ картки), а велика рамка «Сповіщення» — окремим рядком
+   на всю ширину. Картки більше НЕ розтягуються одна за одною.
+   ============================================================ */
+.sw-grid{grid-template-columns:1fr 1fr 1fr;align-items:start}
+.sw-grid > *{min-width:0}
+.sw-grid .sw-duo.sw-col-a{display:contents}
+.sw-grid .sw-duo.sw-col-b{grid-column:1 / -1;display:flex;flex-direction:column;gap:13px}
+.sw-grid #secCpl{grid-column:1}
+.sw-grid #secZoom{grid-column:2}
+.sw-grid #secConfirm{grid-column:3}
+body.mob .sw-grid{grid-template-columns:1fr}
+body.mob .sw-grid #secCpl,body.mob .sw-grid #secZoom,body.mob .sw-grid #secConfirm{grid-column:1 / -1}

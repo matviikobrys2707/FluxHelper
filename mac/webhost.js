@@ -33,7 +33,7 @@
    ============================================================ */
 (function () {
 'use strict';
-var VER = '3.5.34';
+var VER = '3.5.35';
 var BACKEND = 'https://fluxhelper-backend.onrender.com';
 var ORIGIN = 'https://fluxhelper.pages.dev';
 var DB_URL = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app';
@@ -68,7 +68,7 @@ try {
     '#neterr{display:none!important}' +
     '#bMin,#bClose,#btMin,#btClose{display:none!important}' +
     '#bnav{bottom:calc(12px + var(--fh-sab, env(safe-area-inset-bottom, 0px)))!important}' +   /* 3.5.26: динамічно, як у застосунку */
-    '#secNotif,#nban,#bPerm,#bTestN,#rowNotif{display:none!important}' +
+    '#secNotif,#nban,#bPerm,#bTestN,#rowNotif{display:none!important}\n     /* 3.5.35: без «Сповіщень» ліва колонка налаштувань займає всю ширину */\n     .sw-grid #secCpl{grid-column:1!important}\n     .sw-grid #secZoom{grid-column:2!important}\n     .sw-grid #secConfirm{grid-column:3!important}' +
     '#secUpd{display:none!important}' +   /* 3.5.26: рамку «Оновлення» знесено з САЙТУ (потрібна лише застосункам) */
     'body:not(.fh-beta) .beta-only{display:none!important}' +
     /* «Автоматичний вхід у Zoom (тест)» — ЛИШЕ у Windows-програмі (3.5.21) */

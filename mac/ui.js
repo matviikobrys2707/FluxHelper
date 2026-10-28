@@ -242,7 +242,7 @@ function validS(x) {
 })();
 
 // ---------------- версія + перший запуск ----------------
-const APP_VER = '3.5.34';                  // версія X.Y.Z — з version.h (див. main.cpp)
+const APP_VER = '3.5.35';                  // версія X.Y.Z — з version.h (див. main.cpp)
 /* 3.5.5: КАНАЛ ЗБІРКИ — 'beta' або 'release'. Бета-збірки підписують версію
    словом «beta» скрізь у інтерфейсі (профіль, «Про програму», вікно оновлення),
    релізні показують чистий номер. Перед релізом змінюємо тут і перезбираємо. */
@@ -562,7 +562,20 @@ function glassPerfWatch() {
   }, 1400);
 }
 function applyTheme(t, save) {
-  THEME = (THEME_LIST.indexOf(t) >= 0) ? t : 'standard';   // 2.3.6: усі 7 тем і на ПК
+  THEME = (THEME_LIST.indexOf(t) >= 0) ? t : 'standard';
+  /* 3.5.35: ПЛАВНЕ ПЕРЕТЕКАННЯ ТЕМИ (просив власник: «смена темы тоже чтобы
+     с анимацией перемещалась») — на мить вмикаємо transition кольорів/рамок
+     для всього, тема переливається, потім клас знімаємо. */
+  try {
+    const _de = document.documentElement, _prev = document.body.getAttribute('data-theme');
+    const _rm = (typeof matchMedia === 'function') && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (_prev && _prev !== THEME && !_rm) {
+      _de.classList.add('theme-morph');
+      clearTimeout(window.__fhThemeMorphT);
+      window.__fhThemeMorphT = setTimeout(function () { _de.classList.remove('theme-morph'); }, 700);
+    }
+  } catch (eTM) {}
+  // 2.3.6: усі 7 тем і на ПК
   document.body.setAttribute('data-theme', THEME);
   try { localStorage.setItem('fh_theme', THEME); } catch (e) {}
   host('fh:theme|' + THEME);   // 2.8.8: хост запам'ятовує тему (settings.json) — сплеш наступного запуску одразу у ній
@@ -1162,6 +1175,17 @@ function setSeg(view) {
   if (a) a.classList.toggle('on', view === 'sched');
   if (b) b.classList.toggle('on', view === 'setup');
   const c2 = byId('segAdmin'); if (c2) c2.classList.toggle('on', view === 'adm');   // 3.3.0
+  /* 3.5.35: кнопка акаунта (вгорі) — активний стан із анімацією, коли ти
+     в неї заходиш (просив власник: «чтобы показывалось, как будто она
+     типа активна... и анимация типа переключения на неё») */
+  try {
+    const ab = byId('tbAcc');
+    if (ab) {
+      const was = ab.classList.contains('on');
+      ab.classList.toggle('on', view === 'acc');
+      if (!was && view === 'acc') { ab.classList.remove('accpop'); void ab.offsetWidth; ab.classList.add('accpop'); }
+    }
+  } catch (eTA) {}
 }
 /* 3.5.18: ПЕРЕДЗАВАНТАЖЕННЯ ВКЛАДОК (просив власник: «когда заходишь у
    вкладку перший раз — воно лагає; зроби, щоб усі вкладки завантажувались
@@ -2057,16 +2081,28 @@ function splitInfo(k) {
   return { sub: sub, tch: tch, lbls: lbls };
 }
 function dispName(key) { return key ? key.charAt(0).toUpperCase() + key.slice(1) : ''; }
-function saveGroupInstant(k, v) {
+function saveGroupInstant(k, v, row, sE, seg, inf) {
   if (!S) S = {};
   S[k] = v;
   try { localStorage.setItem('fh_groups2', JSON.stringify(S)); } catch (e) {}
   if (!host('fh:save|' + JSON.stringify(oldKeyMap(S)))) {
     try { localStorage.setItem('fh_groups', JSON.stringify(oldKeyMap(S))); } catch (e) {}
   }
+  /* 3.5.35: ОНОВЛЮЄМО РЯДОК НА МІСЦІ (без перебудови) — двигун пілюлі
+     бачить зміну .on і ПЛАВНО переливає рамку на нову групу */
+  if (row && row.__segBtns) {
+    row.__cur = v;
+    row.__segBtns.forEach(function (b2) { b2.classList.toggle('on', b2._v === v); });
+    if (row.__sE && row.__inf) {
+      const inf2 = row.__inf;
+      row.__sE.textContent = String(inf2.tch[String(v)] || '') + ' · ' + inf2.lbls[v - 1];
+    }
+  } else {
+    buildSummary();
+  }
   render(false);
-  buildSummary();
-  toast(infName(k) + ' — ' + v + '-ша група ✓');
+  const ordName = (v === 1) ? 'перша' : 'друга';
+  toast(dispName(k) + ' — ' + ordName + ' група ✓');
 }
 function infName(k) { return dispName(k); }
 function buildSummary() {
@@ -2092,12 +2128,22 @@ function buildSummary() {
     const sE = el('span'); sE.textContent = g ? (String(inf.tch[String(g)] || '') + ' · ' + inf.lbls[g - 1]) : 'не обрано';
     nm.append(bE, sE);
     const seg = el('div', 'seg');
+    const segBtns = [];
     [1, 2].forEach(function (v) {
       const b2 = el('button'); b2.type = 'button'; b2.textContent = inf.lbls[v - 1] || (v + ' група');
       b2.classList.toggle('on', g === v);
-      b2.onclick = function (ev) { ev.stopPropagation(); if (g !== v) saveGroupInstant(k, v); };
+      b2._k = k; b2._v = v;
+      b2.onclick = function (ev) {
+        ev.stopPropagation();
+        /* 3.5.35: перемикач «Мої групи» — пілюля ПЕРЕЛІТАє (двигун .seg);
+           рядок більше НЕ перебудовується, лише .on і підпис оновлюються */
+        if (S[k] !== v) saveGroupInstant(k, v, row, sE, seg, inf);
+      };
+      segBtns.push(b2);
       seg.appendChild(b2);
     });
+    row.__segBtns = segBtns; row.__sE = sE; row.__inf = inf; row.__k = k;
+    row.__cur = g;
     row.append(ic, nm, seg);
     rows.appendChild(row);
   });
@@ -2493,8 +2539,24 @@ function d1NetDown() {
 
 function d1Snap(cb) {
   if (window.FH_WEB) {
-    /* 3.5.33: сайт — знімок через FluxHelper Backend (D1 на боці сервера,
-       без токенів у браузері). 4 маленькі запити, не частіше ніж тік. */
+    /* 3.5.35: сайт — знімок ОДНИМ запитом /api/pub?path=all (D1 на боці
+       сервера, кеш за ревізією). Бекенд без нового ендпоінта → легасі
+       4 запити (1-в-1 як було). */
+    try {
+      const c2 = (typeof AbortController === 'function') ? new AbortController() : null;
+      if (c2) setTimeout(function () { try { c2.abort(); } catch (eA2) {} }, 9000);
+      fetch(FH_DB_API + '/api/pub?path=all', { cache: 'no-store', signal: c2 ? c2.signal : undefined })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) {
+          if (j && j.ok && j.data) { cb(JSON.stringify(j.data)); return; }
+          d1SnapLegacy(cb);
+        })
+        .catch(function () { d1SnapLegacy(cb); });
+    } catch (eAll) { d1SnapLegacy(cb); }
+    return;
+  }
+  /* старий шлях: 4 запити до легасі-ендпоінта (фолбек) */
+  function d1SnapLegacy(cb) {
     const ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
     if (ctrl) setTimeout(function () { try { ctrl.abort(); } catch (eA) {} }, 9000);
     Promise.all(['schedule', 'subjects', 'teachers', 'weeks'].map(function (p) {
@@ -2507,7 +2569,6 @@ function d1Snap(cb) {
       }
       cb(JSON.stringify({ schedule: res[0].data, subjects: res[1].data, teachers: res[2].data, weeks: res[3].data }));
     });
-    return;
   }
   if (cfOk()) {
     cfExec('SELECT json FROM v_snap_full', [], function (rows) {
@@ -2532,15 +2593,19 @@ function d1Tick() {
   if (window.FH_WEB) {
     if (tickBusy) { d1TickSched(); return; }
     tickBusy = true;
-    /* 3.5.34: на сайті налаштування акаунта перевіряються тим самим тіком
-       (через один — apiGetRow/бекенд важчий за мікроревізію) */
     tickN++;
     if (ACC.user && tickN % 2 === 0) { try { syncStsCheck(userKey(ACC.user)); } catch (eSSW) {} }
-    d1Snap(function (j) {
-      tickBusy = false;
-      if (j) { d1NetUp(); try { d1Apply(JSON.parse(j)); } catch (ePW) {} }
-      else d1NetDown();
-      d1TickSched();
+    /* 3.5.35 РОЗУМНА СИНХРОНІЗАЦІЯ v2: рев-полінг ~50 Б; повний знімок
+       (одним запитом /api/pub?path=all) — ЛИШЕ коли ревізія змінилась.
+       Бекенд недоступний → тягнемо знімок як раніше (фолбек). */
+    webRevTick(function (ch) {
+      if (ch === false) { tickBusy = false; d1NetUp(); d1TickSched(); return; }
+      d1Snap(function (j) {
+        tickBusy = false;
+        if (j) { d1NetUp(); try { d1Apply(JSON.parse(j)); } catch (ePW) {} }
+        else d1NetDown();
+        d1TickSched();
+      });
     });
     return;
   }
@@ -2553,51 +2618,101 @@ function d1Tick() {
      (у фоні — раз/хв). Мікрозапит ~30 байт; чексум-страховка рідшає — раз/10 хв. */
   const doChk = (tickN % 120 === 4);   /* чексум-страховка ~раз на 10 хв */
   tickBusy = true;
-  cfExec("SELECT key, json_extract(val,'$.rev') AS rev FROM _meta WHERE key IN ('snap','upd')", [], function (rows) {
+  /* 3.5.35 РОЗУМНА СИНХРОНІЗАЦІЯ v2: ревізія — через бекенд (/api/rev, ~50 Б;
+     сервер опитує D1 максимум раз на 4 с ЗА ВСІХ клієнтів), знімок — лише
+     при зміні rev. Бекенд спить/недоступний → старий прямий шлях до D1. */
+  d1RevVia(function (snapRev, updRev, alive) {
     tickBusy = false;
-    if (!rows) { d1NetDown(); d1TickSched(); return; }
+    if (!alive) { d1NetDown(); d1TickSched(); return; }
     d1NetUp();
-    let snapRev = null, updRev = null;
-    for (let i = 0; i < rows.length; i++) {
-      const r = rows[i]; if (!r || !r.key) continue;
-      const rv = parseInt(r.rev, 10) || 0;
-      if (r.key === 'snap') snapRev = rv;
-      if (r.key === 'upd') updRev = rv;
-    }
-    if (snapRev === null && updRev === null) {
-      /* _meta ще без rev-рядків (стара база) — самовідновлення один раз,
-         далі працює чексум-страховка */
-      if (!metaHealed) {
-        metaHealed = true;
-        cfExec("INSERT INTO _meta (key,val) VALUES ('snap','{\"rev\":1}') ON CONFLICT(key) DO NOTHING", [], null);
-        cfExec("INSERT INTO _meta (key,val) VALUES ('upd','{\"rev\":1}') ON CONFLICT(key) DO NOTHING", [], null);
-      }
-    } else if (!metaHave) {
-      metaRev.snap = (snapRev === null) ? 0 : snapRev;
-      metaRev.upd = (updRev === null) ? 0 : updRev;
-      metaHave = true;
-    } else {
-      if (snapRev !== null && snapRev !== metaRev.snap) {
-        metaRev.snap = snapRev;
-        d1FetchSnap();
-      }
-      if (updRev !== null && updRev !== metaRev.upd) {
-        metaRev.upd = updRev;
-        clearTimeout(d1UpdT);
-        d1UpdateCheck();
-      }
-    }
-    if (doChk) {
-      cfExec("SELECT (SELECT COUNT(*) FROM schedule) || ':' || IFNULL((SELECT SUM(length(title)+length(t_start)+length(t_end)) FROM schedule),0) || ':' || (SELECT COUNT(*) FROM subject) || ':' || IFNULL((SELECT SUM(length(name)+length(COALESCE(teacher1,''))+length(COALESCE(teacher2,''))+length(COALESCE(zoom1,''))+length(COALESCE(zoom2,''))+length(COALESCE(icon,''))+length(COALESCE(group1,''))+length(COALESCE(group2,''))) FROM subject),0) || ':' || IFNULL((SELECT val FROM _meta WHERE key='weeks'),'') AS chk", [], function (rc) {
-        const chk = (rc && rc[0] && rc[0].chk) ? String(rc[0].chk) : '';
-        if (!chk) return;
-        if (!chkLast) { chkLast = chk; return; }
-        if (chk !== chkLast) d1FetchSnap();   /* успішний apply оновить chkLast */
-      });
-    }
+    d1RevHandle(snapRev, updRev, doChk);
     d1TickSched();
   });
 }
+/* ============================================================
+   3.5.35 — РОЗУМНА СИНХРОНІЗАЦІЯ v2 (просив власник: «один аккаунт
+   обращается к базе и передаёт всем остальным, у Cloudflare лимиты»)
+   Ревізію віддає бекенд (/api/rev, ~50 Б): сервер сам опитує D1
+   МАКСИМУМ раз на 4 с ЗА ВСІХ клієнтів і тримає знімок у пам'яті.
+   Бекенд спить/недоступний → старий прямий шлях до D1 (1-в-1 як було).
+   ============================================================ */
+let revFailN = 0;
+function d1RevVia(cb) {
+  const FALL = function () {
+    cfExec("SELECT key, json_extract(val,'$.rev') AS rev FROM _meta WHERE key IN ('snap','upd')", [], function (rows) {
+      if (!rows) { cb(null, null, false); return; }
+      let sr = null, ur = null;
+      for (let i = 0; i < rows.length; i++) {
+        const r = rows[i]; if (!r || !r.key) continue;
+        const rv = parseInt(r.rev, 10) || 0;
+        if (r.key === 'snap') sr = rv;
+        if (r.key === 'upd') ur = rv;
+      }
+      cb(sr, ur, true);
+    });
+  };
+  if (typeof fetch !== 'function' || !FH_DB_API) { FALL(); return; }
+  let done = false;
+  try {
+    const ac = (typeof AbortController === 'function') ? new AbortController() : null;
+    const to = setTimeout(function () { if (!done) { done = true; if (++revFailN >= 2) { revFailN = 0; } FALL(); } }, 3500);
+    fetch(FH_DB_API + '/api/rev', { cache: 'no-store', signal: ac ? ac.signal : undefined })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        if (done) return; done = true; clearTimeout(to);
+        if (j && j.ok && typeof j.rev === 'number') { revFailN = 0; cb(j.rev, (typeof j.upd === 'number') ? j.upd : null, true); return; }
+        FALL();
+      })
+      .catch(function () { if (!done) { done = true; clearTimeout(to); FALL(); } });
+  } catch (eRV) { FALL(); }
+}
+/* спільна логіка ревізій: перший старт / зміна знімка / зміна оновлень / чексум */
+function d1RevHandle(snapRev, updRev, doChk) {
+  if (snapRev === null && updRev === null) {
+    if (!metaHealed) {
+      metaHealed = true;
+      cfExec("INSERT INTO _meta (key,val) VALUES ('snap','{\"rev\":1}') ON CONFLICT(key) DO NOTHING", [], null);
+      cfExec("INSERT INTO _meta (key,val) VALUES ('upd','{\"rev\":1}') ON CONFLICT(key) DO NOTHING", [], null);
+    }
+  } else if (!metaHave) {
+    metaRev.snap = (snapRev === null) ? 0 : snapRev;
+    metaRev.upd = (updRev === null) ? 0 : updRev;
+    metaHave = true;
+  } else {
+    if (snapRev !== null && snapRev !== metaRev.snap) { metaRev.snap = snapRev; d1FetchSnap(); }
+    if (updRev !== null && updRev !== metaRev.upd) { metaRev.upd = updRev; clearTimeout(d1UpdT); d1UpdateCheck(); }
+  }
+  if (doChk) {
+    cfExec("SELECT (SELECT COUNT(*) FROM schedule) || ':' || IFNULL((SELECT SUM(length(title)+length(t_start)+length(t_end)) FROM schedule),0) || ':' || (SELECT COUNT(*) FROM subject) || ':' || IFNULL((SELECT SUM(length(name)+length(COALESCE(teacher1,''))+length(COALESCE(teacher2,''))+length(COALESCE(zoom1,''))+length(COALESCE(zoom2,''))+length(COALESCE(icon,''))+length(COALESCE(group1,''))+length(COALESCE(group2,''))) FROM subject),0) || ':' || IFNULL((SELECT val FROM _meta WHERE key='weeks'),'') AS chk", [], function (rc) {
+      const chk = (rc && rc[0] && rc[0].chk) ? String(rc[0].chk) : '';
+      if (!chk) return;
+      if (!chkLast) { chkLast = chk; return; }
+      if (chk !== chkLast) d1FetchSnap();
+    });
+  }
+}
+/* 3.5.35: веб — рев-полінг (/api/rev ~50 Б); знімок лише при зміні rev */
+let webRev = -1;
+function webRevTick(cb) {
+  if (typeof fetch !== 'function' || !FH_DB_API) { cb(true); return; }
+  let done = false;
+  const ac = (typeof AbortController === 'function') ? new AbortController() : null;
+  const to = setTimeout(function () { if (!done) { done = true; cb(null); } }, 6000);
+  fetch(FH_DB_API + '/api/rev', { cache: 'no-store', signal: ac ? ac.signal : undefined })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (j) {
+      if (done) return; done = true; clearTimeout(to);
+      if (j && j.ok && typeof j.rev === 'number') {
+        const ch = (webRev === -1) || (j.rev !== webRev);
+        webRev = j.rev;
+        cb(ch);
+        return;
+      }
+      cb(null);
+    })
+    .catch(function () { if (!done) { done = true; clearTimeout(to); cb(null); } });
+}
+
 function d1TickSched() {
   clearTimeout(tickT);
   /* 3.5.34: зміни на сервері долітають максимум за ~5 с (власник: «спустя
@@ -2850,6 +2965,15 @@ function updOpen() { return UPD.avail; }
 // пріоритет. Третій елемент пункта ('pc'/'android') — показувати лише
 // на одній платформі; без нього — на обох.
 const WHATS_NEW = {
+  '3.5.35': [
+    ['✦', 'АНІМАЦІЯ ПЕРЕМИКАЧІВ «МОЇ ГРУПИ»: рамка-пілюля тепер ПЛАВНО ПЕРЕЛІТАє між «1-ша група» і «2-га група» прямо в налаштуваннях — так само, як у перемикача «Додаток/Браузер»', '/'],
+    ['✦', 'ЗМІНА ТЕМИ — ПЛАВНЕ ПЕРЕТЕКАННЯ: кольори, рамки й тіні переливаються одну мить замість різкого стрибка', '/'],
+    ['✦', 'КНОПКА АКАУНТА (вгорі) ПІДСВІЧУЄТЬСЯ з анімацією, коли ти в неї заходиш — видно, де ти зараз', '/'],
+    ['✦', 'LIQUID GLASS ПЕРЕРОБЛЕНА: темні стримані тости (без фіолетових), вкладки днів Пн–Пт — єдине скло з пілюлею, що плавно їздить (без «злеплених» рамочок), нижня панель телефону — ОДНА суцільна скляна пілюля', '/'],
+    ['✦', 'НАЛАШТУВАННЯ НА ПК — КОМПАКТНІ: «Копіювання посилання», «Запуск Zoom» і «Захід на урок» більше не розтягуються через велику рамку «Сповіщень» — кожна картка своєї висоти, все рівненько', '/'],
+    ['/', 'ЩЕ РОЗУМНІША СИНХРОНІЗАЦІЯ: клієнти перевіряють тільки ревізію (~50 байт), а базу тепер опитує СЕРВЕР — максимум раз на 4 с на всіх одразу (ліміти Cloudflare більше нічого не загрожують), знімок качаься лише коли дані змінилися', '/'],
+    ['/', 'Вхід на телефоні стабільний: спершу мить-вхід без вікон, потім надійний вхід через браузер; кнопку «Вийти з акаунта» на телефоні прибрано', '/'],
+  ],
   '3.5.34': [
     ['✦', 'ВИПРАВЛЕНО ВХІД: програма більше не вимагає авторизуватися і вибирати групи після кожного перезапуску — сесія зберігається і відновлюється сама (дефект зборки 3.5.33)', '/'],
     ['✦', 'ВИПРАВЛЕНО ОНОВЛЕННЯ НА ТЕЛЕФОНІ: «версія оновлення 30501 нижча за поточну» — бета-версії тепер завантажуються з правильного каналу versions/beta, а не зі стабільного файлу сайту', '/'],
@@ -4924,6 +5048,68 @@ function syncPull(force, cb, _try) {   // 3.4.4: cb(dec) — 'ok' | 'master' | '
 let syncWatchT = 0;
 function syncStsCheck(k) {
   if (!ACC.user || !k) return;
+  /* 3.5.35 РОЗУМНА СИНХРОНІЗАЦІЯ: відмітка налаштувань — через бекенд
+     (/api/sts, кеш 4 с на uid на сервері → D1 читається максимум раз на 4 с
+     ЗА ВСІХ пристроїв акаунта). Бекенд недоступний → прямий шлях до D1. */
+  const stsHandle = function (sts, known, ok) {
+    if (!ACC.user) return;
+    if (!ok) { stsViaD1(k); return; }
+    if (!known) {
+      if (fhRowKnown(k)) { confirmAccountGone(); }
+      else { usersUpsert(ACC.user, null); }
+      return;
+    }
+    fhRowSeen(k);
+    const ts = parseInt(sts, 10) || 0;
+    if (ts > syncLastTs && ACC.sync) {
+      cfExec('SELECT settings FROM users WHERE user_id=?', [k], function (rows2) {
+        if (rows2 && rows2[0] && ACC.user) { try { syncApply(JSON.parse(rows2[0].settings), false); } catch (e) {} }
+      });
+    }
+  };
+  const stsViaD1 = function (kk) {
+    cfExec('SELECT sts FROM users WHERE user_id=?', [kk], function (rows) {
+      if (!ACC.user) return;
+      if (rows && !rows[0]) {
+        if (fhRowKnown(kk)) { confirmAccountGone(); }
+        else { usersUpsert(ACC.user, null); }
+        return;
+      }
+      if (rows && rows[0]) fhRowSeen(kk);
+      if (rows && rows[0]) {
+        const ts = parseInt(rows[0].sts, 10) || 0;
+        if (ts > syncLastTs && ACC.sync) {
+          cfExec('SELECT settings FROM users WHERE user_id=?', [kk], function (rows2) {
+            if (rows2 && rows2[0] && ACC.user) { try { syncApply(JSON.parse(rows2[0].settings), false); } catch (e) {} }
+          });
+        }
+      }
+    });
+  };
+  if (typeof fetch === 'function' && FH_DB_API) {
+    let done = false;
+    try {
+      const ac = (typeof AbortController === 'function') ? new AbortController() : null;
+      const to = setTimeout(function () { if (!done) { done = true; stsViaD1(k); } }, 3500);
+      fetch(FH_DB_API + '/api/sts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid: k }),
+        cache: 'no-store',
+        signal: ac ? ac.signal : undefined
+      }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+        if (done) return; done = true; clearTimeout(to);
+        if (j && j.ok) { stsHandle(j.sts, !!j.known, true); return; }
+        stsViaD1(k);
+      }).catch(function () { if (!done) { done = true; clearTimeout(to); stsViaD1(k); } });
+      return;
+    } catch (eST) {}
+  }
+  stsViaD1(k);
+}
+
+function syncStsCheckD1Legacy(k) {
+  if (!ACC.user || !k) return;
   cfExec('SELECT sts FROM users WHERE user_id=?', [k], function (rows) {
     if (!ACC.user) return;
     /* 3.4.8: D1 відповіла, а рядка НЕМА. Рядок БАЧИЛИ раніше -> аккаунт
@@ -5700,7 +5886,7 @@ try { init(); } catch (err) {
   } catch (eUn) {}
   /* 3.5.34: + .tb-seg — верхні вкладки ПК (Розклад/Налаштування/Адмін) тепер
      з такою самою їздячою пілюлею, як на телефоні (просив власник) */
-  var SEG_SEL = '.seg-z,.adm-seg,.su-opts,#tabs,.tb-seg';
+  var SEG_SEL = '.seg-z,.adm-seg,.su-opts,#tabs,.tb-seg,.seg';
   function pillFor(cont) {
     var p = cont.__segPill;
     if (!p || !p.isConnected) {
@@ -5713,7 +5899,7 @@ try { init(); } catch (err) {
   }
   function segTo(cont, instant, from) {
     if (!cont || !cont.isConnected) return;
-    var on = cont.querySelector('.seg-z-b.on,.adm-seg-b.on,.su-opt.on,.tab.on');
+    var on = cont.querySelector('.seg-z-b.on,.adm-seg-b.on,.su-opt.on,.tab.on,.seg button.on');
     if (!on && cont.classList && cont.classList.contains('tb-seg')) on = cont.querySelector('button.on');
     var p = pillFor(cont);
     if (!on) { p.classList.remove('pon'); return; }
@@ -5746,7 +5932,7 @@ try { init(); } catch (err) {
   window.fhSegTo = segTo;
   document.addEventListener('click', function (e) {
     var t = e.target;
-    var b = (t && t.closest) ? t.closest('.seg-z-b,.adm-seg-b,.su-opt,.tab,.tb-seg button') : null;
+    var b = (t && t.closest) ? t.closest('.seg-z-b,.adm-seg-b,.su-opt,.tab,.tb-seg button,.seg button') : null;
     if (!b) return;
     if (b.classList.contains('on')) return;   /* 3.5.32: активна опція — без спалаху пілюлі */
     var cont = b.parentElement;

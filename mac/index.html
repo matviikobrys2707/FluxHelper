@@ -146,8 +146,8 @@ try{
 
       <!-- 3.5.21: КОПІЮВАННЯ ПОСИЛАННЯ НА УРОК — перемикач функції:
          ПКМ по уроку в розкладі = посилання в буфері обміну -->
-      <div class="sw-duo">
-      <section class="sw-card" id="secCpl">
+      <div class="sw-duo sw-col-a">
+<section class="sw-card" id="secCpl">
         <div class="sw-c-head">
           <span class="sw-c-ic grad"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
           <div class="sw-c-tt"><b>Копіювання посилання на урок</b><span>швидке копіювання з розкладу</span></div>
@@ -168,7 +168,46 @@ try{
 
       <!-- 3.5.19: id="secNotif" — на сайті секцію ховає webhost.js
            (сповіщення — лише в застосунках Android/Windows) -->
-      <section class="sw-card" id="secNotif">
+      <section class="sw-card" id="secZoom">
+        <div class="sw-c-head">
+          <span class="sw-c-ic grad"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></span>
+          <div class="sw-c-tt"><b>Запуск Zoom</b><span>як відкривається урок</span></div>
+        </div>
+        <div class="seg-z" role="tablist">
+          <button class="seg-z-b" id="zApp" type="button">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="5" width="15" height="14" rx="2"/><path d="M16 10l7-3v10l-7-3z"/></svg>
+            <b>Додаток</b>
+          </button>
+          <button class="seg-z-b" id="zWeb" type="button">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            <b>Браузер</b>
+          </button>
+        </div>
+      </section>
+
+      <!-- 3.5.20: «Захід на урок» — гарний рядок точь-в-точь як на телефоні
+             (індіго-плитка з галочкою + опис). Елементи .beta-only на сайті
+             показуються лише бета-адмінам (webhost.js), у програмі — ЗАВЖДИ -->
+      <section class="sw-card" id="secConfirm">
+        <div class="sw-c-head beta-only">
+          <span class="sw-c-ic grad"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></span>
+          <div class="sw-c-tt"><b>Захід на урок</b></div>
+        </div>
+        <div class="sw-tog-row c-row">
+          <span class="su-tile beta-only" style="background:linear-gradient(135deg,#6366f1,#4f46e5)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+          </span>
+          <div class="su-body">
+            <b>Підтверджувати захід на урок</b>
+            <span class="beta-only">перед уроком спитаємо «Так» чи «Ні»</span>
+          </div>
+          <label class="sw"><input type="checkbox" id="cOn"><i></i></label>
+        </div>
+      </section>
+</div>
+
+<div class="sw-duo sw-col-b">
+<section class="sw-card" id="secNotif">
         <div class="sw-c-head">
           <span class="sw-c-ic grad"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span>
           <div class="sw-c-tt"><b>Сповіщення</b><span>нагадаємо до дзвінка</span></div>
@@ -222,43 +261,8 @@ try{
              iPhone — завжди схована, Mac — лише для бета-адмінів (webhost.js);
              у Windows-програмі картка на місці ЗАВЖДИ: додаток = посилання
              zoommtg:// з бази, браузер = одразу веб-версія Zoom -->
-      <section class="sw-card" id="secZoom">
-        <div class="sw-c-head">
-          <span class="sw-c-ic grad"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></span>
-          <div class="sw-c-tt"><b>Запуск Zoom</b><span>як відкривається урок</span></div>
-        </div>
-        <div class="seg-z" role="tablist">
-          <button class="seg-z-b" id="zApp" type="button">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="5" width="15" height="14" rx="2"/><path d="M16 10l7-3v10l-7-3z"/></svg>
-            <b>Додаток</b>
-          </button>
-          <button class="seg-z-b" id="zWeb" type="button">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-            <b>Браузер</b>
-          </button>
-        </div>
-      </section>
-
-      <!-- 3.5.20: «Захід на урок» — гарний рядок точь-в-точь як на телефоні
-             (індіго-плитка з галочкою + опис). Елементи .beta-only на сайті
-             показуються лише бета-адмінам (webhost.js), у програмі — ЗАВЖДИ -->
-      <section class="sw-card" id="secConfirm">
-        <div class="sw-c-head beta-only">
-          <span class="sw-c-ic grad"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></span>
-          <div class="sw-c-tt"><b>Захід на урок</b></div>
-        </div>
-        <div class="sw-tog-row c-row">
-          <span class="su-tile beta-only" style="background:linear-gradient(135deg,#6366f1,#4f46e5)">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
-          </span>
-          <div class="su-body">
-            <b>Підтверджувати захід на урок</b>
-            <span class="beta-only">перед уроком спитаємо «Так» чи «Ні»</span>
-          </div>
-          <label class="sw"><input type="checkbox" id="cOn"><i></i></label>
-        </div>
-      </section>
-      </div>
+      
+</div>
 
       <section class="sw-card sw-wide">
         <div class="sw-c-head">
