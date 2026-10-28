@@ -268,7 +268,7 @@ function validS(x) {
 // вічно вважав себе старішим. Тепер версію підставляє build.sh з манифеста
 // (2.4.1 -> versionName), а ПІСЛЯ завантаження Java-міст AndroidHost.ver()
 // віддає СПРАВЖНЮ версію встановленого пакета (PackageManager) — найнадійніше.
-let APP_VER = '3.5.39';              // X.Y.Z — підставляється при збірці з манифеста
+let APP_VER = '3.5.40';              // X.Y.Z — підставляється при збірці з манифеста
 try {
   if (window.AndroidHost && AndroidHost.ver) {
     const jv = AndroidHost.ver();
@@ -1772,20 +1772,21 @@ function d1NetDown() {
 
 function d1Snap(cb) {
   if (window.FH_WEB) {
-    /* 3.5.35: сайт — знімок ОДНИМ запитом /api/pub?path=all (D1 на боці
-       сервера, кеш за ревізією). Бекенд без нового ендпоінта → легасі
-       4 запити (1-в-1 як було). */
-    try {
-      const c2 = (typeof AbortController === 'function') ? new AbortController() : null;
-      if (c2) setTimeout(function () { try { c2.abort(); } catch (eA2) {} }, 9000);
-      fetch(FH_DB_API + '/api/pub?path=all', { cache: 'no-store', signal: c2 ? c2.signal : undefined })
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (j) {
-          if (j && j.ok && j.data) { cb(JSON.stringify(j.data)); return; }
-          d1SnapLegacy(cb);
-        })
-        .catch(function () { d1SnapLegacy(cb); });
-    } catch (eAll) { d1SnapLegacy(cb); }
+    /* 3.5.40: сайт — знімок ПРЯМО з дзеркала Firebase (schedule/subjects/
+       teachers/weeks — застосунки пишуть його на кожну зміну). Render БІЛЬШЕ
+       НЕ В ЛАНЦЮЖКУ (ліміт трафіка 5 ГБ/міс). Збій читання → легасі
+       /api/pub (Render) — як резерв. */
+    const names = ['schedule', 'subjects', 'teachers', 'weeks'];
+    let bad = false;
+    Promise.all(names.map(function (p) {
+      return fetch(DB_URL + '/' + p + '.json?cb=' + Date.now(), { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : 'ERR'; })
+        .catch(function () { return 'ERR'; });
+    })).then(function (res) {
+      for (let i = 0; i < res.length; i++) { if (res[i] === 'ERR') { bad = true; break; } }
+      if (!bad) { cb(JSON.stringify({ schedule: res[0], subjects: res[1], teachers: res[2], weeks: res[3] })); return; }
+      d1SnapLegacy(cb);
+    });
     return;
   }
   /* старий шлях: 4 запити до легасі-ендпоінта (фолбек) */
@@ -1865,39 +1866,22 @@ function d1Tick() {
 /* ============================================================
    3.5.35 — РОЗУМНА СИНХРОНІЗАЦІЯ v2 (просив власник: «один аккаунт
    обращается к базе и передаёт всем остальным, у Cloudflare лимиты»)
-   Ревізію віддає бекенд (/api/rev, ~50 Б): сервер сам опитує D1
-   МАКСИМУМ раз на 4 с ЗА ВСІХ клієнтів і тримає знімок у пам'яті.
-   Бекенд спить/недоступний → старий прямий шлях до D1 (1-в-1 як було).
+   3.5.40: релей на Render ЗНЯТО (власник: трафік Render free ~5 ГБ/міс
+   вибрано за півмісяця). Ревізія читається ПРЯМО з D1 одним мікрозапитом
+   (~40 Б на тік; D1 — 5 млн читань/день, лиміти недосяжні).
    ============================================================ */
-let revFailN = 0;
 function d1RevVia(cb) {
-  const FALL = function () {
-    cfExec("SELECT key, json_extract(val,'$.rev') AS rev FROM _meta WHERE key IN ('snap','upd')", [], function (rows) {
-      if (!rows) { cb(null, null, false); return; }
-      let sr = null, ur = null;
-      for (let i = 0; i < rows.length; i++) {
-        const r = rows[i]; if (!r || !r.key) continue;
-        const rv = parseInt(r.rev, 10) || 0;
-        if (r.key === 'snap') sr = rv;
-        if (r.key === 'upd') ur = rv;
-      }
-      cb(sr, ur, true);
-    });
-  };
-  if (typeof fetch !== 'function' || !FH_DB_API) { FALL(); return; }
-  let done = false;
-  try {
-    const ac = (typeof AbortController === 'function') ? new AbortController() : null;
-    const to = setTimeout(function () { if (!done) { done = true; if (++revFailN >= 2) { revFailN = 0; } FALL(); } }, 3500);
-    fetch(FH_DB_API + '/api/rev', { cache: 'no-store', signal: ac ? ac.signal : undefined })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (j) {
-        if (done) return; done = true; clearTimeout(to);
-        if (j && j.ok && typeof j.rev === 'number') { revFailN = 0; cb(j.rev, (typeof j.upd === 'number') ? j.upd : null, true); return; }
-        FALL();
-      })
-      .catch(function () { if (!done) { done = true; clearTimeout(to); FALL(); } });
-  } catch (eRV) { FALL(); }
+  cfExec("SELECT key, json_extract(val,'$.rev') AS rev FROM _meta WHERE key IN ('snap','upd')", [], function (rows) {
+    if (!rows) { cb(null, null, false); return; }
+    let sr = null, ur = null;
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i]; if (!r || !r.key) continue;
+      const rv = parseInt(r.rev, 10) || 0;
+      if (r.key === 'snap') sr = rv;
+      if (r.key === 'upd') ur = rv;
+    }
+    cb(sr, ur, true);
+  });
 }
 /* спільна логіка ревізій: перший старт / зміна знімка / зміна оновлень / чексум */
 function d1RevHandle(snapRev, updRev, doChk) {
@@ -1924,24 +1908,29 @@ function d1RevHandle(snapRev, updRev, doChk) {
     });
   }
 }
-/* 3.5.35: веб — рев-полінг (/api/rev ~50 Б); знімок лише при зміні rev */
+/* 3.5.40: веб — рев-полінг ПРЯМО з Firebase (update/webrev, ~25 Б; маркер
+   пишуть застосунки при кожній зміні дзеркала розкладу). Знімок тягнеться
+   лише при зміні. Render більше не в ланцюжку. */
 let webRev = -1;
 function webRevTick(cb) {
-  if (typeof fetch !== 'function' || !FH_DB_API) { cb(true); return; }
+  if (typeof fetch !== 'function' || !DB_URL) { cb(true); return; }
   let done = false;
   const ac = (typeof AbortController === 'function') ? new AbortController() : null;
   const to = setTimeout(function () { if (!done) { done = true; cb(null); } }, 6000);
-  fetch(FH_DB_API + '/api/rev', { cache: 'no-store', signal: ac ? ac.signal : undefined })
+  fetch(DB_URL + '/update/webrev.json?cb=' + Date.now(), { cache: 'no-store', signal: ac ? ac.signal : undefined })
     .then(function (r) { return r.ok ? r.json() : null; })
-    .then(function (j) {
+    .then(function (v) {
       if (done) return; done = true; clearTimeout(to);
-      if (j && j.ok && typeof j.rev === 'number') {
-        const ch = (webRev === -1) || (j.rev !== webRev);
-        webRev = j.rev;
+      const n = parseInt(v, 10) || 0;
+      if (n > 0) {
+        const ch = (webRev === -1) || (n !== webRev);
+        webRev = n;
         cb(ch);
         return;
       }
-      cb(null);
+      /* маркера ще нема (не було жодної зміни з оновлення) — перший тік
+         тягне знімок, далі чекаємо без повторів */
+      if (webRev === -1) { webRev = 0; cb(true); } else cb(false);
     })
     .catch(function () { if (!done) { done = true; clearTimeout(to); cb(null); } });
 }
@@ -2158,6 +2147,13 @@ function parseNotes(txt) {
 // пріоритет. Третій елемент пункта ('pc'/'android') — показувати лише
 // на одній платформі; без нього — на обох.
 const WHATS_NEW = {
+  '3.5.40': [
+    ['✦', 'ТРАФІК СЕРВЕРА: передачу між користувачами через сервер ЗНЯТО — дані тепер ідуть напряму в базу (Render більше не з\'їдає ліміт 5 ГБ)', '/'],
+    ['✦', 'ФІКС КРАШУ: після виходу з акаунта кнопка «Увійти через Google» більше не ламає програму — вхід тепер через браузер', '/'],
+    ['✦', '«КОД ЗІ САЙТУ» ЗНЕСЕНО повністю — ані кнопки, ані функції: вхід лише напряму через Google', '/'],
+    ['✦', 'СВІТЛА ТЕМА: слайдер «повідомити за» — точь-в-точь як у темній: видима рамочка, контрастна доріжка, світна ручка', '/'],
+    ['✦', 'НИЖНЯ ПАНЕЛЬ ТЕЛЕФОНА: рівномірний фіолетовий градієнт по всій висоті — без плям і «різних кольорів»', '/'],
+  ],
   '3.5.39': [
     ['✦', 'ТІЛЬКИ ДВІ ТЕМИ: стандартна темна фірмова і світла — Аврору та інші знесено повністю', '/'],
     ['✦', 'ФІКС КРИТИЧНОЇ ПОМИЛКИ «NFIRED is not defined» на телефоні й у мобільній версії сайту — програма знову працює', '/'],
@@ -2950,6 +2946,9 @@ function fbEnc(p) {
   return String(p).split('/').map(function (x) { return encodeURIComponent(x); }).join('/');
 }
 function dbPut(path, obj, cb) {
+  /* 3.5.40: дзеркало розкладу змінилось → будимо сайт маркером update/webrev
+     (~25 Б у Firebase) — сайт тепер читає дзеркало ПРЯМО, без Render-релею */
+  try { if (/^(schedule|subjects|teachers|weeks)(\/|$)/.test(String(path))) dbPut('update/webrev', Date.now(), null); } catch (eWB) {}
   const body = JSON.stringify(obj === undefined ? null : obj);
   if (ANDROID && window.AndroidHost && AndroidHost.fbPut) {
     let ok = false;
@@ -3291,11 +3290,8 @@ function gateStart() {
   }
   const gb = byId('agGo'); if (gb) gb.disabled = false;
   const gt = byId('agGoT'); if (gt) gt.textContent = 'Увійти через Google';
-  // 2.8.6: ПІДІГРІВ Credential Manager — готує системну плашку акаунтів
-  // ЗАЗДАЛЕГИДЬ (поки користувач дивиться на гейт). Клік «Увійти через
-  // Google» відкриває Bottom Sheet МАЙЖЕ МИТТЄВО (раніше 5–10 с холодного
-  // старту GoogleApi). На ПК це повідомлення просто ігнорується.
-  try { if (window.AndroidHost && AndroidHost.prewarm) AndroidHost.prewarm(); } catch (e) {}
+  // 2.8.6: ПІДІГРІВ Credential Manager — 3.5.40 ВИДАЛЕНО: нативний CM після
+  // явного виходу ПАДАВ (краш «Увійти через Google», скарга власника).
 }
 function gateIsOn() { return document.body.classList.contains('gate-on'); }
 function fhRandHex(nBytes) {
@@ -3401,6 +3397,21 @@ function authStart() {
   const st = fhRandHex(12);
   agState = st;
   try { localStorage.setItem('fh_auth_state', st); } catch (e) {}
+  /* 3.5.40: НА ANDROID ВХІД ЛИШЕ ЧЕРЕЗ БРАУЗЕР (AndroidHost.open) — нативний
+     Credential Manager після явного виходу з акаунта ПАДАВ (краш програми;
+     скарга власника 28.10). Браузерна сторінка входу auth.html пише профіль
+     в Firebase auth_cb/<state> — authPollDb його підхопить і доукладе вхід.
+     На сайті AndroidHost.login — GIS-попап webhost.js, там усе працює. */
+  if (ANDROID) {
+    let opened = false;
+    try { AndroidHost.open(SITE_URL + 'auth.html#s=' + encodeURIComponent(st) + '&prompt=select_account'); opened = true; } catch (eO) {}
+    if (opened) { authPollDb(st); return; }
+    agState = '';
+    try { localStorage.removeItem('fh_auth_state'); } catch (eLR2) {}
+    setAgStat('Не вдалося відкрити вхід. Спробуй ще раз.', 'err');
+    const g2b = byId('agGo'); if (g2b) g2b.disabled = false;
+    return;
+  }
   try { AndroidHost.login(st); authPollDb(st); }
   catch (e) {
     agState = '';
@@ -4073,6 +4084,9 @@ function syncUp(now) {
            (fluxhelper.pages.dev/iphone): налаштування з ПК/телефона
            з'являються на сайті, а зміни з сайту — тут (syncWatch). */
         try { dbPut('update/web/' + k, p, null); } catch (eWM3) {}
+        /* 3.5.40: дрібний маркер (update/websts/<uid>) — сайт полінгує саме його
+           (~25 Б) і читає повний знімок лише коли він змінився. Без Render. */
+        try { dbPut('update/websts/' + k, p.t, null); } catch (eWM4) {}
         deviceWrite();   // 2.9.0: знімок налаштувань пристрою теж оновлюється
       }
     });
@@ -4392,25 +4406,9 @@ function syncStsCheck(k) {
       }
     });
   };
-  if (typeof fetch === 'function' && FH_DB_API) {
-    let done = false;
-    try {
-      const ac = (typeof AbortController === 'function') ? new AbortController() : null;
-      const to = setTimeout(function () { if (!done) { done = true; stsViaD1(k); } }, 3500);
-      fetch(FH_DB_API + '/api/sts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uid: k }),
-        cache: 'no-store',
-        signal: ac ? ac.signal : undefined
-      }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
-        if (done) return; done = true; clearTimeout(to);
-        if (j && j.ok) { stsHandle(j.sts, !!j.known, true); return; }
-        stsViaD1(k);
-      }).catch(function () { if (!done) { done = true; clearTimeout(to); stsViaD1(k); } });
-      return;
-    } catch (eST) {}
-  }
+  /* 3.5.40: /api/sts на Render ЗНЯТО з гарячого шляху. Застосунки — прямий D1
+     (stsViaD1); сайт — cfRoute → дзеркало Firebase (websts-маркер, ~25 Б).
+     Рядок нижче лишено для історії: rелей /api/sts більше не викликається. */
   stsViaD1(k);
 }
 
@@ -5575,58 +5573,10 @@ function init() {
   /* 3.4.9: версія в підвалі шухляди (оновлюється і після підтягування з PackageManager) */
   (function () { const dv = byId('dwVer'); if (dv) dv.textContent = verLabel(); })();
   const agoM = byId('agGo'); if (agoM) agoM.onclick = function () { authStart(); };
-/* ==== 3.5.28: РУЧНИЙ ВХІД КОДОМ ЗІ САЙТУ ================================
-   Сторінка входу (fluxhelper.pages.dev/auth.html) після успішного Google
-   входу показує 6-значний код і пише профіль у Firebase:
-   update/manlogin/<КОД>.json (живе 10 хв, одноразовий). Якщо автоматична
-   передача профілю не спрацювала (попап заблоковано / холодний Render /
-   втрачений state) — користувач вводить код тут, і вхід завершується. */
-(function () {
-  const cLnk = byId('agCodeLnk'), cRow = byId('agCodeRow'),
-        cIn = byId('agCodeIn'), cGo = byId('agCodeGo');
-  if (!cLnk || !cRow || !cIn || !cGo) return;
-  cLnk.onclick = function () {
-    const on = !cRow.style.display || cRow.style.display === 'none';
-    cRow.style.display = on ? 'flex' : 'none';
-    if (on) { try { cIn.focus(); } catch (e) {} }
-  };
-  const cNorm = function (s) { return String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); };
-  const cTry = function () {
-    const c = cNorm(cIn.value);
-    if (c.length < 5) { setAgStat('Код має 6 знаків — він на сторінці входу в браузері.', 'err'); return; }
-    cGo.disabled = true;
-    setAgStat('<span class="spin"></span>Перевіряємо код…');
-    const t0 = Date.now();
-    const tick = function () {
-      if (ACC.user) { cGo.disabled = false; return; }
-      fetch(DB_URL + '/update/manlogin/' + c + '.json', { cache: 'no-store' })
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (j) {
-          if (ACC.user) { cGo.disabled = false; return; }
-          if (j && j.d && j.d.sub) {
-            const p = j.d;
-            const u2 = { sub: String(p.sub), name: String(p.name || 'Користувач'), email: String(p.email || ''), pic: String(p.picture || p.pic || '') };
-            if (p.fid) u2.fid = String(p.fid);
-            authAccept(u2);
-            try { fetch(DB_URL + '/update/manlogin/' + c + '.json', { method: 'DELETE' }).catch(function () {}); } catch (eD) {}
-            cGo.disabled = false;
-          } else if (Date.now() - t0 < 600000) {
-            setTimeout(tick, 2000);
-          } else {
-            cGo.disabled = false;
-            setAgStat('Код не дійсний. Увійди на сайті ще раз — код дається після входу.', 'err');
-          }
-        })
-        .catch(function () {
-          if (Date.now() - t0 < 600000) setTimeout(tick, 2500);
-          else { cGo.disabled = false; setAgStat('Зв’язку з базою немає. Спробуй ще раз.', 'err'); }
-        });
-    };
-    tick();
-  };
-  cGo.onclick = cTry;
-  cIn.onkeydown = function (e) { try { if (e.key === 'Enter') cTry(); } catch (e2) {} };
-})();
+/* 3.5.40: РУЧНИЙ ВХІД КОДОМ ЗІ САЙТУ ЗНЕСЕНО (просив власник: «на экране
+   авторизации убери функцию код с сайту — и текст, и саму функцию в коде»):
+   ані кнопки «є код зі сайту?», ані каналу manlogin більше нема — вхід
+   лише напряму через Google (браузерна сторінка входу → auth_cb). */
 
   byId('bGroups').onclick = function () { AUTO_SETUP = false; openGroups(); };
   // 2.3.6: секція «Телефон · оновлення і дозволи»

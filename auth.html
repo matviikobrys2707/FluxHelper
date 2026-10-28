@@ -257,9 +257,7 @@ h2 {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.code-box{margin:14px auto 0;display:inline-flex;flex-direction:column;gap:4px;padding:10px 22px;border-radius:14px;background:#14141f;border:1px solid #34344c}
-.code-box span{font-size:10px;color:#8b8fa8;letter-spacing:.6px}
-.code-box b{font-size:20px;letter-spacing:4px;color:#e9d5ff;font-family:ui-monospace,monospace}
+.code-box{display:none}
 </style>
 </head>
 <body>
@@ -328,9 +326,9 @@ h2 {
   var h = {}, seg = (location.hash || '').replace(/^#/, '').split('&');
   for (var i = 0; i < seg.length; ++i) { var kv = seg[i].split('='); if (kv[0]) h[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1] || ''); }
   var STATE = h.s || '', PORT = h.p || '', HINT = h.h || '';
-  var LOGIN_CODE = '';
-  function genCode() { var cs = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', s = ''; for (var i = 0; i < 6; i++) s += cs.charAt(Math.floor(Math.random() * cs.length)); return s.slice(0, 3) + '-' + s.slice(3); }
-  var FH_BACKEND = 'https://fluxhelper-backend.onrender.com';   // ключ і URL бази тепер тільки на сервері
+  /* 3.5.40: FH_BACKEND (Render) більше не використовується — вхід іде
+   напряму: identitytoolkit (Web key публічний) + Firebase auth_cb */
+  var FB_KEY = 'AIzaSyCDWpF3QTMEFBN9ravDxH_woKnBpcMRDvI';   /* публічний Firebase Web API key */
   var GIS_CLIENT = '668834523935-k470ldmdv0r9am0720v6lgaatm6rtuf3.apps.googleusercontent.com';
 
   var go = document.getElementById('go'), goT = document.getElementById('goT'),
@@ -392,9 +390,10 @@ h2 {
   }
 
   function deliver(prof, ok, fail) {
-    /* 3.5.28: 4 канали (localhost / релей / Firebase auth_cb / Firebase manlogin-КОД).
-       Рішення приймається, коли ВСІ запущені канали відповіли АБО за таймаутом:
-       будь-який успіх = профіль дійшов (авто-канал або код у руках користувача). */
+    /* 3.5.40: 2 канали (localhost — ПК-хост; Firebase auth_cb — прямий PUT).
+       Релей на Render і канал КОДУ (manlogin) ЗНЕСЕНО — просив власник:
+       вхід кодом зі сайту більше неможливий, а Render не потрібен у
+       ланцюжку входу (прямий PUT до Firebase досягає бази завжди). */
     var sent = false, pending = 0, decided = false;
     try { if (window.__fhHbStop) window.__fhHbStop(); } catch (eHB) { }   // 3.4.12: серцебиття більше не потрібне
     function fin(good) { pending--; if (good) sent = true; if (!decided && pending <= 0) { decided = true; (sent ? ok : fail)(); } }
@@ -408,30 +407,10 @@ h2 {
           .catch(function () { fin(false); });
       });
     }
-    chan(function () {
-      fetch(FH_BACKEND + '/api/auth-cb-relay', {
-        method: 'POST', cache: 'no-store',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ state: STATE, data: { d: prof, t: Date.now() } })
-      }).then(function (r) { fin(!!r && r.ok); }).catch(function () { fin(false); });
-    });
-    /* 3.5.24: ПРЯМИЙ канал у Firebase RTDB (як робить webhost.js на сайті).
-       Застосунки опитують update/auth_cb/<state> — релей на бекенді може
-       бути недоступний (Render cold start), а прямий PUT досягає бази
-       завжди; застосунок підхопить профіль за 1-2 с і увійде сам */
+    /* 3.5.24: ПРЯМИЙ канал у Firebase RTDB — застосунки опитують
+       update/auth_cb/<state> і підхоплюють профіль за 1-2 с */
     chan(function () {
       fetch('https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app/update/auth_cb/' + encodeURIComponent(STATE) + '.json', {
-        method: 'PUT', cache: 'no-store',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ d: prof, t: Date.now() })
-      }).then(function (r) { fin(!!r && r.ok); }).catch(function () { fin(false); });
-    });
-    /* 3.5.28: канал КОДУ — профіль також летить під 6-значний код; якщо всі
-       автоматичні канали не дісталися застосунку, користувач введе код у
-       програмі («є код зі сайту?») — і вхід завершиться миттєво */
-    LOGIN_CODE = genCode();
-    chan(function () {
-      fetch('https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app/update/manlogin/' + encodeURIComponent(LOGIN_CODE.replace('-', '')) + '.json', {
         method: 'PUT', cache: 'no-store',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ d: prof, t: Date.now() })
@@ -443,23 +422,22 @@ h2 {
     busy(false, 'Готово');
     document.getElementById('stForm').style.display = 'none';
     var d = document.getElementById('stDone'); d.style.display = 'block';
-    var codeHtml = LOGIN_CODE
-      ? '<div class="code-box"><span>код для програми</span><b>' + LOGIN_CODE + '</b></div>'
-      : '';
     if (prof && prof.name) {
       document.getElementById('doneSub').innerHTML =
-        'Вітаємо, <b>' + String(prof.name).replace(/[<>&]/g, '') + '</b>!<br>Поверніться у FluxHelper — акаунт уже підтверджено.<br>Якщо програма не увійшла сама — натисніть у програмі «є код зі сайту?» і введіть код.' + codeHtml;
+        'Вітаємо, <b>' + String(prof.name).replace(/[<>&]/g, '') + '</b>!<br>Поверніться у FluxHelper — акаунт уже підтверджено.<br>Цю вкладку браузера можна закрити.';
     }
   }
 
   function fbRegister(accessTok) {
     return new Promise(function (res) {
       try {
-        fetch(FH_BACKEND + '/api/auth/google', {
+        /* 3.5.40: прямий identitytoolkit (той самий виклик, що робить dex
+           застосунка) — без Render-релею; Web key публічний */
+        fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=' + encodeURIComponent(FB_KEY), {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: accessTok })
+          body: JSON.stringify({ postBody: 'id_token=' + encodeURIComponent(accessTok) + '&providerId=google.com', requestUri: 'http://localhost', returnSecureToken: true })
         }).then(function (r) { return r.json(); }).then(function (j) {
-          res((j && j.ok && j.localId) ? { localId: String(j.localId), resp: j } : null);
+          res((j && j.localId) ? { localId: String(j.localId), resp: j } : null);
         }).catch(function () { res(null); });
       } catch (e) { res(null); }
     });

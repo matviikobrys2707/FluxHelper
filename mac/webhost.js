@@ -33,11 +33,28 @@
    ============================================================ */
 (function () {
 'use strict';
-var VER = '3.5.39';
+var VER = '3.5.40';
 var BACKEND = 'https://fluxhelper-backend.onrender.com';
 var ORIGIN = 'https://fluxhelper.pages.dev';
 var DB_URL = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app';
 var GIS_CLIENT = '668834523935-k470ldmdv0r9am0720v6lgaatm6rtuf3.apps.googleusercontent.com';
+
+/* 3.5.40: ПРЯМІ канали Firebase — без Render-релею (ліміт трафіка Render
+   free ~5 ГБ/міс). FB_KEY — ПУБЛІЧНИЙ Firebase Web API key (він і так вшитий
+   в APK/додатки Firebase; у dex FluxHelper лежить відкритим текстом). */
+var FB_KEY = 'AIzaSyCDWpF3QTMEFBN9ravDxH_woKnBpcMRDvI';
+function tokRefreshRT(rt, cb) {
+  try {
+    fetch('https://securetoken.googleapis.com/v1/token?key=' + FB_KEY, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ grant_type: 'refresh_token', refresh_token: String(rt || '') })
+    }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+      if (j && j.id_token) cb({ idToken: String(j.id_token), refreshToken: String(j.refresh_token || rt), expiresIn: String(j.expires_in || '3600') });
+      else cb(null);
+    }).catch(function () { cb(null); });
+  } catch (e) { cb(null); }
+}
+
 
 window.FH_WEB = true;
 
@@ -68,7 +85,10 @@ try {
     '#neterr{display:none!important}' +
     '#bMin,#bClose,#btMin,#btClose{display:none!important}' +
     '#bnav{bottom:calc(12px + var(--fh-sab, env(safe-area-inset-bottom, 0px)))!important}' +   /* 3.5.26: динамічно, як у застосунку */
-    '#secNotif,#nban,#bPerm,#bTestN,#rowNotif{display:none!important}' +   /* 3.5.38: примусові grid-column ЗНЯТО — адаптивна сітка (2 колонки ≤859, 1 ≤699) тепер єдина для сайту й застосунку; раніше !important ламав media-запити й стискала картки до 1-2 слів у рядку (скрін власника) */
+    '#secNotif,#nban,#bPerm,#bTestN,#rowNotif{display:none!important}' +
+    /* 3.5.40: Сповіщення на сайті сховано — порожню ліву колонку теж прибираємо:
+       сітка налаштувань на САЙТІ стає однією колонкою (у exe лишається 2 колонки) */
+    '.sw-duo.sw-col-b{display:none!important}.sw-grid{grid-template-columns:1fr!important}' +   /* 3.5.38: примусові grid-column ЗНЯТО — адаптивна сітка (2 колонки ≤859, 1 ≤699) тепер єдина для сайту й застосунку; раніше !important ламав media-запити й стискала картки до 1-2 слів у рядку (скрін власника) */
     '#secUpd{display:none!important}' +   /* 3.5.26: рамку «Оновлення» знесено з САЙТУ (потрібна лише застосункам) */
     'body:not(.fh-beta) .beta-only{display:none!important}' +
     /* «Автоматичний вхід у Zoom (тест)» — ЛИШЕ у Windows-програмі (3.5.21) */
@@ -102,14 +122,9 @@ function ensureTok(cb) {
   if (tokState && tokState.tok && tokState.tokT && Date.now() < tokState.tokT - 30000) { cb(true); return; }
   if (!tokState || !tokState.rtok) { cb(false); return; }
   try {
-    var x = new XMLHttpRequest();
-    x.open('POST', BACKEND + '/api/auth/refresh', true);
-    x.setRequestHeader('Content-Type', 'application/json');
-    x.onreadystatechange = function () {
-      if (x.readyState !== 4) return;
-      var j = null;
-      try { j = JSON.parse(x.responseText); } catch (e) {}
-      if (j && j.ok && j.idToken) {
+    /* 3.5.40: прямий securetoken — без /api/auth/refresh на Render */
+    tokRefreshRT(tokState.rtok, function (j) {
+      if (j && j.idToken) {
         tokState.tok = String(j.idToken);
         tokState.rtok = String(j.refreshToken || tokState.rtok);
         var exp = parseInt(j.expiresIn, 10) || 3600;
@@ -117,8 +132,7 @@ function ensureTok(cb) {
         sessSave(tokState);
         cb(true);
       } else cb(false);
-    };
-    x.send(JSON.stringify({ refresh_token: tokState.rtok }));
+    });
   } catch (e) { cb(false); }
 }
 /* синхронне оновлення токена — для синхронного fbPut (як у нативному мосту) */
@@ -128,15 +142,16 @@ function ensureTokSync() {
   if (!tokState || !tokState.rtok) return false;
   try {
     var x = new XMLHttpRequest();
-    x.open('POST', BACKEND + '/api/auth/refresh', false);
+    /* 3.5.40: прямий securetoken — без /api/auth/refresh на Render */
+    x.open('POST', 'https://securetoken.googleapis.com/v1/token?key=' + FB_KEY, false);
     x.setRequestHeader('Content-Type', 'application/json');
-    x.send(JSON.stringify({ refresh_token: tokState.rtok }));
+    x.send(JSON.stringify({ grant_type: 'refresh_token', refresh_token: tokState.rtok }));
     var j = null;
     try { j = JSON.parse(x.responseText); } catch (e) {}
-    if (j && j.ok && j.idToken) {
-      tokState.tok = String(j.idToken);
-      tokState.rtok = String(j.refreshToken || tokState.rtok);
-      var exp = parseInt(j.expiresIn, 10) || 3600;
+    if (j && j.id_token) {
+      tokState.tok = String(j.id_token);
+      tokState.rtok = String(j.refresh_token || tokState.rtok);
+      var exp = parseInt(j.expires_in, 10) || 3600;
       tokState.tokT = Date.now() + exp * 1000 - 120000;
       sessSave(tokState);
       return true;
@@ -147,23 +162,23 @@ function ensureTokSync() {
 function rtdbSync(op, path, data) {
   if (!ensureTokSync() || !tokState || !tokState.tok) return false;
   try {
+    /* 3.5.40: прямий RTDB REST — без /api/rtdb на Render */
     var x = new XMLHttpRequest();
-    x.open('POST', BACKEND + '/api/rtdb', false);
+    x.open(op.toUpperCase(), DB_URL + '/' + normPath(path) + '.json?auth=' + encodeURIComponent(tokState.tok), false);
     x.setRequestHeader('Content-Type', 'application/json');
-    x.setRequestHeader('Authorization', 'Bearer ' + tokState.tok);
-    x.send(JSON.stringify({ op: op, path: String(path), data: data === undefined ? null : data }));
+    x.send((op === 'put' || op === 'patch') ? JSON.stringify(data === undefined ? null : data) : null);
     return x.status >= 200 && x.status < 300;
   } catch (e) { return false; }
 }
 function rtdbAsync(op, path, data, cb) {
   ensureTok(function (ok) {
     if (!ok || !tokState || !tokState.tok) { cb(null); return; }
-    fetch(BACKEND + '/api/rtdb', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tokState.tok },
-      body: JSON.stringify({ op: op, path: String(path), data: data === undefined ? null : data })
-    }).then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (j) { cb(j && j.ok ? (j.data === undefined ? null : j.data) : null); })
+    /* 3.5.40: прямий RTDB REST — без /api/rtdb на Render */
+    var init = { method: op.toUpperCase(), headers: { 'Content-Type': 'application/json' } };
+    if (op === 'put' || op === 'patch') init.body = JSON.stringify(data === undefined ? null : data);
+    fetch(DB_URL + '/' + normPath(path) + '.json?auth=' + encodeURIComponent(tokState.tok), init)
+      .then(function (r) { return r.ok ? r.text() : null; })
+      .then(function (t) { var d = null; try { d = t ? JSON.parse(t) : null; } catch (e) {} cb(d); })
       .catch(function () { cb(null); });
   });
 }
@@ -251,6 +266,15 @@ function apiGetRow(cb) {
 }
 function apiPutSnap(snap, profile, cb) {
   var done = function (ok) { cb(ok); };
+  /* 3.5.40: дзеркало Firebase ПЕРШИМ ділом (миттєвий sync інших веб-пристроїв
+     через маркер websts), потім D1 через бекенд (надійний канал, outbox) */
+  var k0 = myFid();
+  if (k0) {
+    try {
+      rtdbAsync('put', 'update/web/' + k0, snap, function () {});
+      rtdbAsync('put', 'update/websts/' + k0, parseInt(snap.t, 10) || Date.now(), function () {});
+    } catch (eM0) {}
+  }
   var viaMirror = function () {
     var k = myFid();
     if (!k) { done(false); return; }
@@ -261,6 +285,7 @@ function apiPutSnap(snap, profile, cb) {
     var fin = function (ok) { if (ok) okN += 1; if (--left <= 0) done(okN > 0); };
     rtdbAsync('put', wk, snap, fin);
     rtdbAsync('put', sk, appWrap, fin);
+    try { rtdbAsync('put', 'update/websts/' + k, parseInt(snap.t, 10) || Date.now(), function () {}); } catch (eWS) {}
   };
   ensureTok(function (ok) {
     if (!ok || !tokState || !tokState.tok) { viaMirror(); return; }
@@ -316,6 +341,50 @@ window.addEventListener('online', function () { if (myFid()) outboxKick(200); })
    бреше «рядок є» — чесна перевірка через apiGetRow (раніше INSERT міг
    тихо провалитись, а наступний SELECT казав «рядок є» -> акаунт «зник»
    з бази і програма викидала на вхід). */
+/* 3.5.40: ГАРЯЧІ запити (sts щотіка ~16 с) — з дзеркала Firebase, БЕЗ бекенда.
+   Сайт полінгує крихітний маркер update/websts/<uid> (~25 Б, пишуть застосунки
+   у syncUp і веб у apiPutSnap); повний знімок update/web/<uid> читається
+   ЛИШЕ коли маркер змінився. Роль/вхід — як і було, через /api/sync (рідко). */
+var mirCache = { mark: -1, sts: 0, snap: null, snapT: 0, missT: 0 };
+function mirStsCheck(cb) {
+  var k = myFid();
+  if (!k) { cb(null); return; }
+  if (mirCache.snapT && Date.now() - mirCache.snapT < 15000) { cb({ sts: mirCache.sts, has: true }); return; }
+  fetch(DB_URL + '/update/websts/' + k + '.json?cb=' + Date.now(), { cache: 'no-store' })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (v) {
+      var m = parseInt(v, 10) || 0;
+      if (m === mirCache.mark && (mirCache.snapT || mirCache.missT) && Date.now() - Math.max(mirCache.snapT, mirCache.missT) < 300000) {
+        cb({ sts: mirCache.sts, has: true }); return;
+      }
+      mirCache.mark = m;
+      if (m === 0) mirCache.missT = Date.now();
+      fetch(DB_URL + '/update/web/' + k + '.json?cb=' + Date.now(), { cache: 'no-store' })
+        .then(function (r2) { return r2.ok ? r2.json() : null; })
+        .then(function (snap) {
+          if (snap && typeof snap === 'object' && snapOk(snap)) {
+            mirCache.snap = snap; mirCache.sts = parseInt(snap.t, 10) || 0; mirCache.snapT = Date.now();
+            cb({ sts: mirCache.sts, has: true });
+          } else cb({ sts: 0, has: true });   /* дзеркала ще нема — «рядок є, sts 0», без фейкових викидів */
+        })
+        .catch(function () { cb(null); });
+    })
+    .catch(function () { cb(null); });
+}
+function mirSnap(cb) {
+  var k = myFid();
+  if (!k) { cb(null); return; }
+  if (mirCache.snap && mirCache.snapT && Date.now() - mirCache.snapT < 10000) { cb(JSON.stringify(mirCache.snap)); return; }
+  fetch(DB_URL + '/update/web/' + k + '.json?cb=' + Date.now(), { cache: 'no-store' })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (snap) {
+      if (snap && typeof snap === 'object' && snapOk(snap)) {
+        mirCache.snap = snap; mirCache.sts = parseInt(snap.t, 10) || 0; mirCache.snapT = Date.now();
+        cb(JSON.stringify(snap));
+      } else cb(null);
+    })
+    .catch(function () { cb(null); });
+}
 function cfRoute(id, payload) {
   var sql = '', params = [];
   try { sql = String(payload.sql || ''); params = payload.params || []; } catch (e) { cfReply(id, false, null); return; }
@@ -333,8 +402,9 @@ function cfRoute(id, payload) {
   if (/^SELECT role, sync FROM users/i.test(sql)) {
     apiGetRow(function (r) { cfReply(id, r !== null, r ? [{ role: r.role, sync: r.sync }] : []); }); return;
   }
-  if (/^SELECT settings FROM users/i.test(sql)) { apiGetRow(function (r) { cfReply(id, r !== null, r ? [{ settings: r.settings }] : []); }); return; }
-  if (/^SELECT sts FROM users/i.test(sql)) { apiGetRow(function (r) { cfReply(id, r !== null, r ? [{ sts: r.sts }] : []); }); return; }
+  /* 3.5.40: гарячі шляхи — з дзеркала Firebase (без бекенда); роль/логін — як було */
+  if (/^SELECT settings FROM users/i.test(sql)) { mirSnap(function (s) { cfReply(id, s !== null, s ? [{ settings: s }] : []); }); return; }
+  if (/^SELECT sts FROM users/i.test(sql)) { mirStsCheck(function (r) { cfReply(id, r !== null, r ? [{ sts: r.sts }] : []); }); return; }
   if (/^SELECT user_id FROM users WHERE user_id=/i.test(sql)) {
     /* 3.5.18: ЧЕСНА перевірка існування рядка (перевірка INSERT у usersUpsert) */
     apiGetRow(function (r) {
@@ -458,9 +528,10 @@ function webLogin(st) {
                 if (!name && email) name = email.split('@')[0];
                 /* 3.5.12: бекенд обмінює Google-токен на Firebase (localId +
                    idToken + refreshToken) — той самий виклик, що на старому сайті */
-                fetch(BACKEND + '/api/auth/google', {
+                /* 3.5.40: прямий identitytoolkit — без /api/auth/google на Render */
+                fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=' + FB_KEY, {
                   method: 'POST', headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ token: at })
+                  body: JSON.stringify({ postBody: 'id_token=' + encodeURIComponent(at) + '&providerId=google.com', requestUri: 'http://localhost', returnSecureToken: true })
                 }).then(function (r) { return r.json(); }).catch(function () { return null; })
                   .then(function (j) {
                     if (!j || !j.localId) { agErr('Сервер входу не відповів. Спробуй ще раз за хвилину.'); return; }
