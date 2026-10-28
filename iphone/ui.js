@@ -98,6 +98,12 @@
 
 
 "use strict";
+/* 3.5.39 КРИТИЧНИЙ ФІКС «NFIRED is not defined»: реєстрація «цей урок уже
+   отримав сповіщення» ВЗГАЛІ НЕ БУЛА ОГОЛОШЕНА в телефонному ui.js — перший же
+   pushNotifSched() на старті падав з ReferenceError («помилка інтерфейсу»),
+   обриваючи решту ініціалізації (netProbe, netWatch, живі тики). */
+var NFIRED = {};
+try { NFIRED = JSON.parse(localStorage.getItem('fh_nfired') || '{}') || {}; } catch (eNFI) { NFIRED = {}; }
 /* 2.8.2: жодного виділення/копіювання тексту довгим натисканням */
 try {
   document.addEventListener('selectstart', function (e) {
@@ -262,7 +268,7 @@ function validS(x) {
 // вічно вважав себе старішим. Тепер версію підставляє build.sh з манифеста
 // (2.4.1 -> versionName), а ПІСЛЯ завантаження Java-міст AndroidHost.ver()
 // віддає СПРАВЖНЮ версію встановленого пакета (PackageManager) — найнадійніше.
-let APP_VER = '3.5.38';              // X.Y.Z — підставляється при збірці з манифеста
+let APP_VER = '3.5.39';              // X.Y.Z — підставляється при збірці з манифеста
 try {
   if (window.AndroidHost && AndroidHost.ver) {
     const jv = AndroidHost.ver();
@@ -563,13 +569,16 @@ function refreshZoomUI() {
 }
 
 // ---------------- тема оформлення (2.1.0; 2.2.3 — сім тем) ----------------
-const THEME_LIST = ['standard', 'light', 'glass'];   // 2.3.10: Океан/Захід/Ліс/Аврора тимчасово прибрано (лише 3 теми)
-const THEME_NAMES = { standard: 'Стандартна тема ✓', light: 'Світла тема ✓', glass: 'Аврора ✓',
-                      ocean: 'Океан', sunset: 'Захід', forest: 'Ліс', aurora: 'Аврора' };
+/* 3.5.39: ЛИШЕ ДВІ ТЕМИ (власник: «повністю прибери всі теми, залиш тільки
+   стандартну темну фірмову і світлу»). Аврора (glass)/Океан/Захід/Ліс знесено
+   з css і js; збережені старі вибори тихо повертаються в стандартну. */
+const THEME_LIST = ['standard', 'light'];
+const THEME_NAMES = { standard: 'Стандартна тема ✓', light: 'Світла тема ✓' };
 let THEME = 'standard';
 try {
   const t0 = localStorage.getItem('fh_theme');
   if (THEME_LIST.indexOf(t0) >= 0) THEME = t0;
+  else if (t0) { try { localStorage.removeItem('fh_theme'); } catch (eT0) {} }
 } catch (e) {}
 /* 2.8.5: watchdog Liquid Glass — на слабких GPU автоматично вмикаємо
    body.lite-glass (без блюрів; дизайн тримають тінт+бордери+градієнт).
@@ -622,7 +631,8 @@ function applyTheme(t, save) {
      ніколи не блимають неправильно */
   try { if (window.AndroidHost && typeof AndroidHost.theme === 'function') AndroidHost.theme(THEME); } catch (e) {}
   refreshThemeUI();
-  if (THEME === 'glass') glassPerfWatch(); else document.body.classList.remove('lite-glass');
+  /* 3.5.39: watchdog lite-glass знесено разом з темою glass — клас більше ніколи не повертається */
+  document.body.classList.remove('lite-glass');
   if (save) {
     syncUp(30);   // 2.8.6: тема одразу летить у хмару — Liquid Glass з ПК приїде сам
     toast((THEME_NAMES[THEME] || 'Темна') + ' тема ✓');
@@ -2148,6 +2158,12 @@ function parseNotes(txt) {
 // пріоритет. Третій елемент пункта ('pc'/'android') — показувати лише
 // на одній платформі; без нього — на обох.
 const WHATS_NEW = {
+  '3.5.39': [
+    ['✦', 'ТІЛЬКИ ДВІ ТЕМИ: стандартна темна фірмова і світла — Аврору та інші знесено повністю', '/'],
+    ['✦', 'ФІКС КРИТИЧНОЇ ПОМИЛКИ «NFIRED is not defined» на телефоні й у мобільній версії сайту — програма знову працює', '/'],
+    ['✦', 'СВІТЛА ТЕМА: перемикачі знову фіолетові (видно ввімк/вимк), рамки «Оновлення», бейдж версії й тости — усе красиво', '/'],
+    ['✦', 'НАЛАШТУВАННЯ ПК — РІВНЕНЬКО: «Копіювання», «Запуск Zoom» і «Захід на урок» — три акуратні картки, «Сповіщення» на всю ширину; виправлено «капець» із розтягнутими рамками', '/'],
+  ],
   '3.5.38': [
     ['✦', 'НОВА ТЕМА «АВРОРА» замість Liquid Glass — глибока бірюзова ніч, суцільні панелі, жодного скла; усе працює як у темній', '/'],
     ['✦', 'СВІТЛА ТЕМА: видно вимкнені перемикачі, контури груп і рамки — усе як у темній, тільки світле', '/'],
@@ -5950,7 +5966,26 @@ window.__fh = {
     if (u && u.sub) authAccept(u);
   },
   authErr: function (m) { agState = ''; toast(m || 'Не вдалося підтвердити вхід'); },
-  notifFired: function (name, t, delta) { LAST_NOTIF = { name: name, t: t, delta: delta }; },
+  notifFired: function (name, t, delta) {
+    LAST_NOTIF = { name: name, t: t, delta: delta };
+    /* 3.5.39: реєстрація «цей урок уже сповіщений» — 1-в-1 як на ПК: ключ
+       дата|HH:MM, pushNotifSched вилучає такі уроки з payload, тож після
+       перестановки списку синком хост не сповістить той самий урок вдруге. */
+    try {
+      const dk = new Date();
+      const fk = dk.getFullYear() + '-' + ('0' + (dk.getMonth() + 1)).slice(-2) + '-' + ('0' + dk.getDate()).slice(-2) + '|' + String(t || '');
+      NFIRED[fk] = 1;
+      let nn = 0; for (const _k in NFIRED) nn++;
+      if (nn > 40) {
+        const _today = fk.split('|')[0];
+        const _cl = {};
+        for (const _k2 in NFIRED) if (String(_k2).indexOf(_today) === 0) _cl[_k2] = 1;
+        _cl[fk] = 1;
+        NFIRED = _cl;
+      }
+      try { localStorage.setItem('fh_nfired', JSON.stringify(NFIRED)); } catch (eN2) {}
+    } catch (eNF) {}
+  },
   notifAction: function (act, url2) {
     try {
       /* 3.4.6: клік по кнопці сповіщення = свідома дія «зайти на урок»:

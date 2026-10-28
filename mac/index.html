@@ -48,9 +48,9 @@ var m=function(){var b=document.body;if(b&&!document.getElementById('fhEarlyHide
    3) standard. Обраний варіант пишемо назад у body + localStorage */
 try{
   var _t=document.body.getAttribute('data-theme')||'';
-  if(['standard','light','glass','ocean','sunset','forest','aurora'].indexOf(_t)<0){
+  if(['standard','light'].indexOf(_t)<0){
     _t=localStorage.getItem('fh_theme')||'';
-    if(['standard','light','glass','ocean','sunset','forest','aurora'].indexOf(_t)<0)_t='standard';
+    if(['standard','light'].indexOf(_t)<0)_t='standard';
   }
   document.body.setAttribute('data-theme',_t);
   localStorage.setItem('fh_theme',_t);
@@ -272,7 +272,6 @@ try{
         <div class="theme-rows" id="themeRows">
           <button class="theme-tile" data-t="standard" type="button"><span class="tp std"></span><b>Стандарт</b><span>темна, фірмова</span></button>
           <button class="theme-tile" data-t="light" type="button"><span class="tp lit"></span><b>Світла</b><span>денне світло</span></button>
-          <button class="theme-tile" data-t="glass" type="button"><span class="tp gls"></span><b>Аврора</b><span>бірюзова ніч</span></button>
         </div>
       </section>
 
