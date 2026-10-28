@@ -157,8 +157,8 @@ try{
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
           </span>
           <div class="su-body">
-            <b>Копіювати посилання правою кнопкою</b>
-            <span>клацни ПКМ по уроку в розкладі — посилання одразу в буфері обміну</span>
+            <b>Копіювати правою кнопкою</b>
+            <span>клацни ПКМ по уроку — посилання одразу в буфері обміну</span>
           </div>
           <label class="sw"><input type="checkbox" id="cplOn"><i></i></label>
         </div>
@@ -191,14 +191,14 @@ try{
       <section class="sw-card" id="secConfirm">
         <div class="sw-c-head beta-only">
           <span class="sw-c-ic grad"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></span>
-          <div class="sw-c-tt"><b>Захід на урок</b></div>
+          <div class="sw-c-tt"><b>Захід на урок</b><span class="beta-only">підтвердження «Так» чи «Ні»</span></div>
         </div>
         <div class="sw-tog-row c-row">
           <span class="su-tile beta-only" style="background:linear-gradient(135deg,#6366f1,#4f46e5)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
           </span>
           <div class="su-body">
-            <b>Підтверджувати захід на урок</b>
+            <b>Підтверджувати захід</b>
             <span class="beta-only">перед уроком спитаємо «Так» чи «Ні»</span>
           </div>
           <label class="sw"><input type="checkbox" id="cOn"><i></i></label>
@@ -222,11 +222,6 @@ try{
           </div>
           <label class="sw"><input type="checkbox" id="nOn"><i></i></label>
         </div>
-        <div class="nslider hidden" id="nMinRow">
-          <div class="ns-top"><span class="ns-lbl">повідомити за</span><span class="ns-val" id="nMinVal">5 хв</span></div>
-          <input type="range" id="nMin" min="1" max="15" step="1" value="5" aria-label="Хвилин до уроку">
-          <div class="ns-scale"><span>1 хв</span><span>5</span><span>10</span><span>15 хв</span></div>
-        </div>
         <div class="sw-tog-row" id="nSndRow">
           <span class="su-tile" style="background:linear-gradient(135deg,#34d399,#059669)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
@@ -236,6 +231,11 @@ try{
             <span>мелодія-дзвіночок разом із повідомленням</span>
           </div>
           <label class="sw"><input type="checkbox" id="nSnd"><i></i></label>
+        </div>
+        <div class="nslider hidden" id="nMinRow">
+          <div class="ns-top"><span class="ns-lbl">повідомити за</span><span class="ns-val" id="nMinVal">5 хв</span></div>
+          <input type="range" id="nMin" min="1" max="15" step="1" value="5" aria-label="Хвилин до уроку">
+          <div class="ns-scale"><span>1 хв</span><span>5</span><span>10</span><span>15 хв</span></div>
         </div>
         <div class="sw-tog-row" id="nOffRow">
           <span class="su-tile" style="background:linear-gradient(135deg,#a855f7,#7c3aed)">

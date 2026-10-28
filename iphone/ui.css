@@ -1993,26 +1993,28 @@ body[data-theme="glass"]{
   --lg-t:400ms;
   --lg-e:cubic-bezier(0.25,1,0.5,1);
   --lg-bw:clamp(1px,0.0625em,4px);
-  --lg-glass-bg:linear-gradient(-75deg,rgba(255,255,255,.05),rgba(255,255,255,.2),rgba(255,255,255,.05));
+  /* 3.5.37: скло = ЯК НИЖНЯ ПАНЕЛЬ (еталон власника) — темне, з фіолетовим
+     свечінням; 1-в-1 з mac/ui.css, щоб телефон/сайт/ПК були однакові */
+  --lg-glass-bg:radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.16),transparent 58%),linear-gradient(180deg,rgba(46,37,92,.60),rgba(24,17,50,.74));
   --lg-glass-sh:
-    inset 0 .125em .125em rgba(0,0,0,.05),
-    inset 0 -.125em .125em rgba(255,255,255,.5),
-    0 .25em .125em -.125em rgba(0,0,0,.2),
-    0 0 .1em .25em inset rgba(255,255,255,.2),
+    inset 0 .125em .125em rgba(255,255,255,.10),
+    inset 0 -.125em .125em rgba(255,255,255,.14),
+    0 .25em .125em -.125em rgba(0,0,0,.35),
+    0 1.2em 2.2em -.6em rgba(8,5,24,.55),
     0 0 0 0 rgba(255,255,255,1);
   --lg-glass-sh-hov:
-    inset 0 .125em .125em rgba(0,0,0,.05),
-    inset 0 -.125em .125em rgba(255,255,255,.5),
-    0 .15em .05em -.1em rgba(0,0,0,.25),
-    0 0 .05em .1em inset rgba(255,255,255,.5),
+    inset 0 .125em .125em rgba(255,255,255,.12),
+    inset 0 -.125em .125em rgba(255,255,255,.18),
+    0 .15em .05em -.1em rgba(0,0,0,.35),
+    0 1em 1.8em -.5em rgba(8,5,24,.6),
     0 0 0 0 rgba(255,255,255,1);
   --lg-glass-sh-act:
-    inset 0 .125em .125em rgba(0,0,0,.05),
-    inset 0 -.125em .125em rgba(255,255,255,.5),
-    0 .125em .125em -.125em rgba(0,0,0,.2),
-    0 0 .1em .25em inset rgba(255,255,255,.2),
+    inset 0 .125em .125em rgba(255,255,255,.10),
+    inset 0 -.125em .125em rgba(255,255,255,.14),
+    0 .125em .125em -.125em rgba(0,0,0,.3),
+    0 .8em 1.4em -.4em rgba(8,5,24,.5),
     0 .225em .05em 0 rgba(0,0,0,.05),
-    0 .25em 0 0 rgba(255,255,255,.75),
+    0 .25em 0 0 rgba(255,255,255,.30),
     inset 0 .25em .05em 0 rgba(0,0,0,.15);
   --lg-rim:conic-gradient(from var(--angle-1) at 50% 50%,
       rgba(0,0,0,.5),rgba(0,0,0,0) 5% 40%,rgba(0,0,0,.5) 50%,
@@ -2558,17 +2560,25 @@ body[data-theme="glass"] #bnPill{background:rgba(255,255,255,.10);
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),inset 0 1px 0 rgba(255,255,255,.28),0 1px 10px rgba(0,0,0,.28)}
 
 /* ============================================================
-   3.5.35 — LIQUID GLASS: ВКЛАДКИ ДНІВ (Пн–Пт) — одне скло + пілюля
-   Просив власник: «вот эти кнопки переключения понедельник, вторник —
-   выглядят некрасиво, они как-то соединены»
+   3.5.37 — ВКЛАДКИ ДНІВ (Пн–Пт) = ОКРЕМІ СКЛЯНІ ПЛАШКИ (1-в-1 з ПК;
+   власник: «плашечки закруглённые, не соединены, отступ небольшой»)
    ============================================================ */
+body[data-theme="glass"] #tabs{
+  background:transparent!important;box-shadow:none!important;border:0!important;
+  -webkit-backdrop-filter:none!important;backdrop-filter:none!important;gap:7px}
+body[data-theme="glass"] #tabs::before,body[data-theme="glass"] #tabs::after{content:none!important}
 body[data-theme="glass"] .tab{
-  background:transparent!important;border-color:transparent!important;box-shadow:none!important;
-  -webkit-backdrop-filter:none!important;backdrop-filter:none!important}
-body[data-theme="glass"] .tab::before,body[data-theme="glass"] .tab::after{content:none!important}
-body[data-theme="glass"] .tab{color:#c6cbe0;text-shadow:none}
+  background:var(--lg-glass-bg)!important;
+  box-shadow:var(--lg-glass-sh)!important;
+  border:1px solid rgba(255,255,255,.10)!important;
+  -webkit-backdrop-filter:blur(clamp(1px,.125em,4px));
+  backdrop-filter:blur(clamp(1px,.125em,4px))}
+body[data-theme="glass"] .tab::before,body[data-theme="glass"] .tab::after{content:''!important}
+body[data-theme="glass"] .tab{color:#c9cdf2;text-shadow:none}
 body[data-theme="glass"] .tab.on{color:#fff!important}
-body[data-theme="glass"] #tabs{-webkit-backdrop-filter:blur(clamp(1px,.125em,4px)) saturate(150%);backdrop-filter:blur(clamp(1px,.125em,4px)) saturate(150%)}
+body.mob.lite-glass[data-theme="glass"] .tab{
+  -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+  background:linear-gradient(180deg,rgba(48,39,96,.88),rgba(26,19,54,.92))!important}
 
 /* ============================================================
    3.5.35 — LIQUID GLASS: ТЕМНІ ТОСТИ (телефон/сайт — ті самі кольори,

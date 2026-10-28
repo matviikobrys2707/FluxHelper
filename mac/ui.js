@@ -242,7 +242,7 @@ function validS(x) {
 })();
 
 // ---------------- версія + перший запуск ----------------
-const APP_VER = '3.5.35';                  // версія X.Y.Z — з version.h (див. main.cpp)
+const APP_VER = '3.5.37';                  // версія X.Y.Z — з version.h (див. main.cpp)
 /* 3.5.5: КАНАЛ ЗБІРКИ — 'beta' або 'release'. Бета-збірки підписують версію
    словом «beta» скрізь у інтерфейсі (профіль, «Про програму», вікно оновлення),
    релізні показують чистий номер. Перед релізом змінюємо тут і перезбираємо. */
@@ -1186,6 +1186,17 @@ function setSeg(view) {
       if (!was && view === 'acc') { ab.classList.remove('accpop'); void ab.offsetWidth; ab.classList.add('accpop'); }
     }
   } catch (eTA) {}
+  /* 3.5.36 ФІКС «залиплої фіолетової вкладки»: якщо перемикання відбулось
+     ШВИДКО (під час 600 мс польоту пілюлі .tb-seg), спостерігач мутацій
+     пропускав синхронізацію (guard __flyAt) — і пілюля залишалась висіти
+     на старій вкладці (Налаштування), хоча .on вже знято. Тепер setSeg
+     САМ миттєво синхронізує пілюлю за актуальним .on (fhSegTo instant —
+     guard не діє), тож підсвітка завжди відповідає відкритій вкладці. */
+  try {
+    var _sgA = byId('segSched');
+    var _seg = _sgA && _sgA.parentElement;
+    if (_seg && _seg.classList && _seg.classList.contains('tb-seg') && typeof window.fhSegTo === 'function') window.fhSegTo(_seg, true);
+  } catch (eSG) {}
 }
 /* 3.5.18: ПЕРЕДЗАВАНТАЖЕННЯ ВКЛАДОК (просив власник: «когда заходишь у
    вкладку перший раз — воно лагає; зроби, щоб усі вкладки завантажувались
@@ -2292,7 +2303,7 @@ function testNotifSound() {
      тест»). Заголовок і текст — формат справжнього сповіщення, час — за
      налаштуванням (NOTIF.min, а не «5» hardcoded), у кінці — «(тест)». */
   const title = 'Зайти на урок через ' + NOTIF.min + ' хв';
-  const text = nextTestLessonName() + ' • початок о ' + hh + ':' + mm + ' (тест)';
+  const text = '\uD83D\uDD14 ' + nextTestLessonName() + ' • початок о ' + hh + ':' + mm + ' (тест)';   /* як у справжньому — з \uD83D\uDD14 */
   /* 3.4.14: «Зайти на урок» у ТЕСТІ веде на ВИМІСЛЕНЕ посилання — рандомний
      ID конференції, якого в розкладі НІКОЛИ не буває (просив власник: «щоб
      воно просто перекидувало в Zoom»). Zoom відкриється, реальні уроки — ні. */
@@ -2335,7 +2346,14 @@ function pushNotifSched(quiet) {   // 3.4.5: quiet=true — розклад із 
     }
     const dayArr = RES[dow - 1] || [];
     dayArr.forEach(function (l) {
-      if (l.t) items.push({ dow: dow, t: l.t, n: l.name, u: l.url || '', m: ZOOM.mode });
+      if (l.t) {
+        /* 3.5.36 ФІКС «два сповіщення»: урок, який ВЖЕ отримав тост сьогодні,
+           виключаємо з payload — хост (ключ день*1000+індекс) не зможе
+           сповіщити його вдруге після перестановки списку синком */
+        const _fk = day.getFullYear() + '-' + ('0' + (day.getMonth() + 1)).slice(-2) + '-' + ('0' + day.getDate()).slice(-2) + '|' + String(l.t);
+        if (NFIRED[_fk]) return;
+        items.push({ dow: dow, t: l.t, n: '\uD83D\uDD14 ' + l.name, u: l.url || '', m: ZOOM.mode });   /* \uD83D\uDD14 = 🔔 */
+      }
     });
   }
   const payload = JSON.stringify({
@@ -2965,6 +2983,14 @@ function updOpen() { return UPD.avail; }
 // пріоритет. Третій елемент пункта ('pc'/'android') — показувати лише
 // на одній платформі; без нього — на обох.
 const WHATS_NEW = {
+  '3.5.37': [
+    ['✦', 'LIQUID GLASS — ДОВЕДЕНА: скло тепер темне (як нижня панель) і ОДНАКОВЕ везде — картки, профіль, верхня панель, модалки', '/'],
+    ['✦', 'ВКЛАДКИ ДНІВ Пн–Пт — окремі скляні плашки з відступами (як у стандартній темі), не злиті', '/'],
+    ['✦', 'ФІКС «залипаючої» вкладки: при швидкому перемиканні підсвічення більше не залишається на старій вкладці', '/'],
+    ['✦', 'ФІКС двійного сповіщення на ПК: нагадування приходить РІВ ОДИН раз + емодзі у тексті', '/'],
+    ['✦', 'НАЛАШТУВАННЯ ПК — РІВНІ: однакові висоти карток, Сповіщення компактні (усе в 2 колонки)', '/'],
+    ['✦', 'СВІТЛА ТЕМА ДОВЕДЕНА: товстина шрифтів 1-в-1 як у стандарті, кнопки вікна без рамок, красиві випадаючі вікна, без «біле на білому»', '/'],
+  ],
   '3.5.35': [
     ['✦', 'АНІМАЦІЯ ПЕРЕМИКАЧІВ «МОЇ ГРУПИ»: рамка-пілюля тепер ПЛАВНО ПЕРЕЛІТАє між «1-ша група» і «2-га група» прямо в налаштуваннях — так само, як у перемикача «Додаток/Браузер»', '/'],
     ['✦', 'ЗМІНА ТЕМИ — ПЛАВНЕ ПЕРЕТЕКАННЯ: кольори, рамки й тіні переливаються одну мить замість різкого стрибка', '/'],
@@ -3917,6 +3943,11 @@ const SITE_URL = 'https://fluxhelper.pages.dev/';
 const ROLEL = { user: 'Користувач', admin: 'Адмін', developer: 'Розробник' };
 let ACC = { user: null, role: 'user', sync: true };
 let authReady = false, agT = 0, agState = '', syncT = 0, syncLastTs = 0, LAST_NOTIF = null;
+/* 3.5.36: реєстр «цей урок уже отримав сповіщення» (день|HH:MM) — захист від
+   повторного тоста після перестановки списку предметів синком (ключ хоста —
+   індексний, бачив NI once; див. notifFired / pushNotifSched) */
+let NFIRED = {};
+try { NFIRED = JSON.parse(localStorage.getItem('fh_nfired') || '{}') || {}; } catch (eNFI) { NFIRED = {}; }
 let gateAccountGone = false;   // 2.9.1: гейт відкривається через «аккаунт видалено з бази»
 let cfLast = 0, agRetry = false;   // 2.7.3: статус останньої хмарної відповіді + авто-повтор входу
 try {
@@ -5746,7 +5777,29 @@ window.__fh = {
   netErr: function (on) { if (on) showNetErr(); else hideNetErr(); },
   dlProg: dlProg, dlErr: dlErr, dlDone: dlDone,
   updState: function () { return UPD; },
-  notifFired: function (name, t, delta) { LAST_NOTIF = { name: name, t: t, delta: delta }; },
+  notifFired: function (name, t, delta) {
+    LAST_NOTIF = { name: name, t: t, delta: delta };
+    /* 3.5.36 ФІКС «СПОВІЩЕННЯ ПРИХОДИТЬ ДВІЧІ»: хост позначає урок ключем
+     день*1000+ІНДЕКС у списку — якщо синк (d1Apply) переставив предмети,
+     той самий урок отримував НОВИЙ індекс і сповіщення стріляло ще раз.
+     Тепер UI запам'ятовує «цього уроку вже сповіщено» (день + час) — а
+     pushNotifSched ВИЛУЧАЄ такі уроки з payload, тож хост фізично не може
+     сповіщити їх вдруге, навіть після перестановки списку. */
+    try {
+      const dk = new Date();
+      const fk = dk.getFullYear() + '-' + ('0' + (dk.getMonth() + 1)).slice(-2) + '-' + ('0' + dk.getDate()).slice(-2) + '|' + String(t || '');
+      NFIRED[fk] = 1;
+      let nn = 0; for (const _k in NFIRED) nn++;
+      if (nn > 40) {
+        const _today = fk.split('|')[0];
+        const _cl = {};
+        for (const _k2 in NFIRED) if (String(_k2).indexOf(_today) === 0) _cl[_k2] = 1;   // лишаем только сегодняшний день
+        _cl[fk] = 1;
+        NFIRED = _cl;
+      }
+      try { localStorage.setItem('fh_nfired', JSON.stringify(NFIRED)); } catch (eN2) {}
+    } catch (eNF) {}
+  },
   notifAction: function (act, url2) {
     // кнопка «Зайти» в тості Windows -> відкриваємо той урок
     if (updOpen()) return;
@@ -5767,7 +5820,10 @@ window.__fh = {
     }
     let target = null;
     if (LAST_NOTIF && LAST_NOTIF.name) {
-      for (let i = 0; i < day.length; i++) if (day[i].name === LAST_NOTIF.name) { target = day[i]; break; }
+      /* 3.5.36: у items ім'я уроку може нести префікс емодзі (🔔) — звірємо
+         назви без нього, щоб кнопка «Зайти» не промахнулась */
+      const _bare = function (s) { return String(s || '').replace(/^[^\p{L}\p{N}]+\s*/u, ''); };
+      for (let i = 0; i < day.length; i++) if (_bare(day[i].name) === _bare(LAST_NOTIF.name)) { target = day[i]; break; }
     }
     if (!target && url2) { setTimeout(function () { openL(String(url2)); }, 150); return; }
     if (!target) {
@@ -5902,7 +5958,7 @@ try { init(); } catch (err) {
     var on = cont.querySelector('.seg-z-b.on,.adm-seg-b.on,.su-opt.on,.tab.on,.seg button.on');
     if (!on && cont.classList && cont.classList.contains('tb-seg')) on = cont.querySelector('button.on');
     var p = pillFor(cont);
-    if (!on) { p.classList.remove('pon'); return; }
+    if (!on) { p.classList.remove('pon'); p.__flyAt = 0; return; }
     p.classList.add('pon');
     /* 3.5.34 FLIP: клік запам'ятовує СТАРУ позицію пілюлі ще ДО перемикання
        .on (фаза capture), тож навіть якщо спостерігач мутацій встигне зробити
@@ -5921,7 +5977,7 @@ try { init(); } catch (err) {
     p.style.height = on.offsetHeight + 'px';
     p.style.transform = 'translate(' + on.offsetLeft + 'px,' + on.offsetTop + 'px)';
     p.__x = on.offsetLeft; p.__y = on.offsetTop;
-    if (instant) { void p.offsetWidth; p.style.transition = ''; }
+    if (instant) { void p.offsetWidth; p.style.transition = ''; p.__flyAt = 0; }
     else {
       /* 3.5.34: позначка «пілюля летить» — спостерігач мутацій 600 мс НЕ робить
          миттєву пересинхронізацію поверх анімації */

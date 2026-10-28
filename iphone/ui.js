@@ -262,7 +262,7 @@ function validS(x) {
 // вічно вважав себе старішим. Тепер версію підставляє build.sh з манифеста
 // (2.4.1 -> versionName), а ПІСЛЯ завантаження Java-міст AndroidHost.ver()
 // віддає СПРАВЖНЮ версію встановленого пакета (PackageManager) — найнадійніше.
-let APP_VER = '3.5.36';              // X.Y.Z — підставляється при збірці з манифеста
+let APP_VER = '3.5.37';              // X.Y.Z — підставляється при збірці з манифеста
 try {
   if (window.AndroidHost && AndroidHost.ver) {
     const jv = AndroidHost.ver();
@@ -2133,6 +2133,11 @@ function parseNotes(txt) {
 // пріоритет. Третій елемент пункта ('pc'/'android') — показувати лише
 // на одній платформі; без нього — на обох.
 const WHATS_NEW = {
+  '3.5.37': [
+    ['✦', 'LIQUID GLASS — скло тепер темне (як нижня панель) і ОДНАКОВЕ на телефоні, сайті і ПК', '/'],
+    ['✦', 'ВКЛАДКИ ДНІВ Пн–Пт — окремі скляні плашки з відступами, не злиті', '/'],
+    ['✦', 'Світла тема доведена: без «біле на білому», читабельні шрифти', '/'],
+  ],
   '3.5.36': [
     ['✦', 'ГАРАНТОВИЙ ФІКС: виправлено запуск програми на телефоні — версія 3.5.35 могла не відкриватися; ця версія запускається стабільно', '/'],
     ['/', 'Радимо встановити одразу: скачайте APK із сайту ( fluxhelper.pages.dev ) і поставте поверх — усі дані залишаться', '/'],
@@ -6133,7 +6138,7 @@ try { init(); } catch (err) {
     var on = cont.querySelector('.seg-z-b.on,.adm-seg-b.on,.su-opt.on,.tab.on');
     if (!on && cont.classList && cont.classList.contains('tb-seg')) on = cont.querySelector('button.on');
     var p = pillFor(cont);
-    if (!on) { p.classList.remove('pon'); return; }
+    if (!on) { p.classList.remove('pon'); p.__flyAt = 0; return; }
     p.classList.add('pon');
     /* 3.5.34 FLIP: клік запам'ятовує СТАРУ позицію пілюлі ще ДО перемикання
        .on (фаза capture), тож навіть якщо спостерігач мутацій встигне зробити
@@ -6152,7 +6157,7 @@ try { init(); } catch (err) {
     p.style.height = on.offsetHeight + 'px';
     p.style.transform = 'translate(' + on.offsetLeft + 'px,' + on.offsetTop + 'px)';
     p.__x = on.offsetLeft; p.__y = on.offsetTop;
-    if (instant) { void p.offsetWidth; p.style.transition = ''; }
+    if (instant) { void p.offsetWidth; p.style.transition = ''; p.__flyAt = 0; }
     else {
       /* 3.5.34: позначка «пілюля летить» — спостерігач мутацій 600 мс НЕ робить
          миттєву пересинхронізацію поверх анімації */
