@@ -242,7 +242,7 @@ function validS(x) {
 })();
 
 // ---------------- версія + перший запуск ----------------
-const APP_VER = '3.5.37';                  // версія X.Y.Z — з version.h (див. main.cpp)
+const APP_VER = '3.5.38';                  // версія X.Y.Z — з version.h (див. main.cpp)
 /* 3.5.5: КАНАЛ ЗБІРКИ — 'beta' або 'release'. Бета-збірки підписують версію
    словом «beta» скрізь у інтерфейсі (профіль, «Про програму», вікно оновлення),
    релізні показують чистий номер. Перед релізом змінюємо тут і перезбираємо. */
@@ -525,42 +525,14 @@ function refreshZoomUI() {
 // ---------------- тема оформлення (2.1.0) ----------------
 let THEME = 'standard';
 const THEME_LIST = ['standard', 'light', 'glass'];   // 2.3.10: Океан/Захід/Ліс/Аврора тимчасово прибрано (лише 3 теми)
-const THEME_NAMES = { standard: 'Стандартна тема ✓', light: 'Світла тема ✓', glass: 'Liquid Glass ✓',
+const THEME_NAMES = { standard: 'Стандартна тема ✓', light: 'Світла тема ✓', glass: 'Аврора ✓',
                       ocean: 'Океан ✓', sunset: 'Захід ✓', forest: 'Ліс ✓', aurora: 'Аврора ✓' };
 try {
   const t0 = localStorage.getItem('fh_theme');
   if (THEME_LIST.indexOf(t0) >= 0) THEME = t0;
 } catch (e) {}
-/* 2.8.5: watchdog Liquid Glass — на слабких GPU автоматично вмикаємо
-   body.lite-glass (без блюрів; дизайн тримають тінт+бордери+градієнт).
-   Міряємо середній кадр ~55 кадрів після увімкнення теми; стрибки >120 мс
-   (згортання вікна/фон) скидають замір, щоб не отримати хибне «лагає». */
-let glassWatchT = 0;
-function glassPerfWatch() {
-  let lite = false;
-  try { lite = localStorage.getItem('fh_liteglass') === '1'; } catch (e) {}
-  document.body.classList.toggle('lite-glass', lite);
-  clearTimeout(glassWatchT);
-  glassWatchT = setTimeout(function () {
-    if (THEME !== 'glass' || typeof requestAnimationFrame !== 'function') return;
-    let n = 0, t0 = 0, last = 0;
-    const tick = function (ts) {
-      if (THEME !== 'glass') return;
-      if (!n) { t0 = last = ts; n = 1; requestAnimationFrame(tick); return; }
-      if (ts - last > 120) { t0 = last = ts; n = 1; requestAnimationFrame(tick); return; }
-      last = ts; n++;
-      if (n >= 55) {
-        const avg = (ts - t0) / (n - 1);
-        const slow = avg > 21;   // >21 мс/кадр = менше ~48 fps -> старий iGPU не тягне
-        document.body.classList.toggle('lite-glass', slow);
-        try { localStorage.setItem('fh_liteglass', slow ? '1' : '0'); } catch (e) {}
-        return;
-      }
-      requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-  }, 1400);
-}
+/* 3.5.38: watchdog lite-glass ЗНЕСЕНО разом зі склом — «Аврора» суцільна,
+   блюру нема, слабкі GPU тягнуть її 1-в-1 з іншими темами. */
 function applyTheme(t, save) {
   THEME = (THEME_LIST.indexOf(t) >= 0) ? t : 'standard';
   /* 3.5.35: ПЛАВНЕ ПЕРЕТЕКАННЯ ТЕМИ (просив власник: «смена темы тоже чтобы
@@ -580,7 +552,7 @@ function applyTheme(t, save) {
   try { localStorage.setItem('fh_theme', THEME); } catch (e) {}
   host('fh:theme|' + THEME);   // 2.8.8: хост запам'ятовує тему (settings.json) — сплеш наступного запуску одразу у ній
   refreshThemeUI();
-  if (THEME === 'glass') glassPerfWatch(); else document.body.classList.remove('lite-glass');
+  document.body.classList.remove('lite-glass');   /* 3.5.38: клас більше ніколи не повертається */
   if (save) {
     syncUp(30);   // 2.8.6: тема одразу летить у хмару — на інших пристроях застосується сама
     toast(THEME_NAMES[THEME] || 'Тема змінена ✓');
@@ -1022,7 +994,11 @@ function render(anim) {
     /* 3.5.32: порядок — НАЗВА → КАБІНЕТ → ЗАРАЗ/ДАЛІ (просив власник: після
        номера кабинета — красива рамочка «далі»); бейджі з кольоровими рамочками */
     try {
-      const rm = roomFor(DAYDEFS[sel][0], l);
+      /* 3.5.38: уроки, що ПОЧИНАЮТЬСЯ після 12:35 — онлайн (просив власник):
+         кабінет не показуємо взагалі, лише назва/час/учитель. Уроки 8:00-12:35
+         (та рівно 12:35) — кабінет лишається. */
+      const _stM = (function (t) { const m = /^\s*(\d{1,2}):(\d{2})/.exec(String(t || '')); return m ? ((+m[1]) * 60 + (+m[2])) : 0; })(l.t);
+      const rm = (_stM > 755) ? null : roomFor(DAYDEFS[sel][0], l);
       if (rm) h3.appendChild(el('span', 'rm-chip', rm));
     } catch (eRm) {}
     if (i === nowIdx) h3.appendChild(el('span', 'now-chip', '<i></i>ЗАРАЗ'));
@@ -2345,14 +2321,22 @@ function pushNotifSched(quiet) {   // 3.4.5: quiet=true — розклад із 
       if (skipSet[dstr]) continue;
     }
     const dayArr = RES[dow - 1] || [];
+    const _dstr = day.getFullYear() + '-' + ('0' + (day.getMonth() + 1)).slice(-2) + '-' + ('0' + day.getDate()).slice(-2);
+    const _dayMs = new Date(day.getFullYear(), day.getMonth(), day.getDate()).getTime();
     dayArr.forEach(function (l) {
       if (l.t) {
         /* 3.5.36 ФІКС «два сповіщення»: урок, який ВЖЕ отримав тост сьогодні,
            виключаємо з payload — хост (ключ день*1000+індекс) не зможе
            сповіщити його вдруге після перестановки списку синком */
-        const _fk = day.getFullYear() + '-' + ('0' + (day.getMonth() + 1)).slice(-2) + '-' + ('0' + day.getDate()).slice(-2) + '|' + String(l.t);
+        const _fk = _dstr + '|' + String(l.t);
         if (NFIRED[_fk]) return;
-        items.push({ dow: dow, t: l.t, n: '\uD83D\uDD14 ' + l.name, u: l.url || '', m: ZOOM.mode });   /* \uD83D\uDD14 = 🔔 */
+        /* 3.5.38: СТАБІЛЬНІ ПОЛЯ (d = дата уроку, at = ТОЧНИЙ момент сповіщення
+           «початок мінус N хвилин» в epoch ms). Старі хости/Android поля
+           ігнорують; нові зможуть планувати секундамі — фікс «за 1 хв приходить
+           за 90 с» без перебудови ключів. */
+        const _sm = (/^(\d{1,2}):(\d{2})/.exec(String(l.t)));
+        const _at = _sm ? (_dayMs + ((+_sm[1]) * 60 + (+_sm[2])) * 60000 - NOTIF.min * 60000) : 0;
+        items.push({ dow: dow, t: l.t, n: '\uD83D\uDD14 ' + l.name, u: l.url || '', m: ZOOM.mode, d: _dstr, at: _at });   /* \uD83D\uDD14 = 🔔 */
       }
     });
   }
@@ -2983,6 +2967,15 @@ function updOpen() { return UPD.avail; }
 // пріоритет. Третій елемент пункта ('pc'/'android') — показувати лише
 // на одній платформі; без нього — на обох.
 const WHATS_NEW = {
+  '3.5.38': [
+    ['✦', 'НОВА ТЕМА «АВРОРА» замість Liquid Glass — глибока бірюзова ніч, суцільні панелі, жодного скла; усе працює як у темній', '/'],
+    ['✦', 'СВІТЛА ТЕМА: видно вимкнені перемикачі, контури груп і рамки — усе як у темній, тільки світле', '/'],
+    ['✦', 'РОЗКЛАД: у онлайн-уроків (після 12:35) більше немає номера кабінету; кабінет ближче до назви уроку', '/'],
+    ['✦', 'КНОПКУ «Вийти з акаунта» повернено на телефон', '/'],
+    ['✦', 'ЗБЕРЕЖЕННЯ АКАУНТА: після видалення й встановлення програми акаунт відновлюється; після явного виходу — потрібне підтвердження входу', '/'],
+    ['✦', 'ВЕРСІЇ ПРИСТРОЇВ у профілі: телефон і комп\u2019ютер пишуть останню версію застосунку', '/'],
+    ['✦', 'Сповіщення: точний момент «за N хвилин» у розкладі; попап дозволу оновлення переписано просто і зрозуміло', '/'],
+  ],
   '3.5.37': [
     ['✦', 'LIQUID GLASS — ДОВЕДЕНА: скло тепер темне (як нижня панель) і ОДНАКОВЕ везде — картки, профіль, верхня панель, модалки', '/'],
     ['✦', 'ВКЛАДКИ ДНІВ Пн–Пт — окремі скляні плашки з відступами (як у стандартній темі), не злиті', '/'],
@@ -3826,6 +3819,10 @@ function d1Init() {
   cfExec('ALTER TABLE users ADD COLUMN sver TEXT', [], null);
   cfExec('ALTER TABLE users ADD COLUMN sts INTEGER', [], null);
   cfExec('ALTER TABLE users ADD COLUMN created INTEGER', [], null);
+  /* 3.5.38: версії платформ у users (просив власник): ver_phone / ver_pc —
+     остання версія застосунку на телефоні й комп'ютері цього акаунта */
+  cfExec('ALTER TABLE users ADD COLUMN ver_phone TEXT', [], null);
+  cfExec('ALTER TABLE users ADD COLUMN ver_pc TEXT', [], null);
 }
 function loadRemoteCfg() { /* 2.7.2: конфіг не потрібен — токен у хості, D1 вбудовано */ }
 
@@ -3926,6 +3923,19 @@ function deviceWrite() {
          'model=excluded.model, os=excluded.os, ver=excluded.ver, settings=excluded.settings, last_seen=excluded.last_seen',
     [devId(), k, String(d.type || ''), String(d.name || ''), String(d.model || ''),
      String(d.os || ''), APP_VER, deviceSnapshot(), f, Date.now()], null);
+  /* 3.5.38: ВЕРСІЯ ПЛАТФОРМИ В USERS (просив власник): «в таблиці для
+     користувачів дві колонки phone/computer — пишеться його версія». Пишемо
+     лише коли версія змінилась (економія квоти D1); на сайті не пишемо —
+     cfRoute сайту не пропускає довільні UPDATE, і версія сайту не потрібна. */
+  if (window.FH_WEB) return;
+  const _vk = 'fh_verw_' + (ANDROID ? 'phone' : 'pc');
+  let _vl = ''; try { _vl = localStorage.getItem(_vk) || ''; } catch (eVw) {}
+  if (_vl !== APP_VER) {
+    cfExec('UPDATE users SET ' + (ANDROID ? 'ver_phone' : 'ver_pc') + '=? WHERE user_id=?',
+      [APP_VER, k], function (rV) {
+        try { if (rV !== null) localStorage.setItem(_vk, APP_VER); } catch (eVw2) {}
+      });
+  }
 }
 function devicePing() {
   if (_statBusy) return;
@@ -5904,28 +5914,7 @@ try { init(); } catch (err) {
 (function () {
   /* 3.5.31: прапорець «двигун пілюлі живий» — CSS віддає .on під пілюлю лише з ним */
   try { document.body.classList.add('segjs'); } catch (eSeg) {}
-  /* 3.5.32: СПРАВЖНЄ РІДКЕ СКЛО — SVG-фільтр заломлення країв для теми
-     Liquid Glass. <filter id="lgDisp"> додається ОДИН раз; CSS вживає його
-     через backdrop-filter: url(#lgDisp) тільки в Chromium (html.lg-ok):
-     WebView2 (ПК), Chrome, Android WebView. Safari/Firefox — те саме скло
-     без шару заломлення. Мапа: R = зсув Y, B = зсув X, центр нейтральний. */
-  try {
-    if (!document.getElementById('lgDisp')) {
-      var _lgMap = 'data:image/png;base64,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';
-      var _d = document.createElement('div');
-      _d.innerHTML = '<svg style="position:absolute;width:0;height:0" aria-hidden="true" focusable="false">' +
-        '<filter id="lgDisp" primitiveUnits="objectBoundingBox" x="-15%" y="-15%" width="130%" height="130%" color-interpolation-filters="sRGB">' +
-        '<feImage href="' + _lgMap + '" xlink:href="' + _lgMap + '" preserveAspectRatio="none" x="0" y="0" width="1" height="1" result="map"/>' +
-        '<feDisplacementMap in="SourceGraphic" in2="map" scale="0.26" xChannelSelector="B" yChannelSelector="R"/>' +
-        '</filter></svg>';
-      document.body.insertBefore(_d.firstChild, document.body.firstChild);
-    }
-  } catch (eSvg) {}
-  try {
-    var _ua32 = navigator.userAgent || '';
-    var _lgOk = (/Chrom(e|ium)\/\d+/.test(_ua32) || /Edg\/\d+/.test(_ua32)) && !/CriOS|FxiOS|EdgiOS/.test(_ua32);
-    if (_lgOk) document.documentElement.classList.add('lg-ok');
-  } catch (eLg) {}
+  /* 3.5.38: SVG-фільтр заломлення (lgDisp) і клас lg-ok ЗНЕСЕНО разом із темою скла. */
   /* 3.5.32: у модалці оновлення — пояснення про місце встановлення
      (просив власник: «після оновлення програма лишилась на тому ж місці») */
   try {

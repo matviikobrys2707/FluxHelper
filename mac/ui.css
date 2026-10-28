@@ -765,16 +765,6 @@ body[data-theme="light"] .tb-acc .tb-acc-t b{color:#0f172a;font-weight:800}
 body[data-theme="light"] .tb-acc .tb-acc-t span{color:#475569;font-weight:600}
 body[data-theme="light"] .bn-t span{color:#334155;font-weight:600}
 body[data-theme="light"] .su-perm{color:#92400e;background:rgba(245,158,11,.14);border:1.5px solid rgba(180,83,9,.35);font-weight:700}
-
-/* ---------- LIQUID GLASS — 2.8.5 ОПТИМІЗОВАНО ДЛЯ СЛАБКИХ ПК ----------
-   Чому лагало: backdrop-filter стояв на КОЖНІЙ картці уроку (25 шт.), кожній
-   вкладці дня й дрібних елементах. Композитор перераховує всі блюри на КОЖЕН
-   кадр (скрол, поява, hover, анімація .tab.on tabg 3.4s infinite) — старий
-   iGPU не витягує. За картками уроків лише СТАТИЧНИЙ градієнт, тож блюр там
-   візуально нічого не дає: знімаємо блюр, трохи піднімаємо тінт — вигляд той
-   самий. Блюр лишається ТІЛЬКИ де під ним справжній контент (модалки/тости).
-   Для дуже слабких машин watchdog вмикає body.lite-glass — мінус і ці блюри. */
-body[data-theme="glass"]{color:#f2f3fa;background-attachment:fixed}
 body[data-theme="glass"] .tb-seg{border-color:rgba(255,255,255,.18)}
 /* 3.5.37: кнопка акаунта (вгорі) — ТОЙ САМИЙ скляний матеріал, що й
    перемикач вкладок / нижня панель (власник: «в верхней панели оно
@@ -798,14 +788,6 @@ body[data-theme="glass"] .su-opt.on{background:linear-gradient(135deg,rgba(139,9
 body[data-theme="glass"] .m-item:hover{background:linear-gradient(135deg,rgba(139,92,246,.4),rgba(99,102,241,.3))}body[data-theme="glass"] .fld input {background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.2)}
 body[data-theme="glass"] .us-card{background:rgba(26,22,54,.76);backdrop-filter:blur(16px) saturate(1.7);
   -webkit-backdrop-filter:blur(16px) saturate(1.7);border:1px solid rgba(255,255,255,.22)}
-/* 2.8.6: glass-тост тепер через --toast-* (прозоріше скло + blur) */
-/* --- 2.8.5: lite-glass — на слабких GPU знімає блюр модалок/тостів --- */
-body.lite-glass[data-theme="glass"] .modal,body.lite-glass[data-theme="glass"] .mback,
-body.lite-glass[data-theme="glass"] .us-card{backdrop-filter:none;-webkit-backdrop-filter:none}
-body.lite-glass[data-theme="glass"] .modal,body.lite-glass[data-theme="glass"] .us-card{background:rgba(26,22,54,.97)}
-body.lite-glass[data-theme="glass"] .mback{background:rgba(8,5,26,.75)}
-body.lite-glass .ac-hero-card::before{animation:none!important}
-body.lite-glass .now-chip i,body.lite-glass .next-chip i{animation:none!important}
 
 /* ---------- 2.3.9: сегмент-перемикач «Запуск Zoom» ---------- */
 .seg-z{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:14px;padding:4px;border-radius:14px;
@@ -824,8 +806,6 @@ body[data-theme="light"] .seg-z-b:hover{color:#1c1f33;background:rgba(20,24,46,.
 body[data-theme="light"] .seg-z-b.on{color:#ffffff}
 body[data-theme="light"] .seg-z-b.on:hover{color:#ffffff}
 body[data-theme="glass"] .seg-z{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18)}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .seg-z{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.13)}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .seg-z-b.on{background:linear-gradient(135deg,var(--ac1),var(--ac2));box-shadow:0 6px 18px var(--acShadow)}
 .sw-tog-row.c-row .su-ic2{width:36px;height:36px;border-radius:11px;flex:none;display:grid;place-items:center;
   background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.16),0 6px 16px rgba(99,102,241,.4)}
@@ -839,7 +819,7 @@ body[data-theme="glass"] .seg-z{background:rgba(255,255,255,.08);border-color:rg
 .theme-tile .tp{display:block;height:34px;border-radius:9px;margin-bottom:7px;border:1px solid rgba(255,255,255,.14)}
 .theme-tile .tp.std{background:linear-gradient(135deg,#0b0b14,#221a3f)}
 .theme-tile .tp.lit{background:linear-gradient(135deg,#eef0f8,#dfe3f4)}
-.theme-tile .tp.gls{background:linear-gradient(135deg,#2b1a5e,#7c3aed 55%,#38bdf8)}
+.theme-tile .tp.gls{background:linear-gradient(135deg,#0d3a42,#2dd4bf 55%,#0ea5e9)}
 .theme-tile b{display:block;font-size:11.5px;color:#e8eaf2;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .theme-tile > span:not(.tp){display:block;font-size:9.5px;color:#8b8fa3;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .theme-tile:hover{transform:translateY(-1px);border-color:rgba(129,140,248,.45)}
@@ -866,77 +846,6 @@ body[data-theme="light"] .sw-about .ab-t b{color:#1c1f33}
 body[data-theme="light"] .sw-about .ab-t span{color:#6a7089}
 body[data-theme="glass"] .sw-about{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18)}/* ================================================================
    2.2.0 — плюшки авторизації, конфіг хмари, довідка входу {min-width:64px;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-
-/* ---------- 2.3.6: КОЛЬОРОВІ ТЕМИ НА ПК (Океан / Захід / Ліс / Аврора) ----------
-   Ті самі палітри, що й на телефоні. Змінні --ac* задають акцент, спільні
-   :is()-правила перефарбовують компоненти вікна — синхронізація теми з
-   телефона тепер працює в обидва боки. */
-body[data-theme="ocean"]{--ac1:#38bdf8;--ac2:#2563eb;--acT:#7dd3fc;--acSoft:rgba(56,189,248,.17);--acShadow:rgba(37,99,235,.34);
-  color:#dfe9f5;
-  background:radial-gradient(700px 460px at 10% -12%,rgba(14,165,233,.22),transparent 66%),
-             radial-gradient(760px 520px at 92% 114%,rgba(37,99,235,.18),transparent 64%),#030b16}
-body[data-theme="sunset"]{--ac1:#fb923c;--ac2:#e11d48;--acT:#fda4af;--acSoft:rgba(251,113,133,.17);--acShadow:rgba(225,29,72,.30);
-  color:#f7e4e6;
-  background:radial-gradient(700px 460px at 10% -12%,rgba(244,63,94,.19),transparent 66%),
-             radial-gradient(760px 520px at 92% 114%,rgba(249,115,22,.17),transparent 64%),#0d0509}
-body[data-theme="forest"]{--ac1:#34d399;--ac2:#059669;--acT:#6ee7b7;--acSoft:rgba(52,211,153,.15);--acShadow:rgba(5,150,105,.30);
-  color:#ddefe7;
-  background:radial-gradient(700px 460px at 10% -12%,rgba(16,185,129,.18),transparent 66%),
-             radial-gradient(760px 520px at 92% 114%,rgba(5,150,105,.16),transparent 64%),#03100a}
-body[data-theme="aurora"]{--ac1:#2dd4bf;--ac2:#0284c7;--acT:#5eead4;--acSoft:rgba(45,212,191,.16);--acShadow:rgba(2,132,199,.32);
-  color:#ddeef0;
-  background:radial-gradient(700px 460px at 10% -12%,rgba(20,184,166,.20),transparent 66%),
-             radial-gradient(760px 520px at 92% 114%,rgba(14,165,233,.16),transparent 64%),
-             radial-gradient(900px 600px at 78% -6%,rgba(45,212,191,.10),transparent 60%),#02100e}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) #tbar{background:transparent;border-bottom:0}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) #tbar .tb-name{color:#fff}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .tb-btn{color:var(--acT);border-color:transparent;background:transparent}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .tb-btn:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#fff}:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .tb-acc{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.18)}:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .tb-acc .ta-n{color:#fff}:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .tb-acc .ta-mail,:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .m-head span,
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .m-item .m-t{color:rgba(255,255,255,.62)}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .tb-seg{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .tb-seg button{color:var(--acT)}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .tb-seg button.on{background:linear-gradient(135deg,var(--ac1),var(--ac2));color:#fff}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.13);box-shadow:0 10px 30px rgba(0,0,0,.32)}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .card h3{color:#fff}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .card .meta{color:rgba(255,255,255,.62)}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .card .b-join{background:var(--acSoft);color:var(--acT);border:1px solid var(--acSoft)}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .card .b-join:hover{background:linear-gradient(135deg,var(--ac1),var(--ac2));color:#fff;border-color:transparent}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .card.now{background:var(--acSoft);border-color:var(--ac1)}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .card.next{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.18)}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .tab{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.13);color:var(--acT)}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .tab.on{background:linear-gradient(135deg,var(--ac1),var(--ac2));border-color:transparent;color:#fff}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) header h2{color:#fff}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .chip{background:rgba(255,255,255,.06);color:var(--acT);border:1px solid rgba(255,255,255,.12)}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .empty,:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .empty{color:rgba(255,255,255,.55)}:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) #vSetup,
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) #vSetup,
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) #vSetup,
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) #vDev{color:#e6ecf5}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .sw-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.13);box-shadow:0 18px 50px rgba(0,0,0,.38)}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .sw-c-tt b,
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .su-body b{color:#fff}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .sw-c-tt span,
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .sw-sub{color:rgba(255,255,255,.6)}:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .su-opt,:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .ms-row,:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .m-item,
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .c-info,
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .su-opt,:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .ms-row,:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .m-item,
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .c-info,
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .su-opt,:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .ms-row,:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .m-item,
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .c-info,
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .dv-acc{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12)}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .su-opt.on{background:var(--acSoft);border-color:var(--ac1)}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .su-opt.on b,
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .su-opt.on span{color:#fff}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .m-item:hover{background:var(--acSoft)}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .modal{background:#0b101c;border:1px solid rgba(255,255,255,.15);box-shadow:0 30px 90px rgba(0,0,0,.6),0 0 0 1px var(--acSoft)}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .mback{background:rgba(2,6,12,.62)}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .m-head b{color:#fff}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .m-head span,
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .m-item .m-t{color:rgba(255,255,255,.62)}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .b-save{background:linear-gradient(135deg,var(--ac1),var(--ac2));border-color:transparent;color:#fff}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .theme-tile.on{border-color:var(--ac1);background:var(--acSoft)}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .us-card{background:#0b101c;border:1px solid rgba(255,255,255,.14);box-shadow:0 30px 90px rgba(0,0,0,.6)}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .us-btn{background:linear-gradient(135deg,var(--ac1),var(--ac2))}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]){--toast-bg:rgba(8,12,22,.97);--toast-bd:var(--ac1);--toast-tx:var(--acT)}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .theme-tile b{color:#fff}:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .a-perk{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.13)}:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .a-perk b{color:#fff}
 /* плитки-мініатюри нових тем */
 .theme-tile .tp.oce{background:linear-gradient(135deg,#03102a,#0e3a6e 60%,#38bdf8)}
 .theme-tile .tp.sun{background:linear-gradient(135deg,#1c060c,#7a1024 55%,#fb923c)}
@@ -1024,10 +933,9 @@ body[data-theme="light"] #agate .ag-foot{color:#8a8fa8}
 body[data-theme="light"] #agate .us-chip{color:#5b21b6}
 /* скло: той самий фон, що й в основної частини */
 body[data-theme="glass"] #agate{background:
-  radial-gradient(760px 540px at 6% -10%, rgba(168,85,247,.5), transparent 62%),
-  radial-gradient(820px 580px at 96% 4%, rgba(56,189,248,.32), transparent 58%),
-  radial-gradient(880px 620px at 50% 118%, rgba(236,72,153,.3), transparent 62%),
-  linear-gradient(160deg,#0e0a26 0%,#141033 45%,#1a0f2e 100%)}
+    radial-gradient(700px 460px at 10% -8%, rgba(45,212,191,.20), transparent 60%),
+    radial-gradient(760px 520px at 94% 6%, rgba(14,165,233,.17), transparent 58%),
+    linear-gradient(165deg,#020d0f 0%,#041418 48%,#031a1e 100%)}
 .tb-ava{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800;color:#fff;background:linear-gradient(135deg,#8b5cf6,#6366f1);overflow:hidden}
 .tb-ava img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 /* ==== 2.8.3: ПРОФІЛЬ — новий дизайн (герой-картка, сірі сегменти) ==== */
@@ -1225,22 +1133,6 @@ body[data-theme="light"] .adm-backdrop{background:rgba(28,33,74,.4)}
 body[data-theme="light"] .now-chip .cd{color:#047857}
 body[data-theme="light"] .next-chip .cd{color:#b45309}
 .card .prog{transition:width .6s linear}
-
-/* ================================================================
-   3.1.0 — LIQUID GLASS БЕЗ ЛАГІВ (GPU-захист; дзеркало мобільного)
-   ================================================================ */
-body.lite-glass *,
-body.glass-scroll *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
-body.lite-glass[data-theme="glass"] .card,
-body.glass-scroll[data-theme="glass"] .card{background:rgba(22,20,42,.92)}
-body.lite-glass[data-theme="glass"] .sw-card,
-body.glass-scroll[data-theme="glass"] .sw-card{background:rgba(22,20,42,.9)}
-body.lite-glass[data-theme="glass"] #drawer,
-body.glass-scroll[data-theme="glass"] #drawer{background:rgba(16,15,30,.97)}
-body.lite-glass[data-theme="glass"] .tb,
-body.glass-scroll[data-theme="glass"] .tb{background:rgba(20,19,38,.96)}
-body.lite-glass[data-theme="glass"] .adm-backdrop,
-body.glass-scroll[data-theme="glass"] .adm-backdrop{background:rgba(3,3,7,.86);backdrop-filter:none}
 @media (prefers-reduced-motion:reduce){
   body[data-theme="glass"] *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
   .now-chip i,.next-chip i{animation:none}
@@ -1333,7 +1225,6 @@ body[data-theme="light"] .acc-stat span{color:#6a7089}
    той самий темний скляний матеріал, що й усі рамки (були «очень светлый») */
 body[data-theme="glass"] .acc-stat{background:var(--lg-glass-bg);border-color:rgba(255,255,255,.13);
   box-shadow:var(--lg-glass-sh);-webkit-backdrop-filter:blur(clamp(1px,.125em,4px));backdrop-filter:blur(clamp(1px,.125em,4px))}
-
 
 /* модалка «Налаштування уроку» */
 .adm-tgrid{display:flex;gap:10px}
@@ -1587,41 +1478,16 @@ body.segjs .seg-z-b.on,body.segjs .adm-seg-b.on,body.segjs .su-opt.on,body.segjs
 body[data-theme="light"] #tabs .seg-pill{background:linear-gradient(135deg,#7c3aed 0%,#6366f1 100%);background-size:100% 100%;animation:none;box-shadow:0 8px 22px rgba(124,58,237,.38)}
 body[data-theme="light"] .su-opts .seg-pill{background:linear-gradient(135deg,rgba(139,92,246,.18),rgba(99,102,241,.12));box-shadow:0 3px 12px rgba(124,58,237,.2),inset 0 0 0 1px rgba(124,58,237,.45)}
 body[data-theme="light"] .tb-seg .seg-pill{background:linear-gradient(135deg,#7c3aed,#6366f1);box-shadow:0 3px 10px rgba(124,58,237,.32)}
-/* акцентні теми (ocean/sunset/forest/aurora) — копія їх .on */
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) #tabs .seg-pill{background:linear-gradient(135deg,var(--ac1),var(--ac2));background-size:100% 100%;animation:none;box-shadow:0 4px 14px var(--acShadow)}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .seg-z .seg-pill{background:linear-gradient(135deg,var(--ac1),var(--ac2));box-shadow:0 6px 18px var(--acShadow)}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .adm-seg .seg-pill,:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .tb-seg .seg-pill{background:linear-gradient(135deg,var(--ac1),var(--ac2));box-shadow:0 4px 14px var(--acShadow)}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .su-opts .seg-pill{background:var(--acSoft);box-shadow:inset 0 0 0 1px var(--ac1)}
 /* Liquid Glass — повний редизайн (лише тема glass) */
 body[data-theme="glass"] #tabs .seg-pill,body[data-theme="glass"] .seg-z .seg-pill,body[data-theme="glass"] .adm-seg .seg-pill,body[data-theme="glass"] .tb-seg .seg-pill,body[data-theme="glass"] .seg .seg-pill{background:linear-gradient(135deg,rgba(139,92,246,.72),rgba(99,102,241,.66));background-size:100% 100%;animation:none;box-shadow:0 6px 20px rgba(124,58,237,.42),inset 0 1px 0 rgba(255,255,255,.28)}
 body[data-theme="glass"] .su-opts .seg-pill{background:linear-gradient(135deg,rgba(139,92,246,.55),rgba(99,102,241,.44));box-shadow:0 6px 20px rgba(124,58,237,.38),inset 0 1px 0 rgba(255,255,255,.24)}
 @media (prefers-reduced-motion:reduce){.seg-pill{transition:opacity .2s ease}}
-
-/* ============================================================
-   3.5.32 — РІДКЕ СКЛО ВЕЗДЕ (ЛИШЕ тема Liquid Glass) + дрібниці
-   Власник: «сделай жидкое стекло для темы Liquid Glass, чтобы оно
-   было везде: на кнопках, на всяких рамках, на кнопках
-   переключателей — везде». Стандартні/світла/акцентні теми —
-   НЕ ТОРКНУТО (правило 3.5.31).
-   Справжнє заломлення країв = SVG-фільтр #lgDisp (додає JS) через
-   backdrop-filter: url(#lgDisp) — працює в Chromium (WebView2/Chrome/
-   Android WebView). Safari/Firefox/weak (lite-glass) — те саме скло,
-   але без шару заломлення. body.mob (телефон) — без важких фільтрів
-   на картках (25 шт.), щоб не лагало; панелі/модалки — з блюром.
-   ============================================================ */
-
-/* ---------- 1) ЗАРАЗ (зелена рамочка) / ДАЛІ (жовта рамочка) ---------- */
-/* красиві бейджі-рамочки у рядку назви, після плашки КАБІНЕТУ (усі теми) */
-.now-chip,.next-chip,.card h3 .now-chip,.card h3 .next-chip{
-  border-radius:8px;padding:3px 8px;margin-left:7px;gap:5px}
 .now-chip,.card h3 .now-chip{color:#6ee7b7;background:rgba(52,211,153,.13);border:1px solid rgba(52,211,153,.42)}
 .next-chip,.card h3 .next-chip{color:#fcd34d;background:rgba(251,191,36,.13);border:1px solid rgba(251,191,36,.44)}
 body[data-theme="light"] .now-chip,body[data-theme="light"] .card h3 .now-chip{color:#065f46;background:rgba(16,185,129,.15);border-color:rgba(5,150,105,.42)}
 body[data-theme="light"] .next-chip,body[data-theme="light"] .card h3 .next-chip{color:#92400e;background:rgba(245,158,11,.16);border-color:rgba(217,119,6,.44)}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .now-chip{color:#a7f3d0}
-:is(body[data-theme="ocean"],body[data-theme="sunset"],body[data-theme="forest"],body[data-theme="aurora"]) .next-chip{color:#fde68a}
 /* КАБІНЕТ: нормальний відступ від назви + акуратніша форма (усі теми) */
-.rm-chip,.card h3 .rm-chip{margin-left:8px;padding:3.5px 8px;border-radius:8px;letter-spacing:.6px}
+.rm-chip,.card h3 .rm-chip{margin-left:4px;padding:3.5px 8px;border-radius:8px;letter-spacing:.6px}
 
 /* ---------- 2) ПК: КОМПАКТНІ КАРТКИ УРОКІВ (менші рамки) ---------- */
 .card{height:92px;padding:10px 14px;border-radius:16px;margin-bottom:8px;
@@ -1636,8 +1502,6 @@ body[data-theme="light"] .next-chip,body[data-theme="light"] .card h3 .next-chip
    display:contents прибирає проміжну коробку: картки стають прямими
    дітьми .sw-grid і отримують нормальні колонки 1fr 1fr. */
 
-
-
 /* ============================================================
    3.5.33 — СТАНИ ТЕМИ LIQUID GLASS (залишено з 3.5.29/3.5.32:
    активні вкладки/опції, сцена, вхід, екран завантаження).
@@ -1645,21 +1509,21 @@ body[data-theme="light"] .next-chip,body[data-theme="light"] .card h3 .next-chip
    ============================================================ */
 body[data-theme="glass"]{
   background:
-    radial-gradient(820px 560px at 4% -12%, rgba(168,85,247,.55), transparent 60%),
-    radial-gradient(880px 600px at 98% 2%, rgba(56,189,248,.38), transparent 56%),
-    radial-gradient(700px 500px at 88% 92%, rgba(236,72,153,.34), transparent 60%),
-    radial-gradient(900px 640px at 42% 122%, rgba(99,102,241,.30), transparent 62%),
-    linear-gradient(160deg,#0b0820 0%,#120e30 46%,#180d2a 100%);
+    radial-gradient(780px 540px at 6% -10%, rgba(45,212,191,.22), transparent 62%),
+    radial-gradient(860px 580px at 98% 2%, rgba(14,165,233,.19), transparent 58%),
+    radial-gradient(720px 500px at 52% 118%, rgba(45,212,191,.14), transparent 60%),
+    radial-gradient(560px 400px at 78% 64%, rgba(2,132,199,.10), transparent 64%),
+    linear-gradient(165deg,#020d0f 0%,#041418 46%,#031a1e 100%);
 }
 body[data-theme="glass"] #tbar{background:transparent;border-bottom:0;backdrop-filter:none;-webkit-backdrop-filter:none}
-body[data-theme="glass"] .su-opt.on{background:linear-gradient(180deg,rgba(167,139,250,.55),rgba(99,102,241,.42));
-  border-color:rgba(221,214,253,.62);box-shadow:inset 0 1px 0 rgba(255,255,255,.42),0 8px 22px rgba(124,93,250,.35)}
+body[data-theme="glass"] .su-opt.on{background:linear-gradient(180deg,rgba(45,212,191,.55),rgba(2,132,199,.42));
+  border-color:rgba(153,246,228,.62);box-shadow:inset 0 1px 0 rgba(255,255,255,.32),0 8px 22px rgba(2,132,199,.35)}
 body[data-theme="glass"] .card.now{background:
-    linear-gradient(180deg,rgba(196,181,253,.30),rgba(139,92,246,.14) 44%,rgba(99,102,241,.10) 100%);
-  border-color:rgba(221,214,253,.55);
-  box-shadow:0 16px 46px rgba(109,76,246,.36),inset 0 1px 0 rgba(255,255,255,.42),inset 0 12px 30px rgba(255,255,255,.07)}
-body[data-theme="glass"] .mback{background:rgba(8,4,28,.66)}
-body[data-theme="glass"]{--toast-bg:rgba(30,26,58,.5);--toast-bd:rgba(167,139,250,.45);--toast-tx:#ede9fe;--toast-sh:rgba(0,0,0,.45)}
+    linear-gradient(180deg,rgba(94,234,212,.26),rgba(45,212,191,.12) 44%,rgba(2,132,199,.08) 100%);
+  border-color:rgba(153,246,228,.55);
+  box-shadow:0 16px 46px rgba(2,132,199,.30),inset 0 1px 0 rgba(255,255,255,.32),inset 0 12px 30px rgba(255,255,255,.06)}
+body[data-theme="glass"] .mback{background:rgba(1,8,10,.72)}
+body[data-theme="glass"]{--toast-bg:rgba(6,24,30,.94);--toast-bd:rgba(94,234,212,.25);--toast-tx:#e6fffa;--toast-sh:rgba(0,0,0,.5)}
 body[data-theme="glass"] #toast{border-radius:999px}
 body[data-theme="glass"] #boot .bt-wbtn{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18);
   border-radius:999px;box-shadow:inset 0 1px 0 rgba(255,255,255,.28)}
@@ -1695,34 +1559,29 @@ body[data-theme="glass"]{
      (rgba(255,255,255,.2)) — саме його власник назвав «очень светлый».
      ОДНЕ значення на ВСІ елементи — картки, вкладки, рядки, модалки,
      панелі виглядають 1-в-1 однаково. */
-  --lg-glass-bg:radial-gradient(120% 90% at 50% 0%,rgba(139,92,246,.16),transparent 58%),linear-gradient(180deg,rgba(46,37,92,.60),rgba(24,17,50,.74));
+  --lg-glass-bg:linear-gradient(180deg,rgba(16,47,54,.90),rgba(7,25,31,.95));
   --lg-glass-sh:
-    inset 0 .125em .125em rgba(255,255,255,.10),
-    inset 0 -.125em .125em rgba(255,255,255,.14),
+    inset 0 .125em .125em rgba(148,233,215,.08),
+    inset 0 -.125em .125em rgba(0,0,0,.18),
     0 .25em .125em -.125em rgba(0,0,0,.35),
-    0 1.2em 2.2em -.6em rgba(8,5,24,.55),
+    0 1.2em 2.2em -.6em rgba(1,10,12,.55),
     0 0 0 0 rgba(255,255,255,1);
   --lg-glass-sh-hov:
-    inset 0 .125em .125em rgba(255,255,255,.12),
-    inset 0 -.125em .125em rgba(255,255,255,.18),
+    inset 0 .125em .125em rgba(148,233,215,.10),
+    inset 0 -.125em .125em rgba(0,0,0,.20),
     0 .15em .05em -.1em rgba(0,0,0,.35),
-    0 1em 1.8em -.5em rgba(8,5,24,.6),
+    0 1em 1.8em -.5em rgba(1,10,12,.6),
     0 0 0 0 rgba(255,255,255,1);
   --lg-glass-sh-act:
-    inset 0 .125em .125em rgba(255,255,255,.10),
-    inset 0 -.125em .125em rgba(255,255,255,.14),
+    inset 0 .125em .125em rgba(148,233,215,.08),
+    inset 0 -.125em .125em rgba(0,0,0,.18),
     0 .125em .125em -.125em rgba(0,0,0,.3),
-    0 .8em 1.4em -.4em rgba(8,5,24,.5),
+    0 .8em 1.4em -.4em rgba(1,10,12,.5),
     0 .225em .05em 0 rgba(0,0,0,.05),
-    0 .25em 0 0 rgba(255,255,255,.30),
+    0 .25em 0 0 rgba(94,234,212,.30),
     inset 0 .25em .05em 0 rgba(0,0,0,.15);
-  --lg-rim:conic-gradient(from var(--angle-1) at 50% 50%,
-      rgba(0,0,0,.5),rgba(0,0,0,0) 5% 40%,rgba(0,0,0,.5) 50%,
-      rgba(0,0,0,0) 60% 95%,rgba(0,0,0,.5)),
-    linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,.5));
-  --lg-gloss:linear-gradient(var(--angle-2),
-      rgba(255,255,255,0) 0%,rgba(255,255,255,.5) 20% 30%,rgba(255,255,255,0) 55%);
-}/* ---------- ТІЛО СКЛА (матеріал референсу,
+  --lg-rim:linear-gradient(180deg,rgba(94,234,212,.30),rgba(94,234,212,.14));
+  --lg-gloss:linear-gradient(0deg,rgba(255,255,255,0),rgba(255,255,255,0));}/* ---------- ТІЛО СКЛА (матеріал референсу,
 світлий варіант) ---------- */
 body[data-theme="glass"] .card,
 body[data-theme="glass"] .tab,
@@ -2043,50 +1902,6 @@ body[data-theme="glass"] .seg-z-b::before,
 body[data-theme="glass"] .tab::before{
     --angle-2:-45deg;
   }}
-
-/* ---------- СТАН «УВІМКНЕНО» — як був (пілюля/акцент),
-тільки скло
-   довкола лишається матеріалом референсу. Активні опції/вкладки мають
-   читатися — їхній фон дають ранні правила (.on/.seg-pill). ---------- */
-
-/* ---------- СЛАБКІ ПРИСТРОЇ (lite-glass): скло без блюра ---------- */
-body.lite-glass[data-theme="glass"] .card,
-body.lite-glass[data-theme="glass"] .tab,
-body.lite-glass[data-theme="glass"] .b-join,
-body.lite-glass[data-theme="glass"] .b-save,
-body.lite-glass[data-theme="glass"] .b-groups,
-body.lite-glass[data-theme="glass"] .b-groups-m,
-body.lite-glass[data-theme="glass"] .b-mini,
-body.lite-glass[data-theme="glass"] .us-btn,
-body.lite-glass[data-theme="glass"] .bn-btn,
-body.lite-glass[data-theme="glass"] .su-opt,
-body.lite-glass[data-theme="glass"] .m-item,
-body.lite-glass[data-theme="glass"] .ms-row,
-body.lite-glass[data-theme="glass"] .modal,
-body.lite-glass[data-theme="glass"] .us-card,
-body.lite-glass[data-theme="glass"] #toast,
-body.lite-glass[data-theme="glass"] #drawer{
-  -webkit-backdrop-filter:none;backdrop-filter:none;
-  background:rgba(255,255,255,.14);
-}
-body.lite-glass[data-theme="glass"] .card::before,
-body.lite-glass[data-theme="glass"] .b-join::before,
-body.lite-glass[data-theme="glass"] .b-save::before,
-body.lite-glass[data-theme="glass"] .b-mini::before,
-body.lite-glass[data-theme="glass"] .us-btn::before,
-body.lite-glass[data-theme="glass"] .bn-btn::before{display:none}
-
-/* ---------- СПРАВЖНЄ ЗАЛОМЛЕННЯ (як .glass-filter референсу:
-   blur + SVG-дисплейсмент + saturate(150%)) — тільки Chromium ---------- */
-body.lg-ok[data-theme="glass"]:not(.lite-glass) .card{
-  -webkit-backdrop-filter:blur(clamp(1px,.125em,4px)) url(#lgDisp) saturate(150%);
-  backdrop-filter:blur(clamp(1px,.125em,4px)) url(#lgDisp) saturate(150%)}body.lg-ok[data-theme="glass"]:not(.lite-glass) .tab,
-body.lg-ok[data-theme="glass"]:not(.lite-glass) .modal,
-body.lg-ok[data-theme="glass"]:not(.lite-glass) .us-card,
-body.lg-ok[data-theme="glass"]:not(.lite-glass) #drawer,
-body.lg-ok[data-theme="glass"]:not(.lite-glass) #toast{
-  -webkit-backdrop-filter:blur(clamp(1px,.125em,4px)) url(#lgDisp) saturate(150%);
-  backdrop-filter:blur(clamp(1px,.125em,4px)) url(#lgDisp) saturate(150%)}
 @media (prefers-reduced-motion:reduce){body[data-theme="glass"] .card,
 body[data-theme="glass"] .tab,
 body[data-theme="glass"] .b-join,
@@ -2198,10 +2013,6 @@ body[data-theme="glass"] .tab{
 body[data-theme="glass"] .tab::before,body[data-theme="glass"] .tab::after{content:''!important}
 body[data-theme="glass"] .tab{color:#c9cdf2;text-shadow:none}body[data-theme="glass"] .tab.on{color:#fff!important}
 body[data-theme="glass"] .tab .today-dot{box-shadow:0 0 8px rgba(110,231,183,.9)}
-/* слабкі GPU — без блюру на плашках вкладок */
-body.lite-glass[data-theme="glass"] .tab{
-  -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
-  background:linear-gradient(180deg,rgba(48,39,96,.88),rgba(26,19,54,.92))!important}
 
 /* ============================================================
    3.5.35 — LIQUID GLASS: ТЕМНІ ТОСТИ
@@ -2263,4 +2074,199 @@ body.mob .sw-grid #secCpl,body.mob .sw-grid #secZoom,body.mob .sw-grid #secConfi
   .sw-grid #secCpl{grid-column:1}
   .sw-grid #secZoom{grid-column:2}
   .sw-grid #secConfirm{grid-column:1/-1}
+}
+
+/* ============================================================
+   3.5.38 — ТЕМА «АВРОРА» (id 'glass' — сумісність із хостами).
+   Просив власник: Liquid Glass прибрати, зробити красиву тему
+   з іншою назвою. Глибока ніч + бірюзово-небесні акценти, жодного
+   скла/блюру. Секція йде ОСТАННЬОЮ — перекриває всі скляні правила.
+   ============================================================ */
+body[data-theme="glass"] *,body[data-theme="glass"] *::before,
+body[data-theme="glass"] *::after{
+  -webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+body[data-theme="glass"] .card::before,body[data-theme="glass"] .tab::before,
+body[data-theme="glass"] .b-join::before,body[data-theme="glass"] .b-save::before,
+body[data-theme="glass"] .b-groups::before,body[data-theme="glass"] .b-groups-m::before,
+body[data-theme="glass"] .b-mini::before,body[data-theme="glass"] .us-btn::before,
+body[data-theme="glass"] .bn-btn::before,body[data-theme="glass"] .su-opt::before,
+body[data-theme="glass"] .m-item::before,body[data-theme="glass"] .ms-row::before,
+body[data-theme="glass"] .modal::before,body[data-theme="glass"] .us-card::before,
+body[data-theme="glass"] .tb-acc::before,body[data-theme="glass"] .acc-stat::before,
+body[data-theme="glass"] #toast::before,body[data-theme="glass"] #toast::after,
+body[data-theme="glass"] .tab::after,body[data-theme="glass"] .card::after,
+body[data-theme="glass"] .b-join::after,body[data-theme="glass"] .b-save::after,
+body[data-theme="glass"] .tb-acc::after,body[data-theme="glass"] .acc-stat::after,
+body[data-theme="glass"] .modal::after,body[data-theme="glass"] .us-card::after,
+body[data-theme="glass"] .ms-card::before,body[data-theme="glass"] .ms-card::after,
+body[data-theme="glass"] .ms-hero::before,body[data-theme="glass"] .ms-back::before,
+body[data-theme="glass"] .sw-card::before,body[data-theme="glass"] .sw-card::after{
+  content:none!important;box-shadow:none!important}
+/* панелі — суцільна глибока бірюза */
+body[data-theme="glass"] .card,body[data-theme="glass"] .sw-card,
+body[data-theme="glass"] .tab,body[data-theme="glass"] .b-mini,
+body[data-theme="glass"] .us-btn,body[data-theme="glass"] .bn-btn,
+body[data-theme="glass"] .su-opt,body[data-theme="glass"] .m-item,
+body[data-theme="glass"] .ms-row,body[data-theme="glass"] .ms-hero,
+body[data-theme="glass"] .ms-back,body[data-theme="glass"] .tb-acc,
+body[data-theme="glass"] .acc-stat,body[data-theme="glass"] .us-card,
+body[data-theme="glass"] .modal,body[data-theme="glass"] .ms-card{
+  background:linear-gradient(180deg,rgba(17,49,56,.92),rgba(8,27,33,.95))!important;
+  border:1px solid rgba(94,234,212,.16)!important;
+  box-shadow:0 10px 30px rgba(0,0,0,.32),inset 0 1px 0 rgba(148,233,215,.08)!important}
+body[data-theme="glass"] .card:hover,body[data-theme="glass"] .m-item:hover,
+body[data-theme="glass"] .ms-row:hover,body[data-theme="glass"] .su-opt:hover{
+  border-color:rgba(94,234,212,.32)!important;
+  background:linear-gradient(180deg,rgba(21,58,66,.94),rgba(10,32,39,.96))!important}
+body[data-theme="glass"] .modal,body[data-theme="glass"] .us-card,body[data-theme="glass"] .ms-card{
+  background:linear-gradient(180deg,rgba(13,38,44,.97),rgba(6,21,26,.98))!important;
+  box-shadow:0 30px 90px rgba(0,0,0,.55),inset 0 1px 0 rgba(148,233,215,.10)!important}
+body[data-theme="glass"] .mback,body[data-theme="glass"] #dback,body[data-theme="glass"] .adm-backdrop{
+  background:rgba(1,8,10,.72)!important}
+body[data-theme="glass"] #drawer{background:linear-gradient(180deg,rgba(12,36,42,.98),rgba(5,19,24,.99))!important;
+  border-right-color:rgba(94,234,212,.14)!important}
+/* акцентні стани — бірюза → небо */
+body[data-theme="glass"] .tab.on{background:linear-gradient(135deg,#2dd4bf,#0284c7)!important;
+  border-color:transparent!important;box-shadow:0 8px 24px rgba(2,132,199,.35)!important;color:#fff!important}
+body[data-theme="glass"] .tb-seg button.on,body[data-theme="glass"] .seg-z-b.on,
+body[data-theme="glass"] .su-opt.on{background:linear-gradient(135deg,#2dd4bf,#0284c7)!important;
+  color:#fff!important;border-color:transparent!important;
+  box-shadow:0 6px 18px rgba(2,132,199,.35)!important}
+body[data-theme="glass"] .seg .seg-pill,body[data-theme="glass"] #bnPill{
+  background:linear-gradient(135deg,#2dd4bf,#0284c7)!important;
+  box-shadow:0 6px 18px rgba(2,132,199,.35)!important}
+body[data-theme="glass"] .b-join,body[data-theme="glass"] .b-save{
+  background:linear-gradient(135deg,#2dd4bf,#0284c7)!important;border:0!important;color:#04222a!important;
+  box-shadow:0 10px 26px rgba(2,132,199,.35),inset 0 1px 0 rgba(255,255,255,.25)!important}
+body[data-theme="glass"] .b-join span,body[data-theme="glass"] .b-save{color:#04222a!important}
+body[data-theme="glass"] .b-join svg,body[data-theme="glass"] .b-save svg{color:#04222a!important}
+body[data-theme="glass"] .tb-acc.on{background:linear-gradient(135deg,rgba(45,212,191,.92),rgba(2,132,199,.88))!important;
+  border-color:rgba(153,246,228,.35)!important;box-shadow:0 6px 20px rgba(2,132,199,.40)!important}
+body[data-theme="glass"] .hd-ic,body[data-theme="glass"] .tb-acc .tb-acc-i,
+body[data-theme="glass"] .sw-c-ic.grad,body[data-theme="glass"] .ac-hero{
+  background:linear-gradient(135deg,#2dd4bf,#0284c7)!important;
+  box-shadow:0 6px 16px rgba(2,132,199,.35)!important}
+body[data-theme="glass"] .rm-chip{background:rgba(45,212,191,.16)!important;
+  border-color:rgba(94,234,212,.38)!important;color:#99f6e4!important}
+body[data-theme="glass"] .now-chip{border-color:rgba(110,231,183,.6)!important;color:#6ee7b7!important}
+body[data-theme="glass"] .now-chip i{background:#6ee7b7!important;box-shadow:0 0 8px rgba(110,231,183,.9)!important}
+body[data-theme="glass"] .next-chip{border-color:rgba(94,234,212,.5)!important;color:#5eead4!important}
+body[data-theme="glass"] .next-chip i{background:#5eead4!important}
+body[data-theme="glass"] .tab .tdot,body[data-theme="glass"] .tab .today-dot{
+  background:#5eead4!important;box-shadow:0 0 8px rgba(94,234,212,.9)!important}
+body[data-theme="glass"] .card.now{background:linear-gradient(165deg,rgba(45,212,191,.20),rgba(8,27,33,.94) 55%)!important;
+  border-color:rgba(94,234,212,.45)!important;
+  box-shadow:0 16px 46px rgba(2,132,199,.25),inset 0 1px 0 rgba(148,233,215,.12)!important}
+body[data-theme="glass"] .card.next{background:linear-gradient(165deg,rgba(45,212,191,.10),rgba(8,27,33,.94) 55%)!important;
+  border-color:rgba(94,234,212,.28)!important}
+/* тости — темна бірюзова ніч */
+body[data-theme="glass"]{--toast-bg:rgba(6,24,30,.94);--toast-bd:rgba(94,234,212,.25);--toast-tx:#e6fffa;--toast-sh:rgba(0,0,0,.5)}
+body[data-theme="glass"] #toast{background:rgba(6,24,30,.94)!important;
+  border-color:rgba(94,234,212,.25)!important;color:#e6fffa!important;
+  box-shadow:0 18px 44px rgba(0,0,0,.5),inset 0 1px 0 rgba(148,233,215,.10)!important}
+body[data-theme="glass"] #toast svg{color:#5eead4!important}
+/* перемикачі/поля */
+body[data-theme="glass"] .sw i{background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.22)}
+body[data-theme="glass"] .sw input:checked + i{background:linear-gradient(135deg,#2dd4bf,#0284c7);border-color:transparent}
+body[data-theme="glass"] .fld input{background:rgba(3,16,20,.7);border-color:rgba(94,234,212,.22);color:#e6fffa}
+body[data-theme="glass"] .fld input:focus{border-color:rgba(94,234,212,.5);
+  box-shadow:0 0 0 3px rgba(45,212,191,.15)!important}
+/* загрузник/гейт — аврора */
+body[data-theme="glass"] #boot{background:inherit}
+body[data-theme="glass"] #boot .bt-wbtn{background:rgba(255,255,255,.07);
+  border:1px solid rgba(94,234,212,.25);border-radius:999px;box-shadow:none}
+body[data-theme="glass"] .bt-wbtn{color:#99f6e4}
+body[data-theme="glass"] .chip{background:rgba(45,212,191,.08);border-color:rgba(94,234,212,.22);color:#a7f3eb}
+body[data-theme="glass"] .tb-ver{color:#5eead4}
+body[data-theme="glass"] .tb-seg{background:rgba(3,18,22,.7);border-color:rgba(94,234,212,.16)}
+body[data-theme="glass"] .tb-seg button{color:#8edcd2}
+body[data-theme="glass"] .tb-seg button:hover{color:#e6fffa;background:rgba(255,255,255,.05)}
+body[data-theme="glass"] .tb-btn{color:#8edcd2}
+body[data-theme="glass"] .theme-tile{background:rgba(17,49,56,.9);border-color:rgba(94,234,212,.16)}
+body[data-theme="glass"] .theme-tile.on{border-color:#5eead4;box-shadow:0 0 0 2px rgba(94,234,212,.25)}
+body[data-theme="glass"] .sw i::after{background:#fff}
+body[data-theme="glass"] #tbar,body[data-theme="glass"] #bnav,body[data-theme="glass"] .bn-b{
+  background:rgba(3,18,22,.88)!important;border-color:rgba(94,234,212,.14)!important;
+  box-shadow:none!important}
+body[data-theme="glass"] .bn-b{color:#8edcd2!important}
+body[data-theme="glass"] .bn-b.on,body[data-theme="glass"] .bn-b.on svg{color:#5eead4!important}
+
+/* ============================================================
+   3.5.38 — СВІТЛА ТЕМА: КОНТРАСТ ВИДИМОСТІ
+   Просив власник: у світлій темі НЕ ВИДНО вимкнені перемикачі,
+   контури рамок (блок «Оновлення») і неактивні опції «Моїх груп»
+   (у темній — видно, у світлій — ні). Усі елементи отримують
+   явні межі; світла тема = та сама інформативність, що темна.
+   ============================================================ */
+body[data-theme="light"] .seg,body[data-theme="light"] .seg-z,
+body[data-theme="light"] .adm-seg,body[data-theme="light"] .su-opts{
+  background:#eef2f7!important;border:1px solid rgba(100,116,139,.38)!important;
+  box-shadow:inset 0 1px 3px rgba(15,23,42,.06)!important}
+body[data-theme="light"] .seg button{color:#475569}
+body[data-theme="light"] .seg button:not(.on){
+  background:#ffffff;border:1px solid rgba(100,116,139,.30);
+  box-shadow:0 1px 2px rgba(15,23,42,.07);color:#334155}
+body[data-theme="light"] .seg button:not(.on):hover{color:#0f172a;background:#ffffff}
+body[data-theme="light"] .seg-z-b:not(.on){
+  background:#ffffff!important;border:1px solid rgba(100,116,139,.30)!important;
+  color:#475569!important}
+body[data-theme="light"] .adm-seg button:not(.on),body[data-theme="light"] .su-opts .su-opt:not(.on){
+  background:#ffffff;border:1px solid rgba(100,116,139,.30)}
+body[data-theme="light"] .sw i{background:#d7dfea!important;
+  border:1.5px solid rgba(71,85,105,.55)!important;
+  box-shadow:inset 0 1px 3px rgba(15,23,42,.14)!important}
+body[data-theme="light"] .sw i::after{box-shadow:0 2px 6px rgba(15,23,42,.30)!important}
+body[data-theme="light"] .b-join{
+  background:linear-gradient(135deg,rgba(124,58,237,.10),rgba(99,102,241,.08))!important;
+  border:1px solid rgba(124,58,237,.45)!important;color:#5b21b6!important}
+body[data-theme="light"] .b-join svg{color:#5b21b6!important}
+body[data-theme="light"] .modal,body[data-theme="light"] .ms-card{
+  border:1.5px solid rgba(139,92,246,.30)!important;
+  box-shadow:0 24px 70px rgba(28,33,74,.25)!important}
+body[data-theme="light"] .mback,body[data-theme="light"] #dback,body[data-theme="light"] .adm-backdrop{
+  background:rgba(49,46,90,.38)!important}
+body[data-theme="light"] .dv-row{border-bottom:1px solid rgba(100,116,139,.22)!important}
+body[data-theme="light"] .us-row{color:#475569}
+body[data-theme="light"] .su-opt,body[data-theme="light"] .su-item{
+  border:1px solid rgba(100,116,139,.30)!important;background:#ffffff!important}
+body[data-theme="light"] .su-opt:hover{border-color:rgba(124,58,237,.5)!important}
+body[data-theme="light"] .m-item,body[data-theme="light"] .ms-row{
+  border-color:rgba(100,116,139,.26)!important}
+body[data-theme="light"] .fld input{
+  background:#ffffff!important;border:1.5px solid rgba(100,116,139,.40)!important;color:#0f172a!important}
+body[data-theme="light"] .fld input:focus{border-color:#7c3aed!important;
+  box-shadow:0 0 0 3px rgba(124,58,237,.14)!important}
+body[data-theme="light"] .tb-btn{color:#64748b}
+body[data-theme="light"] .tb-btn:hover{color:#0f172a;background:rgba(15,23,42,.07);border-color:rgba(100,116,139,.35)}
+
+/* 3.5.38 — ЗАХІСТ ВІД ПЕРЕЛИВУ «Сповіщення» (скрін власника: права колонка
+   виходила за край вікна): дітям сітки — min-width:0, рядкам-перемикачам —
+   перенос довгих слів, слайдеру — вся ширина. Сітка 3 картки стискається
+   коректно на будь-якій ширині аж до 640px. */
+#secNotif > *{min-width:0}
+#secNotif .sw-tog-row{flex-wrap:wrap}
+#secNotif .su-body{min-width:0}
+#secNotif .su-body b,#secNotif .su-body span{overflow-wrap:anywhere}
+.sw-tog-row .su-body{min-width:0}
+.sw-tog-row .su-body b,.sw-tog-row .su-body span{overflow-wrap:anywhere}
+@media (max-width:699px){
+  .sw-grid{grid-template-columns:1fr}
+  .sw-grid #secCpl,.sw-grid #secZoom,.sw-grid #secConfirm{grid-column:1/-1}
+  #secNotif{grid-template-columns:1fr}
+}
+
+/* 3.5.38 — ВУЗЬКІ ВІКНА: непереможні правила сітки (власник: картки стискались
+   у вузькому вікні ПК до 1-2 слів у рядку). !important — щоб жодна динамічна
+   розкладка виду не могла повернути 3 колонки у тісному контейнері. */
+@media (max-width:859px){
+  html body .sw-wrap .sw-grid{grid-template-columns:1fr 1fr!important}
+  html body .sw-wrap .sw-grid #secCpl{grid-column:auto!important}
+  html body .sw-wrap .sw-grid #secZoom{grid-column:auto!important}
+  html body .sw-wrap .sw-grid #secConfirm{grid-column:1/-1!important}
+  html body .sw-wrap .sw-grid .sw-duo.sw-col-b{grid-column:1/-1!important}
+}
+@media (max-width:699px){
+  html body .sw-wrap .sw-grid{grid-template-columns:1fr!important}
+  html body .sw-wrap .sw-grid > *{grid-column:1/-1!important}
+  html body .sw-wrap .sw-grid #secNotif{grid-column:1/-1!important;grid-template-columns:1fr!important}
 }
