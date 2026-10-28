@@ -1,0 +1,11 @@
+# FluxHelper — Cloudflare Pages (fluxhelper.pages.dev)
+# 3.5.40: биндинг D1 для Pages Function functions/api/[[route]].js (релей бази
+# замість Render-бекенда — економія трафіка Render free, див. функцію).
+name = "fluxhelper"
+pages_build_output_dir = "."
+compatibility_date = "2024-09-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "fluxhelper"
+database_id = "89424274-f50b-4931-838e-0d6f384bbc20"
