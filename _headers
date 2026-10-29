@@ -24,24 +24,24 @@
   Cache-Control: public, max-age=604800
 /apple-touch-icon.png
   Cache-Control: public, max-age=604800
-/iphone
+/main
+  Cache-Control: public, max-age=0, must-revalidate
+/main/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+# 3.5.45: HTML версій — ЗАВЖДИ свіжий (no wildcard: Pages СКЛЕЮЄ заголовки
+# з правилів, тож /iphone/* no-cache нейтралізував би кеш ассетів нижче)
+/iphone/index.html
   Cache-Control: public, max-age=0, must-revalidate
 /iphone/manifest.webmanifest
   Cache-Control: public, max-age=0, must-revalidate
+/mac/index.html
+  Cache-Control: public, max-age=0, must-revalidate
 
-/iphone/*
-  Cache-Control: no-cache
-/mac/*
-  Cache-Control: no-cache
-/main
-  Cache-Control: no-cache
-/main/*
-  Cache-Control: no-cache
-
-# 3.5.45: ревізовані ассети (?v=3545) кешуються на добу — повторні
-# відкриття сайту не качають 660KB css/js заново (просив власник:
-# «сайт загружается очень долго»). HTML лишається no-cache, тож нова
-# версія приїде одразу після деплою (/?v= змінюється разом з файлами).
+# 3.5.45: ревізовані ассети (?v=3545) кешуються — повторні відкриття сайту
+# не качають ~660KB css/js заново (просив власник: «сайт загружается очень
+# долго»). При зміні ui.js/ui.css/webhost.js/logo.png ПІДВИЩУЙ ?v= у
+# main/index.html — нова версия приїде миттєво, без очікування кеша.
 /iphone/ui.css
   Cache-Control: public, max-age=86400
 /iphone/ui.js
