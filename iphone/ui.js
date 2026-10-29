@@ -285,7 +285,7 @@ function validS(x) {
 // вічно вважав себе старішим. Тепер версію підставляє build.sh з манифеста
 // (2.4.1 -> versionName), а ПІСЛЯ завантаження Java-міст AndroidHost.ver()
 // віддає СПРАВЖНЮ версію встановленого пакета (PackageManager) — найнадійніше.
-let APP_VER = '3.5.45';              // X.Y.Z — підставляється при збірці з манифеста
+let APP_VER = '3.5.46';              // X.Y.Z — підставляється при збірці з манифеста
 try {
   if (window.AndroidHost && AndroidHost.ver) {
     const jv = AndroidHost.ver();
@@ -2217,6 +2217,15 @@ function parseNotes(txt) {
 // пріоритет. Третій елемент пункта ('pc'/'android') — показувати лише
 // на одній платформі; без нього — на обох.
 const WHATS_NEW = {
+  '3.5.46': [
+    ['✦', 'ШВИДКІСТЬ: сайт відкривається швидко ЗАВЖДИ — дзеркало і сервер тепер у гонці (хто перший відповів), у кожного стартового запита таймаут 3.5-4 с, страховка інтерфейсу 4 с замість 8', '/'],
+    ['✦', 'АДМІНКА: нова вкладка «Користувачі» — список акаунтів (пошта, ім\u2019я, іконка), блокування назавжди/на час (10 хв… 7 днів або свій час) і повне видалення акаунта з бази', '/'],
+    ['✦', 'БАН: у заблокованого користувача при вході з\u2019являється вікно «Ваш акаунт заблоковано» — причина, час розблокування і кнопка «Вийти з акаунту»', '/'],
+    ['✦', 'ВИДАЛЕННЯ: акаунт зникає з бази ПОВНІСТЮ; пристрій користувача перевіряє двічі і викидає з акаунта лише за реального видалення — без хибних спрацювань', '/'],
+    ['✦', 'НАЛАШТУВАННЯ ПК (сайт): «Копіювання посилання на урок» тепер РІВНО ОДНА колонка — така ж ширина, як «Запуск Zoom»', '/'],
+    ['✦', 'EXE для Windows ПЕРЕЗІБРАНО зі свіжим інтерфейсом 3.5.46 (3.5.45 не відкривався — беріть новий файл)', '/'],
+  ],
+
   '3.5.45': [
     ['✦', 'ШВИДКІСТЬ: сайт більше не висить на 85% після довгої паузи — відкривається одразу з кешу, свіжі дані тихо доїжджають у фоні', '/'],
     ['✦', 'АДМІНКА: збереження розкладу ПЕРЕРОБЛЕНО — один атомарний запис + перевірка на сервері; «не вдалося зберегти» більше не «тихо видаляє день»', '/'],
@@ -3181,6 +3190,10 @@ function d1Init() {
      остання версія застосунку на телефоні й комп'ютері цього акаунта */
   cfExec('ALTER TABLE users ADD COLUMN ver_phone TEXT', [], null);
   cfExec('ALTER TABLE users ADD COLUMN ver_pc TEXT', [], null);
+  /* 3.5.46: блокування акаунтів (0 = ок, -1 = назавжди, >0 = epoch ms
+     моменту розблокування) + причина — читається при кожному вході */
+  cfExec('ALTER TABLE users ADD COLUMN banned INTEGER DEFAULT 0', [], null);
+  cfExec('ALTER TABLE users ADD COLUMN ban_reason TEXT', [], null);
 }
 // 2.2.1: дистанційна конфігурація — лише аварійна ротація ключів (без полів у dev-вкладці)
 function loadRemoteCfg() { /* 2.7.2: конфіг не потрібен — токен у Java */ }
@@ -3689,7 +3702,7 @@ function usersUpsert(u, cb) {
            [k, (u && u.name) || '', (u && u.email) || '', (u && u.pic) || '', now, now, defaultSettings(), APP_VER, now], function (w) {
       if (w === null && tries < 4) { tries += 1; setTimeout(write, 1200 * tries); return; }   // D1 не відповіла — повторюємо
       cfExec('SELECT user_id FROM users WHERE user_id=?', [k], function (rows) {
-        if (rows && rows[0]) { fhRowSeen(k); if (cb) cb(true); return; }
+        if (rows && rows[0]) { fhRowSeen(k); try { adm46MirrorUser(k); } catch (eMU46) {} if (cb) cb(true); return; }   /* 3.5.46: дзеркало профілю */
         if (tries < 4) { tries += 1; setTimeout(write, 1200 * tries); return; }   // рядок ще не видно (гонка) — повторюємо
         if (cb) cb(false);
       });
@@ -3716,6 +3729,411 @@ function accApplyAuth(rows) {
     try { localStorage.setItem('fh_sync', ACC.sync ? '1' : '0'); } catch (e) {}
   }
   refreshAccUI(); applyDevVis();
+}
+
+/* ================================================================
+   3.5.46 — АДМІНКА: КОРИСТУВАЧІ (вкладка 4) + БАН/ВИДАЛЕННЯ АКАУНТІВ
+   Просив власник: список користувачів (пошта, ім'я, іконка),
+   видалення акаунтів з бази ПОВНІСТЮ, блокування назавжди/на час
+   (свої хвилини/години/дні), попап про бан з причиною, датою
+   розблокування і кнопкою «Вийти з акаунту», викид з акаунта —
+   ЛИШЕ за реально підтвердженого видалення (без хибних спрацювань).
+
+   КАНАЛИ:
+   • Застосунки (Android/Windows, не FH_WEB) — пряма D1 через cfExec:
+     список/банк/видалення = SQL; d1Init додає users.banned/ban_reason.
+   • Сайт (FH_WEB) — дзеркало Firebase: список = update/users/<uid>
+     (пишуть застосунки при кожному вході), дії = маркери.
+   • МАРКЕРИ адмін-дій (читають УСІ клієнти, публічне читання):
+       update/admban/<uid> = {b:-1|epoch_ms, r:причина, t:час}
+       update/admdel/<uid> = 1
+     Захист від хибних спрацювань: маркер мусить відповісти ДВІЧІ
+     поспіль (повторне читання через 1.5 с); збій мережі = «нема
+     інформації», НІКОЛИ не викидає і не банить.
+   ================================================================ */
+function adm46Uid(k) { return String(k || '').replace(/[^A-Za-z0-9_-]/g, '_'); }
+function adm46FmtWhen(ms) {
+  try {
+    const d = new Date(parseInt(ms, 10));
+    return d.toLocaleDateString('uk-UA') + ' ' + d.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
+  } catch (e) { return String(ms); }
+}
+/* GET з дзеркала Firebase — 3.5 с таймаут, cb(null) = не відповіло */
+function adm46Read(path, cb) {
+  let done = false;
+  const fin = function (v) { if (!done) { done = true; cb(v); } };
+  try {
+    const ab = (typeof AbortController === 'function') ? new AbortController() : null;
+    if (ab) setTimeout(function () { try { ab.abort(); } catch (eA) {} }, 3500);
+    fetch(DB_URL + '/' + path + '.json?cb=' + Date.now(), { cache: 'no-store', signal: ab ? ab.signal : undefined })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { fin((j === undefined) ? null : j); })
+      .catch(function () { fin(null); });
+  } catch (e) { fin(null); }
+}
+/* запис у дзеркало: obj=null -> видалення вузла. Сайт — прямий REST
+   (з токеном сесії, якщо він є), застосунки — dbPut/dbDel (хост). */
+function adm46Write(path, obj, cb) {
+  if (window.FH_WEB) {
+    let auth = '';
+    try {
+      const s = JSON.parse(localStorage.getItem('fh_web_session') || 'null');
+      if (s && s.tok) auth = '?auth=' + encodeURIComponent(s.tok);
+    } catch (eS) {}
+    const init = { method: (obj === null) ? 'DELETE' : 'PUT', headers: { 'Content-Type': 'application/json' } };
+    if (obj !== null) init.body = JSON.stringify(obj);
+    fetch(DB_URL + '/' + path + '.json' + auth, init)
+      .then(function (r) { if (cb) cb(r.ok); })
+      .catch(function () { if (cb) cb(false); });
+    return;
+  }
+  if (obj === null) { dbDel(path, cb); return; }
+  dbPut(path, obj, cb);
+}
+/* ------- КОРИСТУВАЧІ: список ------- */
+function adm46UsersLoad(cb) {
+  if (window.FH_WEB) {
+    /* сайт: список живе в дзеркалі update/users (пишуть застосунки) */
+    adm46Read('update/users', function (j) {
+      if (!j || typeof j !== 'object') { cb(null); return; }
+      const rows = [];
+      for (const k in j) {
+        const v = j[k];
+        if (!v || typeof v !== 'object') continue;
+        rows.push({
+          user_id: k, name: String(v.n || ''), email: String(v.e || ''), pic: String(v.p || ''),
+          role: String(v.r || 'user'), banned: parseInt(v.b, 10) || 0, ban_reason: String(v.br || ''),
+          logins: parseInt(v.lg, 10) || 0, created: parseInt(v.cr, 10) || parseInt(v.ts, 10) || 0,
+          ts: parseInt(v.ts, 10) || 0, ver_phone: String(v.vp || ''), ver_pc: String(v.vpc || '')
+        });
+      }
+      rows.sort(function (a, b) { return (b.created || 0) - (a.created || 0); });
+      cb(rows);
+    });
+    return;
+  }
+  cfExec('SELECT user_id,name,email,pic,role,IFNULL(banned,0) AS banned,IFNULL(ban_reason,\'\') AS ban_reason,IFNULL(logins,0) AS logins,created,ts,IFNULL(ver_phone,\'\') AS ver_phone,IFNULL(ver_pc,\'\') AS ver_pc FROM users ORDER BY COALESCE(created,ts) DESC LIMIT 300', [], function (rows) { cb(rows); }, 12000);
+}
+/* дзеркало профілю поточного акаунта (пишеться при кожному вході) */
+function adm46MirrorUser(k) {
+  if (!k || !ACC.user) return;
+  /* 3.5.46: спершу читаємо наявний вузол — b/br НЕ затираємо (на сайті
+     бан могло бути виставлено маркером; застосунки перечитують b з D1) */
+  adm46Read('update/users/' + adm46Uid(k), function (prev46) {
+    const node = {
+      n: String(ACC.user.name || ''), e: String(ACC.user.email || ''), p: String(ACC.user.pic || ''),
+      r: String(ACC.role || 'user'), ts: Date.now(),
+      b: (prev46 && parseInt(prev46.b, 10)) || 0, br: (prev46 && String(prev46.br || '')) || ''
+    };
+    const write = function (extra) {
+      if (extra) for (const x in extra) node[x] = extra[x];
+      adm46Write('update/users/' + adm46Uid(k), node);
+    };
+    if (window.FH_WEB) { write(null); return; }
+  cfExec('SELECT role,IFNULL(banned,0) AS banned,IFNULL(ban_reason,\'\') AS ban_reason,IFNULL(logins,0) AS logins,created,IFNULL(ver_phone,\'\') AS ver_phone,IFNULL(ver_pc,\'\') AS ver_pc FROM users WHERE user_id=?', [k], function (rows) {
+    if (rows && rows[0]) {
+      const r = rows[0];
+      write({ b: parseInt(r.banned, 10) || 0, br: String(r.ban_reason || ''), lg: parseInt(r.logins, 10) || 0, cr: parseInt(r.created, 10) || 0, r: String(r.role || 'user'), vp: String(r.ver_phone || ''), vpc: String(r.ver_pc || '') });
+    } else write(null);
+  });
+  });
+}
+/* ------- ПЕРЕВІРКА БАНУ/ВИДАЛЕННЯ (усі платформи) ------- */
+let adm46Busy = false;
+function adm46Check(src) {
+  if (!ACC.user || adm46Busy) return;
+  const k = userKey(ACC.user);
+  if (!k) return;
+  try { adm46MirrorUser(k); } catch (eMU46c) {}   /* 3.5.46: свій профіль у списку — свіжий (ts/роль/пошта) */
+  adm46Busy = true;
+  adm46Read('update/admdel/' + adm46Uid(k), function (del) {
+    adm46Read('update/admban/' + adm46Uid(k), function (ban) {
+      adm46Busy = false;
+      /* збій мережі (null) = «нема інформації» — НІКОЛИ не караємо */
+      if (del === null && ban === null) return;
+      if (del === 1 || del === true) {
+        /* ДРУГА згода через 1.5 с — маркер мусить підтвердитись двічі */
+        setTimeout(function () {
+          if (!ACC.user || userKey(ACC.user) !== k) return;
+          adm46Read('update/admdel/' + adm46Uid(k), function (del2) {
+            if (del2 !== 1 && del2 !== true) return;   // маркер зник — не караємо
+            /* видалення підтверджено: зачищаємо D1 (якщо рядок ще є) і дзеркало */
+            try {
+              if (!window.FH_WEB) {
+                cfExec('DELETE FROM users WHERE user_id=?', [k], null);
+                cfExec('DELETE FROM device WHERE user_id=?', [k], null);
+              }
+              adm46Write('update/users/' + adm46Uid(k), null);
+              adm46Write('update/web/' + adm46Uid(k), null);
+              adm46Write('update/settings_mirror/' + adm46Uid(k), null);
+              adm46Write('update/websts/' + adm46Uid(k), null);
+            } catch (eC46) {}
+            adm46BanHide();
+            forceAccountGone(false);
+            try { toast('Акаунт видалено адміністратором'); } catch (eT46) {}
+          });
+        }, 1500);
+        return;
+      }
+      const act = ban && typeof ban === 'object' && (parseInt(ban.b, 10) === -1 || parseInt(ban.b, 10) > Date.now());
+      if (act) {
+        /* ДРУГА згода через 1.5 с */
+        setTimeout(function () {
+          if (!ACC.user || userKey(ACC.user) !== k) return;
+          adm46Read('update/admban/' + adm46Uid(k), function (ban2) {
+            if (!(ban2 && typeof ban2 === 'object' && (parseInt(ban2.b, 10) === -1 || parseInt(ban2.b, 10) > Date.now()))) { adm46BanHide(); return; }
+            adm46BanShow(ban2);
+          });
+        }, 1500);
+        return;
+      }
+      adm46BanHide();   // розблоковано (маркера нема) — прибираємо попап, якщо висів
+    });
+  });
+  /* застосунки: додаткова перевірка колонки banned у D1 (найнадійніше джерело) */
+  if (!window.FH_WEB) {
+    cfExec('SELECT IFNULL(banned,0) AS banned,IFNULL(ban_reason,\'\') AS ban_reason FROM users WHERE user_id=?', [k], function (rows) {
+      if (!ACC.user || userKey(ACC.user) !== k || !rows) return;   // null = D1 не відповіла — пропускаємо
+      const r = rows[0];
+      if (r && (parseInt(r.banned, 10) === -1 || parseInt(r.banned, 10) > Date.now())) {
+        adm46BanShow({ b: parseInt(r.banned, 10), r: String(r.ban_reason || '') });
+      }
+    }, 9000);
+  }
+}
+/* ------- БАН-ПОПАП (всі платформи) ------- */
+function adm46BanShow(ban) {
+  let w = document.getElementById('fh46ban');
+  if (!w) {
+    w = document.createElement('div');
+    w.id = 'fh46ban';
+    w.innerHTML = '<div class="f46b-card"><div class="f46b-ico">⛔</div>' +
+      '<h3>Ваш акаунт заблоковано</h3>' +
+      '<div class="f46b-why" id="f46bWhy"></div>' +
+      '<div class="f46b-un" id="f46bUn"></div>' +
+      '<button class="f46b-btn" id="f46bOut" type="button">Вийти з акаунту</button></div>';
+    document.body.appendChild(w);
+    const btn = document.getElementById('f46bOut');
+    if (btn) btn.onclick = function () { adm46BanHide(); try { forceAccountGone(false); } catch (eF46) {} };
+  }
+  const why = document.getElementById('f46bWhy'), un = document.getElementById('f46bUn');
+  const b = parseInt(ban && ban.b, 10);
+  const reason = String((ban && ban.r) || '').trim();
+  if (why) why.textContent = reason ? ('Причина: ' + reason) : 'Причину не вказано';
+  if (un) un.textContent = (b === -1) ? 'Блокування: назавжди' : ('Розблокування: ' + adm46FmtWhen(b));
+  w.classList.add('on');
+}
+function adm46BanHide() {
+  const w = document.getElementById('fh46ban');
+  if (w) w.classList.remove('on');
+}
+/* ------- ВКЛАДКА «КОРИСТУВАЧІ» (адмінка) ------- */
+function adm46UsersHtml() {
+  return '<div class="adm-u-top">' +
+    '<button class="adm-abtn" data-act="admurefresh" type="button">Оновити список</button>' +
+    '<span class="adm-u-dim" id="admUHint">список оновлюється при відкритті вкладки</span>' +
+    '</div><div id="admUList" class="adm-u-list"><div class="adm-u-dim">Завантаження…</div></div>';
+}
+function adm46UsersOpen() {
+  const box = document.getElementById('admUList');
+  if (!box) return;
+  adm46UsersLoad(function (rows) {
+    if (!box.isConnected) return;
+    if (rows === null) { box.innerHTML = '<div class="adm-u-dim">База не відповіла — натисни «Оновити список»</div>'; return; }
+    ADM.usrs = rows || [];
+    adm46UsersRender();
+  });
+}
+function adm46UsersRender() {
+  const box = document.getElementById('admUList');
+  if (!box) return;
+  const rows = ADM.usrs || [];
+  if (!rows.length) { box.innerHTML = '<div class="adm-u-dim">Список порожній: користувачі з\'являться тут після входу в застосунку (веб-акаунти пишуться в базу при кожному вході)</div>'; return; }
+  let h = '';
+  rows.forEach(function (r) {
+    const self = ACC.user && userKey(ACC.user) === r.user_id;
+    const banned = parseInt(r.banned, 10) === -1 || parseInt(r.banned, 10) > Date.now();
+    const ava = r.pic ? '<img src="' + escH(r.pic) + '" referrerpolicy="no-referrer" alt="">' : escH((r.name || '?').charAt(0).toUpperCase());
+    let chips = '';
+    if (r.role === 'admin') chips += '<i class="adm-chip r-admin">адмін</i>';
+    if (r.role === 'developer') chips += '<i class="adm-chip r-developer">розробник</i>';
+    if (banned) chips += '<i class="adm-chip banned" title="' + escH(r.ban_reason || '') + '">заблоковано</i>';
+    const meta = [];
+    if (r.logins) meta.push('входів: ' + r.logins);
+    if (r.created) meta.push('з ' + adm46FmtWhen(r.created));
+    if (r.ver_phone) meta.push('тел: ' + escH(r.ver_phone));
+    if (r.ver_pc) meta.push('ПК: ' + escH(r.ver_pc));
+    if (banned && parseInt(r.banned, 10) > 0) meta.push('до ' + adm46FmtWhen(r.banned));
+    h += '<div class="adm-u-row">' +
+      '<div class="adm-u-ava">' + ava + '</div>' +
+      '<div class="adm-u-info"><b>' + escH(r.name || 'Без імені') + chips + '</b>' +
+      '<span class="adm-u-mail">' + escH(r.email || '—') + '</span>' +
+      (meta.length ? '<span class="adm-u-meta">' + meta.join(' · ') + '</span>' : '') +
+      '</div>' +
+      '<div class="adm-u-btns">' +
+      '<button type="button" data-act="' + (banned ? 'admuunban' : 'admuban') + '" data-u="' + escH(r.user_id) + '"' + (self ? ' disabled' : '') + '>' + (banned ? 'Розблокувати' : 'Заблокувати') + '</button>' +
+      '<button type="button" class="adm-u-del" data-act="admudel" data-u="' + escH(r.user_id) + '" data-e="' + escH(r.email || '') + '"' + (self ? ' disabled' : '') + '>Видалити</button>' +
+      '</div></div>';
+  });
+  box.innerHTML = h;
+}
+/* діалог блокування: причина + тривалість (назавжди / свої хв-год-дні) */
+function adm46BanDialog(uid) {
+  admModal(
+    '<h3 class="adm-h">Блокування акаунта</h3>' +
+    '<div class="adm-u-dim">Користувач побачить вікно з причиною і часом розблокування.</div>' +
+    '<input class="adm-inp" id="adm46r" type="text" maxlength="120" placeholder="Причина (необов\'язково)">' +
+    '<div class="adm46-durs">' +
+    '<label><input type="radio" name="adm46d" value="-1"><span>Назавжди</span></label>' +
+    '<label><input type="radio" name="adm46d" value="600" checked><span>10 хв</span></label>' +
+    '<label><input type="radio" name="adm46d" value="1800"><span>30 хв</span></label>' +
+    '<label><input type="radio" name="adm46d" value="3600"><span>1 год</span></label>' +
+    '<label><input type="radio" name="adm46d" value="21600"><span>6 год</span></label>' +
+    '<label><input type="radio" name="adm46d" value="86400"><span>1 день</span></label>' +
+    '<label><input type="radio" name="adm46d" value="259200"><span>3 дні</span></label>' +
+    '<label><input type="radio" name="adm46d" value="604800"><span>7 днів</span></label>' +
+    '<label><input type="radio" name="adm46d" value="custom"><span>Свій час</span></label>' +
+    '</div>' +
+    '<div class="adm46-custom"><input id="adm46cn" type="number" min="1" max="3650" value="1"><select id="adm46cu"><option value="60">хвилин</option><option value="3600">годин</option><option value="86400" selected>днів</option></select></div>' +
+    '<div class="adm46-act"><button class="adm-abtn" data-act="admubango" data-u="' + escH(uid) + '" type="button">Заблокувати</button>' +
+    '<button class="adm-abtn adm-abtn2" data-act="mclose" type="button">Скасувати</button></div>'
+  );
+}
+function adm46DelDialog(uid, email) {
+  admModal(
+    '<h3 class="adm-h">Видалити акаунт повністю?</h3>' +
+    '<div class="adm-u-dim">Акаунт <b>' + escH(email || uid) + '</b> буде видалено з бази даних ПОВНІСТЮ: ' +
+    'користувача викине з програми, його налаштування і профіль зникнуть. Повторний вхід створить новий акаунт.</div>' +
+    '<div class="adm46-act"><button class="adm-abtn adm-u-delbtn" data-act="admudelgo" data-u="' + escH(uid) + '" type="button">Видалити назавжди</button>' +
+    '<button class="adm-abtn adm-abtn2" data-act="mclose" type="button">Скасувати</button></div>'
+  );
+}
+/* ------- ДІЇ (SQL у застосунках; сайт — дзеркало) ------- */
+function adm46DoBan(uid, untilMs, reason) {
+  const fin = function (ok, what) {
+    if (ok) { toast('Акаунт заблоковано ✓'); try { admModalClose(); } catch (eM) {} adm46UsersOpen(); }
+    else toast(what || 'Не вдалося заблокувати — спробуй ще раз');
+  };
+  if (window.FH_WEB) {
+    /* сайт: маркер + оновлення дзеркала користувача */
+    adm46Write('update/admban/' + adm46Uid(uid), { b: untilMs, r: String(reason || ''), t: Date.now() }, function (ok1) {
+      if (!ok1) { fin(false); return; }
+      adm46Read('update/users/' + adm46Uid(uid), function (u) {
+        const node = (u && typeof u === 'object') ? u : {};
+        node.b = untilMs; node.br = String(reason || ''); node.ts = Date.now();
+        adm46Write('update/users/' + adm46Uid(uid), node, function (ok2) { fin(true); });
+      });
+    });
+    return;
+  }
+  cfExec('UPDATE users SET banned=?, ban_reason=? WHERE user_id=?', [untilMs, String(reason || ''), uid], function (w) {
+    if (w === null) { fin(false); return; }
+    cfExec('SELECT banned FROM users WHERE user_id=?', [uid], function (rows) {
+      if (!(rows && rows[0] && parseInt(rows[0].banned, 10) === untilMs)) { fin(false, 'База не підтвердила блокування'); return; }
+      adm46Write('update/admban/' + adm46Uid(uid), { b: untilMs, r: String(reason || ''), t: Date.now() }, function () {
+        /* 3.5.46: у дзеркалі цілі оновлюємо ЛИШЕ b/br (adm46MirrorUser пише
+           профіль АКТИВНОГО акаунта — тут це адмін, а не ціль!) */
+        adm46Read('update/users/' + adm46Uid(uid), function (u46) {
+          const node46 = (u46 && typeof u46 === 'object') ? u46 : {};
+          node46.b = untilMs; node46.br = String(reason || ''); node46.ts = Date.now();
+          adm46Write('update/users/' + adm46Uid(uid), node46, function () { fin(true); });
+        });
+      });
+    });
+  }, 15000);
+}
+function adm46DoUnban(uid) {
+  const fin = function (ok) {
+    if (ok) { toast('Акаунт розблоковано ✓'); adm46UsersOpen(); }
+    else toast('Не вдалося розблокувати — спробуй ще раз');
+  };
+  if (window.FH_WEB) {
+    adm46Write('update/admban/' + adm46Uid(uid), null, function (ok1) {
+      adm46Read('update/users/' + adm46Uid(uid), function (u) {
+        const node = (u && typeof u === 'object') ? u : null;
+        if (node) { node.b = 0; node.br = ''; node.ts = Date.now(); }
+        adm46Write('update/users/' + adm46Uid(uid), node, function () { fin(true); });
+      });
+    });
+    return;
+  }
+  cfExec('UPDATE users SET banned=0, ban_reason=\'\' WHERE user_id=?', [uid], function (w) {
+    if (w === null) { fin(false); return; }
+    adm46Write('update/admban/' + adm46Uid(uid), null, function () {
+      adm46Read('update/users/' + adm46Uid(uid), function (u46) {
+        const node46 = (u46 && typeof u46 === 'object') ? u46 : {};
+        node46.b = 0; node46.br = ''; node46.ts = Date.now();
+        adm46Write('update/users/' + adm46Uid(uid), node46, function () { fin(true); });
+      });
+    });
+  }, 15000);
+}
+function adm46DoDel(uid) {
+  const fin = function (ok) {
+    if (ok) { toast('Акаунт видалено з бази ✓'); try { admModalClose(); } catch (eM) {} adm46UsersOpen(); }
+    else toast('Не вдалося видалити — спробуй ще раз');
+  };
+  if (window.FH_WEB) {
+    /* сайт: маркер видалення + повне чищення дзеркала; D1-рядок дочисть
+       пристрій користувача (сам видалить себе за маркером) */
+    adm46Write('update/admdel/' + adm46Uid(uid), 1, function (ok1) {
+      adm46Write('update/users/' + adm46Uid(uid), null);
+      adm46Write('update/web/' + adm46Uid(uid), null);
+      adm46Write('update/settings_mirror/' + adm46Uid(uid), null);
+      adm46Write('update/websts/' + adm46Uid(uid), null);
+      fin(!!ok1);
+    });
+    return;
+  }
+  cfExec('DELETE FROM users WHERE user_id=?', [uid], function (w1) {
+    if (w1 === null) { fin(false); return; }
+    cfExec('DELETE FROM device WHERE user_id=?', [uid], function (w2) {
+      if (w2 === null) { fin(false); return; }
+      cfExec('SELECT user_id FROM users WHERE user_id=?', [uid], function (rows) {
+        if (rows === null) { fin(false); return; }
+        if (rows && rows[0]) { fin(false, 'База не підтвердила видалення'); return; }
+        /* ПІДТВЕРДЖЕНО: рядка більше нема — чистимо дзеркало і ставимо маркер */
+        adm46Write('update/users/' + adm46Uid(uid), null);
+        adm46Write('update/web/' + adm46Uid(uid), null);
+        adm46Write('update/settings_mirror/' + adm46Uid(uid), null);
+        adm46Write('update/websts/' + adm46Uid(uid), null);
+        adm46Write('update/admdel/' + adm46Uid(uid), 1, function () { fin(true); });
+      });
+    }, 15000);
+  }, 15000);
+}
+/* делегування кліків вкладки (capture — раніше за загальну адмін-обробку) */
+document.addEventListener('click', function (ev) {
+  const el = (ev.target && ev.target.closest) ? ev.target.closest('[data-act^="admu"]') : null;
+  if (!el) return;
+  const a = el.getAttribute('data-act');
+  const uid = el.getAttribute('data-u') || '';
+  if (a === 'admurefresh') { adm46UsersOpen(); return; }
+  if (a === 'admuban') { ev.stopPropagation(); adm46BanDialog(uid); return; }
+  if (a === 'admuunban') { ev.stopPropagation(); adm46DoUnban(uid); return; }
+  if (a === 'admudel') { ev.stopPropagation(); adm46DelDialog(uid, el.getAttribute('data-e') || ''); return; }
+  if (a === 'admubango') {
+    ev.stopPropagation();
+    let sec = 0;
+    let sel = null;
+    try { sel = document.querySelector('input[name="adm46d"]:checked'); } catch (eQ) {}
+    const v = sel ? sel.value : '600';
+    if (v === 'custom') {
+      const n = parseInt((document.getElementById('adm46cn') || {}).value, 10) || 0;
+      const u = parseInt((document.getElementById('adm46cu') || {}).value, 10) || 60;
+      sec = Math.max(1, n) * u;
+    } else sec = parseInt(v, 10);
+    if (sec === -1) adm46DoBan(uid, -1, (document.getElementById('adm46r') || {}).value || '');
+    else if (sec > 0) adm46DoBan(uid, Date.now() + sec * 1000, (document.getElementById('adm46r') || {}).value || '');
+    else toast('Вкажи тривалість блокування');
+    return;
+  }
+  if (a === 'admudelgo') { ev.stopPropagation(); adm46DoDel(uid); return; }
+}, true);
+/* періодична перевірка бану/видалення (5 хв) + стартовий таймер один раз */
+if (!window.__adm46tick) {
+  window.__adm46tick = 1;
+  setInterval(function () { if (ACC.user) { try { adm46Check('tick'); } catch (e46T) {} } }, 300000);
 }
 
 // ================= 3.4.7: ЗАВАНТАЖЕННЯ = ЕКРАН СТАРТУ 1-В-1 =================
@@ -3783,6 +4201,7 @@ function settleSync(cb) {
     fhSettling = false;
     dataVerified = true;
     try { revealNow(); } catch (eRN) {}   // стартовий екран може завершуватись
+    try { adm46Check('settle'); } catch (eA46) {}   /* 3.5.46: бан/видалення акаунта */
     cb(dec);
     /* 3.4.6: майстер, поставлений у чергу під час перевірки — відкриваємо
        ПІСЛЯ рішення, якщо групи таки є (інакше викликач рішення 'master'
@@ -4904,6 +5323,7 @@ function admRenderBody() {
   const b = byId('admBody'); if (!b) return;
   if (ADM.tab === 0) b.innerHTML = admSchedHtml();
   else if (ADM.tab === 1) b.innerHTML = admZoomHtml();
+  else if (ADM.tab === 3) { b.innerHTML = adm46UsersHtml(); adm46UsersOpen(); }   /* 3.5.46: Користувачі */
   else b.innerHTML = admIconsHtml();
 }
 
@@ -6119,12 +6539,15 @@ function init() {
   if (ACC.user) {
     showDataLoad('Завантаження…', 'перевіряємо дані акаунта на сервері');
     dlSafety();
-    /* 3.5.45: СТРАХОВКА «85% НАЗАВЖДИ» — за 8 с інтерфейс відкриється
-       з локальними даними обов'язково, перевірка сервера догорить у фоні. */
+    /* 3.5.46 (власник: «чтобы всё загружалось очень быстро»): СТРАХОВКА
+       «85% НАЗАВЖДИ» — тепер 4 СЕКУНДИ, а не 8. Дзеркало відповідає за
+       частки секунди, бекенд у гонці з таймаутом 3.5 с — інтерфейс з
+       локальними даними відкривається ЩЕ ДО найгіршої відповіді мережі,
+       серверна перевірка тихо догоряє у фоні (3.5.45: було 8 с). */
     setTimeout(function () {
       if (bootRevealed || dataVerified || updOpen()) return;
       try { dataVerified = true; hideDataLoad(); revealNow(); } catch (eCap) {}
-    }, 8000);
+    }, 4000);
     if (S) { showMain(); render(); }   // під екраном завантаження — миттєвий показ після перевірки
   }
   else if (S) { showMain(); render(); }

@@ -33,7 +33,7 @@
    ============================================================ */
 (function () {
 'use strict';
-var VER = '3.5.45';
+var VER = '3.5.46';
 var BACKEND = 'https://fluxhelper-backend.onrender.com';
 var ORIGIN = 'https://fluxhelper.pages.dev';
 var DB_URL = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app';
@@ -45,9 +45,14 @@ var GIS_CLIENT = '668834523935-k470ldmdv0r9am0720v6lgaatm6rtuf3.apps.googleuserc
 var FB_KEY = 'AIzaSyCDWpF3QTMEFBN9ravDxH_woKnBpcMRDvI';
 function tokRefreshRT(rt, cb) {
   try {
+    /* 3.5.46: ЖОРСТКИЙ ТАЙМАУТ 3.5 с — раніше запит міг висіти хвилинами
+       (погана мережа/файрвол school Wi-Fi), і весь старт чекав на нього. */
+    var ab = null;
+    try { if (typeof AbortController === 'function') { ab = new AbortController(); setTimeout(function () { try { ab.abort(); } catch (eAB1) {} }, 3500); } } catch (eAB0) {}
     fetch('https://securetoken.googleapis.com/v1/token?key=' + FB_KEY, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ grant_type: 'refresh_token', refresh_token: String(rt || '') })
+      body: JSON.stringify({ grant_type: 'refresh_token', refresh_token: String(rt || '') }),
+      signal: ab ? ab.signal : undefined
     }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
       if (j && j.id_token) cb({ idToken: String(j.id_token), refreshToken: String(j.refresh_token || rt), expiresIn: String(j.expires_in || '3600') });
       else cb(null);
@@ -90,11 +95,14 @@ try {
        3.5.44 (просив власник: «сделай две колонки… хотя бы два в ряд»):
        примусову ОДНУ колонку 3.5.40 ЗНЯТО — вона й давала «по очереди».
        Тепер на САЙТІ картки налаштувань теж у 2 КОЛОНКИ: «Запуск Zoom» |
-       «Підтверджувати захід», «Копіювання посилання» — на всю ширину;
-       на вузьких вікнах (<700px) — чесно стовпчиком. */
+       «Підтверджувати захід», «Копіювання посилання».
+       3.5.46 (просив власник: «оно сейчас занимает два столбика, а должна
+       занимать только один»): «Копіювання посилання» БІЛЬШЕ НЕ розтягується
+       на всю ширину — займає РІВНО ОДНУ колонку сітки, таку ж саму ширину,
+       як «Запуск Zoom» (3.5.45 обіцяла це, але правило 1/-1 так і лишилось).
+       На вузьких вікнах (<699px) — чесно стовпчиком. */
     '.sw-duo.sw-col-b{display:none!important}' +
     '.sw-duo.sw-col-a{grid-column:1/-1!important;display:grid!important;grid-template-columns:1fr 1fr!important;gap:13px!important}' +
-    '#secCpl{grid-column:1/-1!important}' +
     '@media (max-width:699px){.sw-duo.sw-col-a{grid-template-columns:1fr!important}}' +
     '#secUpd{display:none!important}' +   /* 3.5.26: рамку «Оновлення» знесено з САЙТУ (потрібна лише застосункам) */
     'body:not(.fh-beta) .beta-only{display:none!important}' +
@@ -183,6 +191,12 @@ function rtdbAsync(op, path, data, cb) {
     /* 3.5.40: прямий RTDB REST — без /api/rtdb на Render */
     var init = { method: op.toUpperCase(), headers: { 'Content-Type': 'application/json' } };
     if (op === 'put' || op === 'patch') init.body = JSON.stringify(data === undefined ? null : data);
+    /* 3.5.46: ТАЙМАУТ 4 с — старт більше НІКОЛИ не залежить від завислого
+       запита; довгі фонові операції (якщо колись знадобляться) кличуть
+       rtdbAsync напряму з більшим лімітом, але стартовий шлях — швидкий. */
+    var ab = null;
+    try { if (typeof AbortController === 'function') { ab = new AbortController(); setTimeout(function () { try { ab.abort(); } catch (eRA1) {} }, 4000); } } catch (eRA0) {}
+    init.signal = ab ? ab.signal : undefined;
     fetch(DB_URL + '/' + normPath(path) + '.json?auth=' + encodeURIComponent(tokState.tok), init)
       .then(function (r) { return r.ok ? r.text() : null; })
       .then(function (t) { var d = null; try { d = t ? JSON.parse(t) : null; } catch (e) {} cb(d); })
@@ -229,34 +243,41 @@ function snapOk(p) { return !!(p && typeof p === 'object' && (p.g || p.n || p.th
    дзеркала RTDB (роль+синк+знімок живуть і там). Якщо і дзеркала
    недоступні — cb(null) = «офлайн» (застосунок лишає локальний стан). */
 function apiGetRow(cb) {
-  var finish = function (row) { cb(row); };
+  /* 3.5.46: ГОЧКА «ДЗЕРКАЛО || БЕКЕНД» — ОБИДВА канали летять ПАРАЛЕЛЬНО,
+     перемагає той, хто відповів ПЕРШИМ. Раніше бекенд (Render) ішов першим
+     і лише після 5 с сбою стартував дзеркало: холодний Render = +5 с до
+     КАЖДОГО старту, завислий fetch = хвилини на «85%». Тепер старт = RTT
+     найшвидшого канала (зазвичай 150-400 мс), фініш гонки — ОДИН раз. */
+  var done = false;
+  var finish = function (row) { if (done) return; done = true; cb(row); };
   var viaMirror = function () {
     var k = myFid();
     if (!k) { finish(null); return; }
     var wk = 'update/web/' + encodeURIComponent(k);
     var sk = 'update/settings_mirror/' + fbEncUid(k);
-    rtdbAsync('get', wk, null, function (a) {
-      rtdbAsync('get', sk, null, function (b) {
-        var sa = rawToSnap(a), sb = rawToSnap(b);
-        var best = null;
-        if (sa && sb) best = (((parseInt(sb.t, 10) || 0) > (parseInt(sa.t, 10) || 0)) ? sb : sa);
-        else best = sa || sb;
-        if (!best) { finish(null); return; }
-        finish({
-          role: String(best.r || 'user'),
-          sync: (best.sync === 0 || best.sync === false || best.sync === '0') ? 0 : 1,
-          settings: JSON.stringify(best),
-          sts: parseInt(best.t, 10) || 0
-        });
+    /* 3.5.46: обидва GET дзеркала — ПАРАЛЕЛЬНО (раніше послідовно = 2 RTT) */
+    var sa = null, sb = null, left = 2;
+    var pick = function () {
+      if (--left > 0) return;
+      var a = rawToSnap(sa), b = rawToSnap(sb);
+      var best = null;
+      if (a && b) best = (((parseInt(b.t, 10) || 0) > (parseInt(a.t, 10) || 0)) ? b : a);
+      else best = a || b;
+      if (!best) { finish(null); return; }
+      finish({
+        role: String(best.r || 'user'),
+        sync: (best.sync === 0 || best.sync === false || best.sync === '0') ? 0 : 1,
+        settings: JSON.stringify(best),
+        sts: parseInt(best.t, 10) || 0
       });
-    });
+    };
+    rtdbAsync('get', wk, null, function (a) { sa = a; pick(); });
+    rtdbAsync('get', sk, null, function (b) { sb = b; pick(); });
   };
   ensureTok(function (ok) {
     if (!ok || !tokState || !tokState.tok) { viaMirror(); return; }
-    /* 3.5.45: Render може холодно прокидатись 30-90 с — фетч із АБОРТОМ 5 с:
-    якщо бекенд не відповів швидко — одразу дзеркало, старт лишась швидким. */
     var ab = null;
-    try { if (typeof AbortController === 'function') { ab = new AbortController(); setTimeout(function () { try { ab.abort(); } catch (eA0) {} }, 5000); } } catch (eAB) {}
+    try { if (typeof AbortController === 'function') { ab = new AbortController(); setTimeout(function () { try { ab.abort(); } catch (eA0) {} }, 3500); } } catch (eAB) {}
     fetch(BACKEND + '/api/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tokState.tok },
@@ -264,6 +285,7 @@ function apiGetRow(cb) {
       signal: ab ? ab.signal : undefined
     }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
       .then(function (j) {
+        if (done) return;                          /* 3.5.46: дзеркало вже відповіло */
         if (!j || !j.ok) { viaMirror(); return; }   /* збій -> фолбек, НЕ «порожній рядок» */
         var set = (j.settings && typeof j.settings === 'object') ? j.settings : null;
         var setStr = set ? JSON.stringify(set) : '';
@@ -275,6 +297,8 @@ function apiGetRow(cb) {
         });
       });
   });
+  /* 3.5.46: дзеркало стартує ОДРАЗУ, а не «після сбою бекенда» */
+  try { viaMirror(); } catch (eM46) {}
 }
 function apiPutSnap(snap, profile, cb) {
   var done = function (ok) { cb(ok); };
