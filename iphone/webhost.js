@@ -33,7 +33,7 @@
    ============================================================ */
 (function () {
 'use strict';
-var VER = '3.5.44';
+var VER = '3.5.45';
 var BACKEND = 'https://fluxhelper-backend.onrender.com';
 var ORIGIN = 'https://fluxhelper.pages.dev';
 var DB_URL = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app';
@@ -245,10 +245,14 @@ function apiGetRow(cb) {
   };
   ensureTok(function (ok) {
     if (!ok || !tokState || !tokState.tok) { viaMirror(); return; }
+    /* 3.5.45: Render може холодно прокидатись 30-90 с — фетч із АБОРТОМ 5 с */
+    var ab = null;
+    try { if (typeof AbortController === 'function') { ab = new AbortController(); setTimeout(function () { try { ab.abort(); } catch (eA0) {} }, 5000); } } catch (eAB) {}
     fetch(BACKEND + '/api/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tokState.tok },
-      body: JSON.stringify({ op: 'get' })
+      body: JSON.stringify({ op: 'get' }),
+      signal: ab ? ab.signal : undefined
     }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
       .then(function (j) {
         if (!j || !j.ok) { viaMirror(); return; }   /* збій -> фолбек, НЕ «порожній рядок» */

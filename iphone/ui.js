@@ -104,6 +104,23 @@
    обриваючи решту ініціалізації (netProbe, netWatch, живі тики). */
 var NFIRED = {};
 try { NFIRED = JSON.parse(localStorage.getItem('fh_nfired') || '{}') || {}; } catch (eNFI) { NFIRED = {}; }
+/* 3.5.45 ПЕРЕРОБКА СПОВІЩЕНЬ (власник: «я нажимаю сповістити за одну хвилину
+   до уроку — оно должно запомнить, уведомление пропадает и больше не
+   появляться. Появиться только если до начала урока меньше 60 секунд»).
+   NARMED — «нагадування за 60 с» поставлене користувачем (кнопка в тості
+   або вибір «за 1 хвилину»): такий урок ВИКЛЮЧАЄМО зі звичайного плану
+   NOTIF.min і плануємо РІВНО на початок мінус 60 секунд. Працює в парі з
+   новим хостом 3.5.45, який стріляє точно за `at` (epoch ms) без «запасів». */
+var NARMED = {};
+try { NARMED = JSON.parse(localStorage.getItem('fh_narmed') || '{}') || {}; } catch (eNAR) { NARMED = {}; }
+function nfKeyNow(t) {
+  const dk = new Date();
+  return dk.getFullYear() + '-' + ('0' + (dk.getMonth() + 1)).slice(-2) + '-' + ('0' + dk.getDate()).slice(-2) + '|' + String(t || '');
+}
+function nfSaveMaps() {
+  try { localStorage.setItem('fh_nfired', JSON.stringify(NFIRED)); } catch (e1) {}
+  try { localStorage.setItem('fh_narmed', JSON.stringify(NARMED)); } catch (e2) {}
+}
 /* 2.8.2: жодного виділення/копіювання тексту довгим натисканням */
 try {
   document.addEventListener('selectstart', function (e) {
@@ -268,7 +285,7 @@ function validS(x) {
 // вічно вважав себе старішим. Тепер версію підставляє build.sh з манифеста
 // (2.4.1 -> versionName), а ПІСЛЯ завантаження Java-міст AndroidHost.ver()
 // віддає СПРАВЖНЮ версію встановленого пакета (PackageManager) — найнадійніше.
-let APP_VER = '3.5.44';              // X.Y.Z — підставляється при збірці з манифеста
+let APP_VER = '3.5.45';              // X.Y.Z — підставляється при збірці з манифеста
 try {
   if (window.AndroidHost && AndroidHost.ver) {
     const jv = AndroidHost.ver();
@@ -1564,8 +1581,11 @@ function pushNotifSched(quiet) {   // 3.4.5: quiet=true — розклад із 
         const _fk = _dstr + '|' + String(l.t);
         if (NFIRED[_fk]) return;
         const _sm = (/^(\d{1,2}):(\d{2})/.exec(String(l.t)));
-        const _at = _sm ? (_dayMs + ((+_sm[1]) * 60 + (+_sm[2])) * 60000 - NOTIF.min * 60000) : 0;
-        items.push({ dow: dow, t: l.t, e: l.e || '', n: l.name, u: l.url || '', d: _dstr, at: _at });
+        /* 3.5.45: NARMED — «Нагадати за 1 хв»: стріляємо РІВНО за 60 с */
+        const _armed60 = !!NARMED[_fk];
+        const _mins = _armed60 ? 1 : NOTIF.min;
+        const _at = _sm ? (_dayMs + ((+_sm[1]) * 60 + (+_sm[2])) * 60000 - _mins * 60000) : 0;
+        items.push({ dow: dow, t: l.t, e: l.e || '', n: l.name, u: l.url || '', d: _dstr, at: _at, r60: _armed60 ? 1 : 0 });
       }
     });
   }
@@ -1715,6 +1735,14 @@ function applyDb(db, fromCache) {
   if (changed) {
     if (!setupOpen) render(false);
     pushNotifSched();
+    /* 3.5.45: чернетка адмінки не відстає від бази (детальніше — у ПК-версії) */
+    try {
+      if (typeof ADM !== 'undefined' && ADM && !ADM.dirty && !ADM.saving) {
+        ADM.draft = null;
+        const ab45 = byId('admBody');
+        if (ab45 && !ab45.closest('.hidden') && typeof admRenderBody === 'function') admRenderBody();
+      }
+    } catch (eD45) {}
   }
   if (db.update && typeof db.update === 'object' && db.update.latest !== undefined) {
     // 2.2.2: розсилка тест-оновлення всім прибрана (тест-екран тепер локальний)
@@ -1969,37 +1997,78 @@ function d1UpsertSubject(name, fields, cb) {
     });
   });
 }
+/* 3.5.45 ПЕРЕРОБКА ЗБЕРЕЖЕННЯ (детальний коментар — у ПК-версії):
+   2 запити (DELETE зайвих позицій + multi-VALUES UPSERT) -> перевірка
+   читанням назад -> ревізія і дзеркало ЛИШЕ після підтвердження. */
+let _admSubjMap = null, _admSubjMapT = 0;
+function admSubjMap(cb) {
+  if (_admSubjMap && (Date.now() - _admSubjMapT) < 120000) { cb(_admSubjMap); return; }
+  cfExec('SELECT id, name FROM subject', [], function (rows) {
+    if (!rows) { cb(null); return; }
+    const m = {};
+    rows.forEach(function (r) { if (r && r.name) m[String(r.name).trim().toLowerCase()] = r.id; });
+    _admSubjMap = m; _admSubjMapT = Date.now();
+    cb(m);
+  });
+}
+function admDaySame(server, arr) {
+  if (!Array.isArray(server) || server.length !== arr.length) return false;
+  for (let i = 0; i < arr.length; i++) {
+    const a = arr[i], b = server[i] || {};
+    if (String(b.title || '') !== String(a.s) || String(b.t_start || '') !== String(a.t) || String(b.t_end || '') !== String(a.e)) return false;
+  }
+  return true;
+}
 function d1SaveDay(dk, arr, cb) {
   if (window.FH_WEB || !cfOk()) { if (cb) cb(false); return; }
-  let bad = 0, left = arr.length + 1;
-  const step = function () { if (--left <= 0 && cb) cb(bad === 0); };
-  cfExec('DELETE FROM schedule WHERE day=?', [dk], function (rd) {
-    if (rd === null) bad++;
-    step();
-    if (!arr.length) { if (bad === 0) d1BumpSnap(); return; }
-    arr.forEach(function (it, i) {
-      cfExec('SELECT id FROM subject WHERE lower(name)=lower(?)', [it.s], function (rows) {
-        if (!rows) { bad++; step(); return; }
-        const insRow = function (sid) {
-          cfExec('INSERT INTO schedule (day, pos, subject_id, title, t_start, t_end) VALUES (?,?,?,?,?,?) ' +
-                 'ON CONFLICT(day,pos) DO UPDATE SET subject_id=excluded.subject_id, title=excluded.title, t_start=excluded.t_start, t_end=excluded.t_end',
-                 [dk, i + 1, sid, it.s, it.t, it.e], function (r2) {
-            if (!r2) bad++;
-            step();
-          });
-        };
-        if (rows[0]) { insRow(rows[0].id); return; }
-        cfExec('INSERT INTO subject (name) VALUES (?)', [String(it.s).toLowerCase()], function (r3) {
-          if (r3 === null) { bad++; step(); return; }
-          cfExec('SELECT id FROM subject WHERE lower(name)=lower(?)', [it.s], function (rows2) {
-            if (!rows2 || !rows2[0]) { bad++; step(); return; }
-            insRow(rows2[0].id);
-          });
+  const finishErr = function (why) { try { console.warn('adm save failed:', why); } catch (eC) {} if (cb) cb(false); };
+  const verify = function (attempt) {
+    cfExec('SELECT pos, title, t_start, t_end FROM schedule WHERE day=? ORDER BY pos LIMIT 12', [dk], function (rows) {
+      if (rows === null) { if (attempt < 1) { setTimeout(function () { verify(attempt + 1); }, 1200); return; } finishErr('verify-read'); return; }
+      if (admDaySame(rows, arr)) { d1BumpSnap(); if (cb) cb(true); return; }
+      if (attempt < 1) { saveOnce(attempt + 1); return; }
+      finishErr('verify-mismatch');
+    }, 15000);
+  };
+  const saveOnce = function (attempt) {
+    admSubjMap(function (map) {
+      if (!map) { finishErr('subjects-unread'); return; }
+      const missing = [];
+      arr.forEach(function (it) { if (!map[String(it.s).trim().toLowerCase()]) missing.push(it.s); });
+      const afterSubjects = function () {
+        admSubjMap(function (map2) {
+          if (!map2) { finishErr('subjects-unread-2'); return; }
+          let left = 1 + (arr.length ? 1 : 0), bad = 0;
+          const step = function () { if (--left <= 0) { if (bad) finishErr('write-fail'); else verify(attempt); } };
+          cfExec('DELETE FROM schedule WHERE day=? AND pos>=?', [dk, arr.length], function (r0) {
+            if (!r0) bad++; step();
+          }, 15000);
+          if (arr.length) {
+            const vals = [], ps = [];
+            arr.forEach(function (it, i) {
+              const sid = map2[String(it.s).trim().toLowerCase()];
+              if (!sid) { bad++; return; }
+              vals.push('(?,?,?,?,?,?)');
+              ps.push(dk, i, sid, it.s, it.t, it.e);
+            });
+            if (!vals.length) { if (!bad) verify(attempt); return; }
+            cfExec('INSERT INTO schedule (day, pos, subject_id, title, t_start, t_end) VALUES ' + vals.join(',') +
+                   ' ON CONFLICT(day,pos) DO UPDATE SET subject_id=excluded.subject_id, title=excluded.title, t_start=excluded.t_start, t_end=excluded.t_end',
+                   ps, function (r1) { if (!r1) bad++; step(); }, 15000);
+          }
         });
-      });
+      };
+      if (!missing.length) { afterSubjects(); return; }
+      let leftM = 1, badM = 0;
+      const valsM = missing.map(function () { return '(?)'; });
+      cfExec('INSERT INTO subject (name) VALUES ' + valsM.join(',') + ' ON CONFLICT(name) DO NOTHING',
+             missing.map(function (s) { return String(s).toLowerCase(); }), function (rM) {
+        if (!rM) badM++;
+        if (--leftM <= 0) { if (badM) finishErr('subject-create'); else afterSubjects(); }
+      }, 15000);
     });
-    if (bad === 0) d1BumpSnap();
-  });
+  };
+  saveOnce(0);
 }
 function d1SaveWeeks(inverted, cb) {
   if (window.FH_WEB || !cfOk()) { if (cb) cb(false); return; }
@@ -2148,6 +2217,13 @@ function parseNotes(txt) {
 // пріоритет. Третій елемент пункта ('pc'/'android') — показувати лише
 // на одній платформі; без нього — на обох.
 const WHATS_NEW = {
+  '3.5.45': [
+    ['✦', 'ШВИДКІСТЬ: сайт більше не висить на 85% після довгої паузи — відкривається одразу з кешу, свіжі дані тихо доїжджають у фоні', '/'],
+    ['✦', 'АДМІНКА: збереження розкладу ПЕРЕРОБЛЕНО — один атомарний запис + перевірка на сервері; «не вдалося зберегти» більше не «тихо видаляє день»', '/'],
+    ['✦', 'СПОВІЩЕННЯ ПК: «Нагадати за 1 хв» запам‘ятовується — тост зникає і приходить РІВНО за 60 секунд до уроку', '/'],
+    ['✦', 'НАЛАШТУВАННЯ ПК (сайт): повернуто дві колонки; «Копіювання посилання» — ширини «Запуску Zoom»', '/'],
+  ],
+
   '3.5.44': [
     ['−', 'З налаштувань прибрано плашку «FluxHelper · розклад 8-го Б класу» — внизу більше нічого зайвого', '/'],
     ['/', 'НИЖНЯ ПАНЕЛЬ — СПРАВЖНЄ СКЛО (доїхало і до веб-версії): крізь панель видно відтінки розкладки, все м’яко розмите', '/'],
@@ -2457,11 +2533,13 @@ function revealNow() {
        щоразу при перезавантаженні») — якщо є СВІЖИЙ кеш (менше 24 год),
        показуємо інтерфейс ОДРАЗУ з кешованими даними, а перевірку сервера
        доводимо тихо у фоні; якщо сервер скаже інше — sync усе виправить. */
+    /* 3.5.45 ФІКС «висить на 85%»: кеш БУДЬ-ЯКОГО віку = миттєвий показ,
+       серверну перевірку sync доводить тихо у фоні. */
     try {
       const c0 = JSON.parse(localStorage.getItem('fh_cache') || 'null');
-      if (c0 && c0.ts && (Date.now() - c0.ts) < 86400000) { bootReady = true; return; }
+      if (c0 && c0.data) { bootReady = true; return; }
     } catch (e0) {}
-    return;   // кешу нема/старий — чекаємо сервер, як раніше
+    return;   // кешу нема взагалі — чекаємо сервер (перший запуск)
   }
   bootReady = true;
 }
@@ -3025,7 +3103,7 @@ let cfSeq = 0;
 const cfCbs = {};
 // один запит до D1 (POST /d1/database/<id>/query). Телефон — прямий fetch
 // (WebView без CORS-обмежень), ПК — через хост (fh:cfq -> WinHTTP).
-function cfExec(sql, params, cb) {
+function cfExec(sql, params, cb, tmo) {
   if (!cfOk()) { if (cb) cb(null); return; }
   const id = 'cf' + (++cfSeq) + '_' + Date.now();
   cfCbs[id] = cb || null;
@@ -3042,7 +3120,8 @@ function cfExec(sql, params, cb) {
   };
   /* 3.4.10: 20с -> 8с — D1 відповідає за 0.2-2с; довший таймаут лишав чорний
      екран завантаження на хвилини при слабкій мережі (fetchRole ретраї множили його) */
-  setTimeout(function () { if (cfCbs[id]) { delete cfCbs[id]; if (cb) cb(null); } }, 8000);   // 3.4.10: було 20с
+  /* 3.5.45: збереженню адмінки даємо 15 с (хибний таймаут запису = «помилка, а записав») */
+  setTimeout(function () { if (cfCbs[id]) { delete cfCbs[id]; if (cb) cb(null); } }, tmo || 8000);
   if (ANDROID && window.AndroidHost && typeof AndroidHost.cfq === 'function') {
     try { AndroidHost.cfq(id, payload); return; } catch (e) { delete cfCbs[id]; }
   }
@@ -4387,6 +4466,13 @@ function betaAllowed() {
 function fetchRole(k, cb, _n) {
   const n = _n || 0;
   if (!k) { if (cb) cb(null); return; }
+  /* 3.5.45 ШВИДКИЙ СТАРТ САЙТУ: cfExec з браузера неможливий — одразу дзеркало. */
+  if (window.FH_WEB && typeof apiGetRow === 'function') {
+    try {
+      apiGetRow(function (row) { if (cb) cb(row ? [row] : null); });
+    } catch (eW) { if (cb) cb(null); }
+    return;
+  }
   cfExec('SELECT role, sync FROM users WHERE user_id=?', [k], function (rows) {
     if (rows === null && n < 2 && ACC.user) { setTimeout(function () { fetchRole(k, cb, n + 1); }, 1400); return; }
     if (cb) cb(rows);
@@ -4411,7 +4497,14 @@ function syncPull(force, cb) {   // 3.4.4: cb(dec) — 'ok' | 'master' | 'offlin
      адміна/перемикачі гарантовано вже на місці при показі інтерфейсу,
      а syncApply бачить правильний ACC.sync (раніше це були ДВА різні
      запити-перегони — і роль могла прибути пізніше за інтерфейс). */
-  cfExec('SELECT role, sync, settings, sts FROM users WHERE user_id=?', [k], function (rows) {
+  /* 3.5.45: САЙТ — одразу через дзеркало/бекенд (apiGetRow). */
+  const runQuery = function (done) {
+    if (window.FH_WEB && typeof apiGetRow === 'function') {
+      try { apiGetRow(function (row) { done(row ? [row] : null); }); return; } catch (eW45) {}
+    }
+    cfExec('SELECT role, sync, settings, sts FROM users WHERE user_id=?', [k], done);
+  };
+  runQuery(function (rows) {
     if (!ACC.user) { if (cb) cb('offline'); return; }
     if (rows && rows[0]) { fhRowSeen(k); accApplyAuth(rows); }   // 3.4.8: рядок підтверджено
     if (rows && rows[0]) {
@@ -4778,7 +4871,7 @@ const ADM_ICON_CAT = [
   ['Природа', ['ecof','flower','tree','bug','fish','sun','moon','cloud','flame']],
   ['Символи', ['smile','key','lock','shield','award','hourglass','watch','bell','calendar','star','heart','flag','pin']]
 ];
-let ADM = { tab: 0, day: 0, draft: null, subj: null, pick: null, edit: -1, zm: 'one', zs: true, zv: null, wy: 0, wm: 0 };
+let ADM = { tab: 0, day: 0, draft: null, subj: null, pick: null, edit: -1, zm: 'one', zs: true, zv: null, wy: 0, wm: 0, dirty: false, saving: false };
 
 function admName(key) { return key ? key.charAt(0).toUpperCase() + key.slice(1) : ''; }
 function admStaff() { return !!(ACC.user && staff()); }
@@ -4792,11 +4885,11 @@ function admShow() {
   if (typeof markNav === 'function') markNav('adm');
   if (typeof setSeg === 'function') setSeg('adm');
   if (typeof setTbSec === 'function') setTbSec('адмін-панель');
-  ADM.draft = null;
+  ADM.draft = null; ADM.dirty = false;
   admRender();
 }
 function admSetTab(i) { ADM.tab = i; admRender(); }
-function admSetDay(i) { ADM.day = i; ADM.draft = null; admRenderBody(); }
+function admSetDay(i) { ADM.day = i; ADM.draft = null; ADM.dirty = false; admRenderBody(); }
 /* 3.4.0: АДМІНКА-ФРЕЙМ — одна велика рамка «Редагування розкладу» з трьома
    внутрішніми вкладками (Розклад / Zoom / Вчителі іконки), а ТИЖНІ — окремою
    рамкою ПІД нею: видно завжди, на будь-якій вкладці, і оновлюється наживо. */
@@ -4936,6 +5029,7 @@ function admAddRow() {
     e = pad(Math.floor(em / 60) % 24) + ':' + pad(em % 60);
   }
   d.push({ s: '', t: t, e: e });
+  ADM.dirty = true;
   admRenderBody();
   const rows = byId('admRows');
   if (rows) rows.scrollTop = rows.scrollHeight;
@@ -4986,6 +5080,7 @@ function admSaveRow(i) {
   if (prev && prev.e && toMin(t) < toMin(prev.e)) { toast('Початок раніше кінця попереднього уроку (' + prev.e + ')'); return; }
   if (next && next.t && toMin(ev) > toMin(next.t)) { toast('Кінець пізніше початку наступного уроку (' + next.t + ')'); return; }
   d[i] = { s: s, t: t, e: ev };
+  ADM.dirty = true;
   admModalClose();
   admRenderBody();
   toast('Урок оновлено у списку ✓');
@@ -4994,38 +5089,70 @@ function admDelRow(i) {
   const d = admDraftArr();
   if (!d[i]) return;
   d.splice(i, 1);
+  ADM.dirty = true;
   admModalClose();
   admRenderBody();
   toast('Урок видалено зі списку');
 }
 function admSaveSched() {
+  if (ADM.saving) return;   /* 3.5.45: одна збережанка за раз */
   const draft = ADM.draft || [];
   const skip = draft.some(function (r) { return !normSubj(r.s) || !r.t || !r.e; });
   const arr = draft.filter(function (r) { return normSubj(r.s) && r.t && r.e; })
     .map(function (r) { return { s: admName(normSubj(r.s)), t: r.t, e: r.e }; });
   const dk = DAYDEFS[ADM.day][0];
-  /* 3.5.33: застосунок пише НАПРЯМУ в Cloudflare D1 (джерело істини) і
-     піднімає rev — всі пристрої оновлюються миттєво; Firebase-дзеркало
-     лишається для старих версій. Сайт пише у Firebase, як і було. */
-  const admSchedDone = function () {
+  /* 3.5.45: збереження з ПЕРЕВІРКОЮ на сервері — успіх тільки коли база
+     реально віддає наш розклад назад (детальніше — у ПК-версії). */
+  const saveBtn = document.querySelector('[data-act="savesched"]');
+  const busy = function (on) {
+    ADM.saving = on;
+    if (saveBtn) { saveBtn.disabled = on; saveBtn.textContent = on ? 'Зберігаємо…' : 'Зберегти розклад'; }
+  };
+  const done = function (ok, why) {
+    busy(false);
+    if (!ok) {
+      toast(why === 'verify' ? 'База не підтвердила збереження — натисни «Зберегти розклад» ще раз'
+                             : 'Не вдалося зберегти — немає зв’язку з базою');
+      try { admRenderBody(); } catch (eR) {}
+      return;
+    }
     if (!DBD.schedule) DBD.schedule = {};
-    DBD.schedule[dk] = arr;
-    ADM.draft = null;
+    DBD.schedule[dk] = arr.map(function (r) { return { e: r.e, s: r.s, t: r.t }; });
+    ADM.draft = null; ADM.dirty = false;
     if (typeof render === 'function') render(false);
     admRender();
-    toast(skip ? 'Розклад оновлено ✓ (порожні рядки пропущено)' : 'Розклад оновлено ✓');
+    toast(skip ? 'Розклад оновлено ✓ (перевірено в базі; порожні рядки пропущено)' : 'Розклад оновлено ✓ (перевірено в базі)');
   };
+  busy(true);
   if (window.FH_WEB) {
-    dbPut('schedule/' + dk, arr.length ? arr : null, function (ok) {
-      if (!ok) { toast('Не вдалося зберегти — немає зв’язку з базою'); return; }
-      admSchedDone();
-    });
+    const verifyWeb = function (attempt) {
+      fetch(DB_URL + '/' + fbEnc('schedule/' + dk) + '.json?cb=' + Date.now(), { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .catch(function () { return null; })
+        .then(function (j) {
+          if (j === null) { if (attempt < 1) { setTimeout(function () { verifyWeb(attempt + 1); }, 1200); return; } done(false, 'verify'); return; }
+          const srv = (j === undefined || j === null) ? [] : j;
+          if (Array.isArray(srv) && admDaySame(srv, arr)) { done(true); return; }
+          if (attempt < 1) { admSchedWebPut(); return; }
+          done(false, 'verify');
+        });
+    };
+    const admSchedWebPut = function () {
+      fetch(DB_URL + '/' + fbEnc('schedule/' + dk) + '.json', { method: 'PUT', body: JSON.stringify(arr.length ? arr : null) })
+        .then(function (r) {
+          if (!r.ok) { done(false, 'put'); return; }
+          try { dbPut('update/webrev', Date.now(), null); } catch (eWB45) {}
+          verifyWeb(0);
+        })
+        .catch(function () { done(false, 'put'); });
+    };
+    admSchedWebPut();
     return;
   }
   d1SaveDay(dk, arr, function (ok) {
-    if (!ok) { toast('Не вдалося зберегти — немає зв’язку з базою'); return; }
+    if (!ok) { done(false, 'd1'); return; }
     try { dbPut('schedule/' + dk, arr.length ? arr : null, null); } catch (eM) {}
-    admSchedDone();
+    done(true);
   });
 }
 
@@ -5514,9 +5641,9 @@ function admBind() {
         if (a === 'edit') { admEditLesson(i); return; }
         if (a === 'saverow') { admSaveRow(i); return; }
         if (a === 'delrow') { admDelRow(i); return; }
-        if (a === 'up' && i > 0) { const d = admDraftArr(); const x = d[i - 1]; d[i - 1] = d[i]; d[i] = x; admRenderBody(); return; }
-        if (a === 'dn') { const d = admDraftArr(); if (i < d.length - 1) { const x = d[i + 1]; d[i + 1] = d[i]; d[i] = x; admRenderBody(); } return; }
-        if (a === 'del') { const d = admDraftArr(); d.splice(i, 1); admRenderBody(); toast('Урок видалено зі списку'); return; }
+        if (a === 'up' && i > 0) { const d = admDraftArr(); const x = d[i - 1]; d[i - 1] = d[i]; d[i] = x; ADM.dirty = true; admRenderBody(); return; }
+        if (a === 'dn') { const d = admDraftArr(); if (i < d.length - 1) { const x = d[i + 1]; d[i + 1] = d[i]; d[i] = x; ADM.dirty = true; admRenderBody(); } return; }
+        if (a === 'del') { const d = admDraftArr(); d.splice(i, 1); ADM.dirty = true; admRenderBody(); toast('Урок видалено зі списку'); return; }
         return;
       }
       const ed = ev.target.closest('[data-edit]');
@@ -5779,7 +5906,25 @@ function init() {
     nMinSl.onchange = function () {
       if (_bad) { _revert(); return; }   // скрол нічого не зберігає
       const v = parseInt(nMinSl.value, 10) || 5;
-      if (v !== _orig) { saveNotif(); pushNotifSched(); syncUp(); }
+      if (v !== _orig) {
+        /* 3.5.45: зміна «повідомити за N хв» ПЕРЕПЛАНОВУЄ сьогоднішні уроки */
+        try {
+          const _now = Date.now();
+          for (let dd = 0; dd <= 1; dd++) {
+            const day = new Date(Date.now() + dd * 86400000);
+            const _dstr = day.getFullYear() + '-' + ('0' + (day.getMonth() + 1)).slice(-2) + '-' + ('0' + day.getDate()).slice(-2);
+            const _dayMs = new Date(day.getFullYear(), day.getMonth(), day.getDate()).getTime();
+            (RES[((day.getDay() + 6) % 7)] || []).forEach(function (l) {
+              const m = /^(\d{1,2}):(\d{2})/.exec(String(l.t || ''));
+              if (!m) return;
+              const at = _dayMs + ((+m[1]) * 60 + (+m[2])) * 60000 - v * 60000;
+              if (at > _now) { const fk = _dstr + '|' + String(l.t); delete NFIRED[fk]; delete NARMED[fk]; }
+            });
+          }
+          nfSaveMaps();
+        } catch (eR45) {}
+        saveNotif(); pushNotifSched(); syncUp();
+      }
       _orig = NOTIF.min;
     };
   }
@@ -5974,6 +6119,12 @@ function init() {
   if (ACC.user) {
     showDataLoad('Завантаження…', 'перевіряємо дані акаунта на сервері');
     dlSafety();
+    /* 3.5.45: СТРАХОВКА «85% НАЗАВЖДИ» — за 8 с інтерфейс відкриється
+       з локальними даними обов'язково, перевірка сервера догорить у фоні. */
+    setTimeout(function () {
+      if (bootRevealed || dataVerified || updOpen()) return;
+      try { dataVerified = true; hideDataLoad(); revealNow(); } catch (eCap) {}
+    }, 8000);
     if (S) { showMain(); render(); }   // під екраном завантаження — миттєвий показ після перевірки
   }
   else if (S) { showMain(); render(); }
@@ -5986,14 +6137,10 @@ function init() {
     const c = JSON.parse(localStorage.getItem('fh_cache') || 'null');
     if (c && c.data) {
       cacheTs = c.ts || 0;
-      /* 3.5.24: КЕШ СТАРШИЙ ЗА 24 ГОДИНИ — предмети/вчителі з нього БІЛЬШЕ
-         НЕ малюються. Раніше «протухлий» кеш міг тижнями показувати старі
-         іконки (bookf/filmf/EN-UA-DE), якщо свіжий фетч не встигав;
-         розклад/тижні/канал залишається — вони мають офлайн-цінність,
-         а свіжі предмети доїжджають за частку секунди (pollSubjects) */
-      const stale = !c.ts || (Date.now() - c.ts) > 86400000;
-      if (stale) applyDb({ schedule: c.data.schedule, weeks: c.data.weeks, app: c.data.app }, true);
-      else applyDb(c.data, true);
+      /* 3.5.45: кеш БУДЬ-ЯКОГО віку малюється ПОВНІСТЮ (розклад + предмети +
+         вчителі + тижні); свіжі дані тихо доїжджають у фоні й виправляють
+         усе за частку секунди, а старт завжди миттєвий. */
+      applyDb(c.data, true);
     }
   } catch (e) {}
 
@@ -6059,9 +6206,9 @@ window.__fh = {
        дата|HH:MM, pushNotifSched вилучає такі уроки з payload, тож після
        перестановки списку синком хост не сповістить той самий урок вдруге. */
     try {
-      const dk = new Date();
-      const fk = dk.getFullYear() + '-' + ('0' + (dk.getMonth() + 1)).slice(-2) + '-' + ('0' + dk.getDate()).slice(-2) + '|' + String(t || '');
+      const fk = nfKeyNow(t);
       NFIRED[fk] = 1;
+      delete NARMED[fk];   /* 3.5.45: нагадування відбулося */
       let nn = 0; for (const _k in NFIRED) nn++;
       if (nn > 40) {
         const _today = fk.split('|')[0];
@@ -6070,8 +6217,27 @@ window.__fh = {
         _cl[fk] = 1;
         NFIRED = _cl;
       }
-      try { localStorage.setItem('fh_nfired', JSON.stringify(NFIRED)); } catch (eN2) {}
+      let nA = 0; for (const _k3 in NARMED) nA++;
+      if (nA > 40) {
+        const _today2 = fk.split('|')[0];
+        const _cl2 = {};
+        for (const _k4 in NARMED) if (String(_k4).indexOf(_today2) === 0) _cl2[_k4] = 1;
+        NARMED = _cl2;
+      }
+      nfSaveMaps();
     } catch (eNF) {}
+  },
+  /* 3.5.45: кнопка «Нагадати за 1 хв» (новий хост повідомляє сюди) —
+     запам'ятали, зняли «вже сповіщено», перепланували на початок − 60 с */
+  notifSnooze: function (t) {
+    try {
+      const fk = nfKeyNow(t);
+      delete NFIRED[fk];
+      NARMED[fk] = 1;
+      nfSaveMaps();
+      pushNotifSched(true);
+      try { toast('Нагадаю за 1 хвилину до початку уроку ✓'); } catch (eT45) {}
+    } catch (eS45) {}
   },
   notifAction: function (act, url2) {
     try {

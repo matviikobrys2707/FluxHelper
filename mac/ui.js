@@ -105,6 +105,23 @@
    ініціалізації (екран «помилка інтерфейсу»). Див. notifFired / pushNotifSched. */
 var NFIRED = {};
 try { NFIRED = JSON.parse(localStorage.getItem('fh_nfired') || '{}') || {}; } catch (eNFI) { NFIRED = {}; }
+/* 3.5.45 ПЕРЕРОБКА СПОВІЩЕНЬ (власник: «я нажимаю сповістити за одну хвилину
+   до уроку — оно должно запомнить, уведомление пропадает и больше не
+   появляться. Появиться только если до начала урока меньше 60 секунд»).
+   NARMED — «нагадування за 60 с» поставлене користувачем (кнопка в тості
+   або вибір «за 1 хвилину»): такий урок ВИКЛЮЧАЄМО зі звичайного плану
+   NOTIF.min і плануємо РІВНО на початок мінус 60 секунд. Працює в парі з
+   новим хостом 3.5.45, який стріляє точно за `at` (epoch ms) без «запасів». */
+var NARMED = {};
+try { NARMED = JSON.parse(localStorage.getItem('fh_narmed') || '{}') || {}; } catch (eNAR) { NARMED = {}; }
+function nfKeyNow(t) {
+  const dk = new Date();
+  return dk.getFullYear() + '-' + ('0' + (dk.getMonth() + 1)).slice(-2) + '-' + ('0' + dk.getDate()).slice(-2) + '|' + String(t || '');
+}
+function nfSaveMaps() {
+  try { localStorage.setItem('fh_nfired', JSON.stringify(NFIRED)); } catch (e1) {}
+  try { localStorage.setItem('fh_narmed', JSON.stringify(NARMED)); } catch (e2) {}
+}
 const LOGO = "data:image/png;base64,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";
 try{window.__fhDevInfo=__DEVINFO_JSON__;}catch(e){window.__fhDevInfo=null;}
 /* 3.5.34 ФІКС «ВИКИДАЄ З АКАУНТА КОЖНОГО ПЕРЕЗАПУСКУ» + «майстер груп щоразу»:
@@ -249,7 +266,7 @@ function validS(x) {
 })();
 
 // ---------------- версія + перший запуск ----------------
-const APP_VER = '3.5.44';                  // версія X.Y.Z — з version.h (див. main.cpp)
+const APP_VER = '3.5.45';                  // версія X.Y.Z — з version.h (див. main.cpp)
 /* 3.5.5: КАНАЛ ЗБІРКИ — 'beta' або 'release'. Бета-збірки підписують версію
    словом «beta» скрізь у інтерфейсі (профіль, «Про програму», вікно оновлення),
    релізні показують чистий номер. Перед релізом змінюємо тут і перезбираємо. */
@@ -1320,7 +1337,7 @@ const ADM_ICON_CAT = [
   ['Природа', ['ecof','flower','tree','bug','fish','sun','moon','cloud','flame']],
   ['Символи', ['smile','key','lock','shield','award','hourglass','watch','bell','calendar','star','heart','flag','pin']]
 ];
-let ADM = { tab: 0, day: 0, draft: null, subj: null, pick: null, edit: -1, zm: 'one', zs: true, zv: null, wy: 0, wm: 0 };
+let ADM = { tab: 0, day: 0, draft: null, subj: null, pick: null, edit: -1, zm: 'one', zs: true, zv: null, wy: 0, wm: 0, dirty: false, saving: false };
 
 function admName(key) { return key ? key.charAt(0).toUpperCase() + key.slice(1) : ''; }
 function admStaff() { return !!(ACC.user && staff()); }
@@ -1334,11 +1351,11 @@ function admShow() {
   if (typeof markNav === 'function') markNav('adm');
   if (typeof setSeg === 'function') setSeg('adm');
   if (typeof setTbSec === 'function') setTbSec('адмін-панель');
-  ADM.draft = null;
+  ADM.draft = null; ADM.dirty = false;   /* 3.5.45: відкриття панелі — чернетка з бази */
   admRender();
 }
 function admSetTab(i) { ADM.tab = i; admRender(); }
-function admSetDay(i) { ADM.day = i; ADM.draft = null; admRenderBody(); }
+function admSetDay(i) { ADM.day = i; ADM.draft = null; ADM.dirty = false; admRenderBody(); }
 /* 3.4.0: АДМІНКА-ФРЕЙМ — одна велика рамка «Редагування розкладу» з трьома
    внутрішніми вкладками (Розклад / Zoom / Вчителі іконки), а ТИЖНІ — окремою
    рамкою ПІД нею: видно завжди, на будь-якій вкладці, і оновлюється наживо. */
@@ -1478,6 +1495,7 @@ function admAddRow() {
     e = pad(Math.floor(em / 60) % 24) + ':' + pad(em % 60);
   }
   d.push({ s: '', t: t, e: e });
+  ADM.dirty = true;   /* 3.5.45: чернетка змінена — синк більше її не перезаписує */
   admRenderBody();
   const rows = byId('admRows');
   if (rows) rows.scrollTop = rows.scrollHeight;
@@ -1528,6 +1546,7 @@ function admSaveRow(i) {
   if (prev && prev.e && toMin(t) < toMin(prev.e)) { toast('Початок раніше кінця попереднього уроку (' + prev.e + ')'); return; }
   if (next && next.t && toMin(ev) > toMin(next.t)) { toast('Кінець пізніше початку наступного уроку (' + next.t + ')'); return; }
   d[i] = { s: s, t: t, e: ev };
+  ADM.dirty = true;
   admModalClose();
   admRenderBody();
   toast('Урок оновлено у списку ✓');
@@ -1536,38 +1555,72 @@ function admDelRow(i) {
   const d = admDraftArr();
   if (!d[i]) return;
   d.splice(i, 1);
+  ADM.dirty = true;
   admModalClose();
   admRenderBody();
   toast('Урок видалено зі списку');
 }
 function admSaveSched() {
+  if (ADM.saving) return;   /* 3.5.45: одна збережанка за раз */
   const draft = ADM.draft || [];
   const skip = draft.some(function (r) { return !normSubj(r.s) || !r.t || !r.e; });
   const arr = draft.filter(function (r) { return normSubj(r.s) && r.t && r.e; })
     .map(function (r) { return { s: admName(normSubj(r.s)), t: r.t, e: r.e }; });
   const dk = DAYDEFS[ADM.day][0];
-  /* 3.5.33: застосунок пише НАПРЯМУ в Cloudflare D1 (джерело істини) і
-     піднімає rev — всі пристрої оновлюються миттєво; Firebase-дзеркало
-     лишається для старих версій. Сайт пише у Firebase, як і було. */
-  const admSchedDone = function () {
+  /* 3.5.45: кнопка показує стан, поки збереження не ПІДТВЕРДЖЕНО базою */
+  const saveBtn = document.querySelector('[data-act="savesched"]');
+  const busy = function (on, txt) {
+    ADM.saving = on;
+    if (saveBtn) { saveBtn.disabled = on; saveBtn.textContent = on ? 'Зберігаємо…' : 'Зберегти розклад'; }
+  };
+  const done = function (ok, why) {
+    busy(false);
+    if (!ok) {
+      /* 3.5.45: ЧЕСНА помилка. Чернетка лишається — можна натиснути ще раз. */
+      toast(why === 'verify' ? 'База не підтвердила збереження — натисни «Зберегти розклад» ще раз'
+                             : 'Не вдалося зберегти — немає зв’язку з базою');
+      try { admRenderBody(); } catch (eR) {}
+      return;
+    }
     if (!DBD.schedule) DBD.schedule = {};
-    DBD.schedule[dk] = arr;
-    ADM.draft = null;
+    DBD.schedule[dk] = arr.map(function (r) { return { e: r.e, s: r.s, t: r.t }; });
+    ADM.draft = null; ADM.dirty = false;
     if (typeof render === 'function') render(false);
     admRender();
-    toast(skip ? 'Розклад оновлено ✓ (порожні рядки пропущено)' : 'Розклад оновлено ✓');
+    toast(skip ? 'Розклад оновлено ✓ (перевірено в базі; порожні рядки пропущено)' : 'Розклад оновлено ✓ (перевірено в базі)');
   };
+  busy(true);
   if (window.FH_WEB) {
-    dbPut('schedule/' + dk, arr.length ? arr : null, function (ok) {
-      if (!ok) { toast('Не вдалося зберегти — немає зв’язку з базою'); return; }
-      admSchedDone();
-    });
+    /* САЙТ: пишемо в Firebase-дзеркало і читаемо день назад — успіх тільки
+       якщо сервер реально віддає саме наш розклад (3.5.45). */
+    const verifyWeb = function (attempt) {
+      fetch(DB_URL + '/' + fbEnc('schedule/' + dk) + '.json?cb=' + Date.now(), { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .catch(function () { return null; })
+        .then(function (j) {
+          if (j === null) { if (attempt < 1) { setTimeout(function () { verifyWeb(attempt + 1); }, 1200); return; } done(false, 'verify'); return; }
+          const srv = (j === undefined || j === null) ? [] : j;
+          if (Array.isArray(srv) && admDaySame(srv, arr)) { done(true); return; }
+          if (attempt < 1) { admSchedWebPut(); return; }
+          done(false, 'verify');
+        });
+    };
+    const admSchedWebPut = function () {
+      fetch(DB_URL + '/' + fbEnc('schedule/' + dk) + '.json', { method: 'PUT', body: JSON.stringify(arr.length ? arr : null) })
+        .then(function (r) {
+          if (!r.ok) { done(false, 'put'); return; }
+          try { dbPut('update/webrev', Date.now(), null); } catch (eWB45) {}
+          verifyWeb(0);
+        })
+        .catch(function () { done(false, 'put'); });
+    };
+    admSchedWebPut();
     return;
   }
   d1SaveDay(dk, arr, function (ok) {
-    if (!ok) { toast('Не вдалося зберегти — немає зв’язку з базою'); return; }
+    if (!ok) { done(false, 'd1'); return; }
     try { dbPut('schedule/' + dk, arr.length ? arr : null, null); } catch (eM) {}
-    admSchedDone();
+    done(true);
   });
 }
 
@@ -2056,9 +2109,9 @@ function admBind() {
         if (a === 'edit') { admEditLesson(i); return; }
         if (a === 'saverow') { admSaveRow(i); return; }
         if (a === 'delrow') { admDelRow(i); return; }
-        if (a === 'up' && i > 0) { const d = admDraftArr(); const x = d[i - 1]; d[i - 1] = d[i]; d[i] = x; admRenderBody(); return; }
-        if (a === 'dn') { const d = admDraftArr(); if (i < d.length - 1) { const x = d[i + 1]; d[i + 1] = d[i]; d[i] = x; admRenderBody(); } return; }
-        if (a === 'del') { const d = admDraftArr(); d.splice(i, 1); admRenderBody(); toast('Урок видалено зі списку'); return; }
+        if (a === 'up' && i > 0) { const d = admDraftArr(); const x = d[i - 1]; d[i - 1] = d[i]; d[i] = x; ADM.dirty = true; admRenderBody(); return; }
+        if (a === 'dn') { const d = admDraftArr(); if (i < d.length - 1) { const x = d[i + 1]; d[i + 1] = d[i]; d[i] = x; ADM.dirty = true; admRenderBody(); } return; }
+        if (a === 'del') { const d = admDraftArr(); d.splice(i, 1); ADM.dirty = true; admRenderBody(); toast('Урок видалено зі списку'); return; }
         return;
       }
       const ed = ev.target.closest('[data-edit]');
@@ -2410,8 +2463,13 @@ function pushNotifSched(quiet) {   // 3.4.5: quiet=true — розклад із 
            ігнорують; нові зможуть планувати секундамі — фікс «за 1 хв приходить
            за 90 с» без перебудови ключів. */
         const _sm = (/^(\d{1,2}):(\d{2})/.exec(String(l.t)));
-        const _at = _sm ? (_dayMs + ((+_sm[1]) * 60 + (+_sm[2])) * 60000 - NOTIF.min * 60000) : 0;
-        items.push({ dow: dow, t: l.t, n: '\uD83D\uDD14 ' + l.name, u: l.url || '', m: ZOOM.mode, d: _dstr, at: _at });   /* \uD83D\uDD14 = 🔔 */
+        /* 3.5.45: NARMED — «Нагадати за 1 хв» натиснуто: стріляємо РІВНО
+           за 60 секунд до початку, а НЕ за NOTIF.min (власник: «появиться
+           только если до начала урока будет меньше 60 секунд») */
+        const _armed60 = !!NARMED[_fk];
+        const _mins = _armed60 ? 1 : NOTIF.min;
+        const _at = _sm ? (_dayMs + ((+_sm[1]) * 60 + (+_sm[2])) * 60000 - _mins * 60000) : 0;
+        items.push({ dow: dow, t: l.t, n: '\uD83D\uDD14 ' + l.name, u: l.url || '', m: ZOOM.mode, d: _dstr, at: _at, r60: _armed60 ? 1 : 0 });   /* \uD83D\uDD14 = 🔔 */
       }
     });
   }
@@ -2563,6 +2621,18 @@ function applyDb(db, fromCache) {
   if (changed) {
     if (!setupOpen) render(false);
     pushNotifSched();
+    /* 3.5.45: чернетка адмінки НЕ ВІДСТАЄ від бази. Якщо синхронізація
+       принесла новий розклад, а користувач нічого не редагував у чернетці —
+       чернетку перезбираємо (раніше вона лишалась застарілою, і «Зберегти
+       розклад» затирало свіжі дані старим списком). Позначку ADM.dirty
+       ставлять усі дії редагування (рядки, порядок, видалення). */
+    try {
+      if (typeof ADM !== 'undefined' && ADM && !ADM.dirty && !ADM.saving) {
+        ADM.draft = null;
+        const ab45 = byId('admBody');
+        if (ab45 && !ab45.closest('.hidden') && typeof admRenderBody === 'function') admRenderBody();
+      }
+    } catch (eD45) {}
   }
   // живе відстеження версії: поки програма відкрита — як тільки в базі з'явиться
   // нова версія (SSE/doFetch), одразу показуємо модалку оновлення
@@ -2815,37 +2885,105 @@ function d1UpsertSubject(name, fields, cb) {
     });
   });
 }
+/* ================================================================
+   3.5.45 — ПЕРЕРОБКА ЗБЕРЕЖЕННЯ РОЗКЛАДУ (власник: «повністю переробай
+   логику админпанели… написало ошибку 'не вдалося зберегти', а на самом
+   деле оно удалило все уроки в четверг»).
+
+   Що було погано в d1SaveDay:
+   1) DELETE виконувався ОКРЕМИМ запитом — якщо відповідь не встигала
+      (таймаут 8 с) або наступні INSERT-и губились, ДЕНЬ ЗАЛИШАВСЯ
+      ПОРОЖНІМ у базі, а інтерфейс чесно казав «не вдалося зберегти».
+   2) d1BumpSnap() стріляв ОДРАЗУ після запуску DELETE (ще ДО результатів)
+      — ревізія піднімалась навіть при провалі, і всі пристрої тягнули
+      «порожній день».
+   3) Жодної перевірки: «зберегли» = «відправили запити».
+
+   Як тепер (3.5.45):
+   1) ВСЬОГО 2 ЗАПИТИ: DELETE зайвих позицій (pos >= N) + ОДИН multi-VALUES
+      UPSERT усіх уроків дня (ON CONFLICT(day,pos) DO UPDATE) — з ними
+      практично неможливо не встигнути, а порядок не важливий.
+   2) ПЕРЕВІРКА НА СЕРВЕРІ: читаємо день назад і ПОРІВНЮЄМО з чернеткою.
+   3) Ревізія (rev) і дзеркало Firebase — ЛИШЕ після підтвердженої успіху.
+   4) Невдача → чесна помилка + автоповтор один раз; чернетка НЕ губиться.
+   ================================================================ */
+let _admSubjMap = null, _admSubjMapT = 0;
+function admSubjMap(cb) {
+  /* карта нижча(ім'я) -> id з D1; JS toLowerCase коректно працює з кирилицею
+     (SQLite lower() — ні, саме тому старий «lower(name)=lower(?)» часом
+     не знаходив предмет і ламав ланцюжок збереження) */
+  if (_admSubjMap && (Date.now() - _admSubjMapT) < 120000) { cb(_admSubjMap); return; }
+  cfExec('SELECT id, name FROM subject', [], function (rows) {
+    if (!rows) { cb(null); return; }
+    const m = {};
+    rows.forEach(function (r) { if (r && r.name) m[String(r.name).trim().toLowerCase()] = r.id; });
+    _admSubjMap = m; _admSubjMapT = Date.now();
+    cb(m);
+  });
+}
+function admDaySame(server, arr) {
+  if (!Array.isArray(server) || server.length !== arr.length) return false;
+  for (let i = 0; i < arr.length; i++) {
+    const a = arr[i], b = server[i] || {};
+    if (String(b.title || '') !== String(a.s) || String(b.t_start || '') !== String(a.t) || String(b.t_end || '') !== String(a.e)) return false;
+  }
+  return true;
+}
 function d1SaveDay(dk, arr, cb) {
   if (window.FH_WEB || !cfOk()) { if (cb) cb(false); return; }
-  let bad = 0, left = arr.length + 1;
-  const step = function () { if (--left <= 0 && cb) cb(bad === 0); };
-  cfExec('DELETE FROM schedule WHERE day=?', [dk], function (rd) {
-    if (rd === null) bad++;
-    step();
-    if (!arr.length) { if (bad === 0) d1BumpSnap(); return; }
-    arr.forEach(function (it, i) {
-      cfExec('SELECT id FROM subject WHERE lower(name)=lower(?)', [it.s], function (rows) {
-        if (!rows) { bad++; step(); return; }
-        const insRow = function (sid) {
-          cfExec('INSERT INTO schedule (day, pos, subject_id, title, t_start, t_end) VALUES (?,?,?,?,?,?) ' +
-                 'ON CONFLICT(day,pos) DO UPDATE SET subject_id=excluded.subject_id, title=excluded.title, t_start=excluded.t_start, t_end=excluded.t_end',
-                 [dk, i + 1, sid, it.s, it.t, it.e], function (r2) {
-            if (!r2) bad++;
-            step();
-          });
-        };
-        if (rows[0]) { insRow(rows[0].id); return; }
-        cfExec('INSERT INTO subject (name) VALUES (?)', [String(it.s).toLowerCase()], function (r3) {
-          if (r3 === null) { bad++; step(); return; }
-          cfExec('SELECT id FROM subject WHERE lower(name)=lower(?)', [it.s], function (rows2) {
-            if (!rows2 || !rows2[0]) { bad++; step(); return; }
-            insRow(rows2[0].id);
-          });
+  const finishErr = function (why) { try { console.warn('adm save failed:', why); } catch (eC) {} if (cb) cb(false); };
+  const verify = function (attempt) {
+    cfExec('SELECT pos, title, t_start, t_end FROM schedule WHERE day=? ORDER BY pos LIMIT 12', [dk], function (rows) {
+      if (rows === null) { if (attempt < 1) { setTimeout(function () { verify(attempt + 1); }, 1200); return; } finishErr('verify-read'); return; }
+      if (admDaySame(rows, arr)) {
+        d1BumpSnap();   /* 3.5.45: ревізія ЛИШЕ тепер — день справді збережено */
+        if (cb) cb(true);
+        return;
+      }
+      if (attempt < 1) { saveOnce(attempt + 1); return; }   /* автоповтор */
+      finishErr('verify-mismatch');
+    }, 15000);
+  };
+  const saveOnce = function (attempt) {
+    admSubjMap(function (map) {
+      if (!map) { finishErr('subjects-unread'); return; }
+      const missing = [];
+      arr.forEach(function (it) { if (!map[String(it.s).trim().toLowerCase()]) missing.push(it.s); });
+      const afterSubjects = function () {
+        admSubjMap(function (map2) {
+          if (!map2) { finishErr('subjects-unread-2'); return; }
+          let left = 1 + (arr.length ? 1 : 0), bad = 0;
+          const step = function () { if (--left <= 0) { if (bad) finishErr('write-fail'); else verify(attempt); } };
+          cfExec('DELETE FROM schedule WHERE day=? AND pos>=?', [dk, arr.length], function (r0) {
+            if (!r0) bad++; step();
+          }, 15000);
+          if (arr.length) {
+            const vals = [], ps = [];
+            arr.forEach(function (it, i) {
+              const sid = map2[String(it.s).trim().toLowerCase()];
+              if (!sid) { bad++; return; }   /* предмет так і не знайшовся — перевірка зловить */
+              vals.push('(?,?,?,?,?,?)');
+              ps.push(dk, i, sid, it.s, it.t, it.e);
+            });
+            if (!vals.length) { if (!bad) verify(attempt); return; }
+            cfExec('INSERT INTO schedule (day, pos, subject_id, title, t_start, t_end) VALUES ' + vals.join(',') +
+                   ' ON CONFLICT(day,pos) DO UPDATE SET subject_id=excluded.subject_id, title=excluded.title, t_start=excluded.t_start, t_end=excluded.t_end',
+                   ps, function (r1) { if (!r1) bad++; step(); }, 15000);
+          }
         });
-      });
+      };
+      if (!missing.length) { afterSubjects(); return; }
+      /* 3.5.45: предмет, якого нема в базі, створюємо одним UPSERT-ом */
+      let leftM = 1, badM = 0;
+      const valsM = missing.map(function () { return '(?)'; });
+      cfExec('INSERT INTO subject (name) VALUES ' + valsM.join(',') + ' ON CONFLICT(name) DO NOTHING',
+             missing.map(function (s) { return String(s).toLowerCase(); }), function (rM) {
+        if (!rM) badM++;
+        if (--leftM <= 0) { if (badM) finishErr('subject-create'); else afterSubjects(); }
+      }, 15000);
     });
-    if (bad === 0) d1BumpSnap();
-  });
+  };
+  saveOnce(0);
 }
 function d1SaveWeeks(inverted, cb) {
   if (window.FH_WEB || !cfOk()) { if (cb) cb(false); return; }
@@ -3034,6 +3172,14 @@ function updOpen() { return UPD.avail; }
 // пріоритет. Третій елемент пункта ('pc'/'android') — показувати лише
 // на одній платформі; без нього — на обох.
 const WHATS_NEW = {
+  '3.5.45': [
+    ['✦', 'ШВИДКІСТЬ: сайт більше не висить на 85% після довгої паузи — відкривається одразу з кешу будь-якого віку, свіжі дані тихо доїжджають у фоні', '/'],
+    ['✦', 'АДМІНКА: збереження розкладу ПЕРЕРОБЛЕНО — один атомарний запис + перевірка на сервері; «не вдалося зберегти» більше НЕ означає «тихо видалило день» (четвер відновлено)', '/'],
+    ['✦', 'СПОВІЩЕННЯ ПК: «Нагадати за 1 хв» тепер запам‘ятовується — тост зникає і приходить РІВНО за 60 секунд до уроку, без повторів', '/'],
+    ['✦', 'СПОВІЩЕННЯ ПК: зміна «повідомити за N хв» перепланувала сьогоднішні уроки — сповіщення приходить за новим часом, навіть якщо стара вже стрільнула', '/'],
+    ['✦', 'НАЛАШТУВАННЯ ПК (сайт): повернуто дві колонки 3.5.44; рамка «Копіювання посилання» — такої ж ширини, як «Запуск Zoom»', '/'],
+  ],
+
   '3.5.44': [
     ['✦', 'ПК-ВЕРСІЯ ОНОВЛЮЄТЬСЯ РАЗОМ З ТЕЛЕФОНОМ: налаштування тепер у ДВОХ КОЛОНКАХ — ліворуч «Сповіщення», праворуч «Запуск Zoom», «Захід на урок» і «Копіювання посилання»', '/'],
     ['✦', 'Налаштування ПК: СУЧАСНИЙ дизайн карток із кольоровими іконками — точь-в-точь як на телефоні; стара рамка «Сповіщень» пішла', '/'],
@@ -3313,15 +3459,19 @@ function wnClose() {
 function revealNow() {
   if (bootRevealed || updOpen()) return;
   if (ACC.user && !dataVerified) {
-    /* 3.5.26: ШВИДКИЙ СТАРТ (просив власник: «щоб не чекати завантаження
-       щоразу при перезавантаженні») — якщо є СВІЖИЙ кеш (менше 24 год),
-       показуємо інтерфейс ОДРАЗУ з кешованими даними, а перевірку сервера
-       доводимо тихо у фоні; якщо сервер скаже інше — sync усе виправить. */
+    /* 3.5.45 ФІКС «висить на 85%» (просив власник: «если его долго не
+       перезагружаешь, то он очень долго загружается на 85%… сделай, чтобы
+       всё быстро загружалось всегда»). Раніше миттєвий показ давав ЛИШЕ
+       кеш молодше 24 год — «протухлий» кеш ігнорувався, і кожне відкриття
+       після паузи чекало повільну перевірку сервера. Тепер СВІЖІСТЬ КЕШУ
+       БІЛЬШЕ НЕ ВАЖЛИВА: з будь-яким кешем інтерфейс відкривається ОДРАЗУ,
+       а серверну перевірку sync доводить тихо у фоні (якщо сервер скаже
+       інше — дані виправляться на льоту, нічого не губиться). */
     try {
       const c0 = JSON.parse(localStorage.getItem('fh_cache') || 'null');
-      if (c0 && c0.ts && (Date.now() - c0.ts) < 86400000) { bootReady = true; return; }
+      if (c0 && c0.data) { bootReady = true; return; }
     } catch (e0) {}
-    return;   // кешу нема/старий — чекаємо сервер, як раніше
+    return;   // кешу нема взагалі — чекаємо сервер (перший запуск)
   }
   bootReady = true;
 }
@@ -3859,7 +4009,7 @@ let cfSeq = 0;
 const cfCbs = {};
 // один запит до D1 (POST /d1/database/<id>/query). Телефон — прямий fetch
 // (WebView без CORS-обмежень), ПК — через хост (fh:cfq -> WinHTTP).
-function cfExec(sql, params, cb) {
+function cfExec(sql, params, cb, tmo) {
   const id = 'cf' + (++cfSeq) + '_' + Date.now();
   cfCbs[id] = cb || null;
   const payload = JSON.stringify({ sql: sql, params: params || [] });
@@ -3874,8 +4024,10 @@ function cfExec(sql, params, cb) {
     cb2(rows);
   };
   /* 3.4.10: 20с -> 8с — при слабкій мережі довгий таймаут множився ретраями
-     fetchRole і лишав екран завантаження «завмерлим» на хвилини */
-  setTimeout(function () { if (cfCbs[id]) { delete cfCbs[id]; cfLast = 0; if (cb) cb(null); } }, 8000);   // 3.4.10: було 20с
+     fetchRole і лишав екран завантаження «завмерлим» на хвилини.
+     3.5.45: збереження адмінки просить ДОВШИЙ таймаут (15 с) — запису не
+     вистачає 8 с, а хибний таймаут на записі = «помилка, а записав». */
+  setTimeout(function () { if (cfCbs[id]) { delete cfCbs[id]; cfLast = 0; if (cb) cb(null); } }, tmo || 8000);
   if (ANDROID && window.AndroidHost && window.AndroidHost.cfq) {
     try { AndroidHost.cfq(id, payload); return; } catch (e) { delete cfCbs[id]; }
   }
@@ -5073,6 +5225,16 @@ function betaAllowed() {
 function fetchRole(k, cb, _n) {
   const n = _n || 0;
   if (!k) { if (cb) cb(null); return; }
+  /* 3.5.45 ШВИДКИЙ СТАРТ САЙТУ: cfExec (пряма D1) із браузера неможливий —
+     немає D1-токена, і раніше сайт ЩОРАЗУ робив три мертві спроби по 1.4 с,
+     перш ніж упасти на дзеркало. Тепер сайт одразу читає роль/синк з
+     дзеркала (update/web/<uid> + /api/sync) — без марних очікувань. */
+  if (window.FH_WEB && typeof apiGetRow === 'function') {
+    try {
+      apiGetRow(function (row) { if (cb) cb(row ? [row] : null); });
+    } catch (eW) { if (cb) cb(null); }
+    return;
+  }
   cfExec('SELECT role, sync FROM users WHERE user_id=?', [k], function (rows) {
     if (rows === null && n < 2 && ACC.user) { setTimeout(function () { fetchRole(k, cb, n + 1); }, 1400); return; }
     if (cb) cb(rows);
@@ -5098,7 +5260,15 @@ function syncPull(force, cb, _try) {   // 3.4.4: cb(dec) — 'ok' | 'master' | '
      адміна/перемикачі гарантовано вже на місці при показі інтерфейсу,
      а syncApply бачить правильний ACC.sync (раніше це були ДВА різні
      запити-перегони — і роль могла прибути пізніше за інтерфейс). */
-  cfExec('SELECT role, sync, settings, sts FROM users WHERE user_id=?', [k], function (rows) {
+  /* 3.5.45: САЙТ — одразу через дзеркало/бекенд (apiGetRow), бо cfExec з
+     браузера неможливий. Аргументи (rows) далі йдуть тим самим шляхом. */
+  const runQuery = function (done) {
+    if (window.FH_WEB && typeof apiGetRow === 'function') {
+      try { apiGetRow(function (row) { done(row ? [row] : null); }); return; } catch (eW45) {}
+    }
+    cfExec('SELECT role, sync, settings, sts FROM users WHERE user_id=?', [k], done);
+  };
+  runQuery(function (rows) {
     if (!ACC.user) { if (cb) cb('offline'); return; }
     if (rows && rows[0]) { fhRowSeen(k); accApplyAuth(rows); }   // 3.4.8: рядок підтверджено
     /* 3.4.5: D1 не відповіла -> до ДВОХ повторів з паузою 1,5 с (мережа могла
@@ -5657,7 +5827,31 @@ function init() {
     nMinSl.onchange = function () {
       if (_bad) { _revert(); return; }   // скрол нічого не зберігає
       const v = parseInt(nMinSl.value, 10) || 5;
-      if (v !== _orig) { saveNotif(); pushNotifSched(); syncUp(); }
+      if (v !== _orig) {
+        /* 3.5.45 ПЕРЕРОБКА: зміна «повідомити за N хв» тепер ПЕРЕПЛАНОВУЄ
+           сьогоднішні уроки, а не ігнорує їх. Раніше урок, який уже
+           сповіщення отримав (NFIRED), виключався з плану назавжди —
+           «поставив за 1 хвилину, а сповіщення так і не прийшло». Тепер:
+           для сьогоднішніх уроків, чий НОВИЙ момент (початок − N хв) ще
+           попереду, знімаємо «вже сповіщено» і «нагадування за 60 с» —
+           хост 3.5.45 переставить тост на новий час без повторів. */
+        try {
+          const _now = Date.now();
+          for (let dd = 0; dd <= 1; dd++) {
+            const day = new Date(Date.now() + dd * 86400000);
+            const _dstr = day.getFullYear() + '-' + ('0' + (day.getMonth() + 1)).slice(-2) + '-' + ('0' + day.getDate()).slice(-2);
+            const _dayMs = new Date(day.getFullYear(), day.getMonth(), day.getDate()).getTime();
+            (RES[((day.getDay() + 6) % 7)] || []).forEach(function (l) {
+              const m = /^(\d{1,2}):(\d{2})/.exec(String(l.t || ''));
+              if (!m) return;
+              const at = _dayMs + ((+m[1]) * 60 + (+m[2])) * 60000 - v * 60000;
+              if (at > _now) { const fk = _dstr + '|' + String(l.t); delete NFIRED[fk]; delete NARMED[fk]; }
+            });
+          }
+          nfSaveMaps();
+        } catch (eR45) {}
+        saveNotif(); pushNotifSched(); syncUp();
+      }
       _orig = NOTIF.min;
     };
   }
@@ -5716,6 +5910,13 @@ function init() {
   if (ACC.user) {
     showDataLoad('Завантаження…', 'перевіряємо дані акаунта на сервері');
     dlSafety();
+    /* 3.5.45: СТРАХОВКА «85% НАЗАВЖДИ». Які б повільні запити ні висіли
+       (холодний Render, повільна мережа) — за 8 с інтерфейс відкриється
+       з локальними даними обов'язково, а серверна перевірка догорить у фоні. */
+    setTimeout(function () {
+      if (bootRevealed || dataVerified || updOpen()) return;
+      try { dataVerified = true; hideDataLoad(); revealNow(); } catch (eCap) {}
+    }, 8000);
     if (S) { showMain(); render(); }   // під екраном завантаження — миттєвий показ після перевірки
   } else if (S) { showMain(); render(); }
   else { showMain(true); render(false); }   // 3.4.6: майстер НЕ відкриваємо до входу — рішення після бази
@@ -5727,14 +5928,12 @@ function init() {
     const c = JSON.parse(localStorage.getItem('fh_cache') || 'null');
     if (c && c.data) {
       cacheTs = c.ts || 0;
-      /* 3.5.24: КЕШ СТАРШИЙ ЗА 24 ГОДИНИ — предмети/вчителі з нього БІЛЬШЕ
-         НЕ малюються. Раніше «протухлий» кеш міг тижнями показувати старі
-         іконки (bookf/filmf/EN-UA-DE), якщо свіжий фетч не встигав;
-         розклад/тижні/канал залишається — вони мають офлайн-цінність,
-         а свіжі предмети доїжджають за частку секунди (pollSubjects) */
-      const stale = !c.ts || (Date.now() - c.ts) > 86400000;
-      if (stale) applyDb({ schedule: c.data.schedule, weeks: c.data.weeks, app: c.data.app }, true);
-      else applyDb(c.data, true);
+      /* 3.5.45: кеш БУДЬ-ЯКОГО віку малюється ПОВНІСТЮ (розклад + предмети +
+         вчителі + тижні). Раніше «протухлий» (>24 год) кеш малювався без
+         предметів/вчителів — після довгої паузи перший кадр був із кривими
+         іконками; тепер свіжі дані тихо доїжджають у фоні й виправляють
+         усе за частку секунди, а старт завжди миттєвий. */
+      applyDb(c.data, true);
     }
   } catch (e) {}
 
@@ -5834,9 +6033,9 @@ window.__fh = {
      pushNotifSched ВИЛУЧАЄ такі уроки з payload, тож хост фізично не може
      сповіщити їх вдруге, навіть після перестановки списку. */
     try {
-      const dk = new Date();
-      const fk = dk.getFullYear() + '-' + ('0' + (dk.getMonth() + 1)).slice(-2) + '-' + ('0' + dk.getDate()).slice(-2) + '|' + String(t || '');
+      const fk = nfKeyNow(t);
       NFIRED[fk] = 1;
+      delete NARMED[fk];   /* 3.5.45: нагадування відбулося — прапорець знято */
       let nn = 0; for (const _k in NFIRED) nn++;
       if (nn > 40) {
         const _today = fk.split('|')[0];
@@ -5845,8 +6044,30 @@ window.__fh = {
         _cl[fk] = 1;
         NFIRED = _cl;
       }
-      try { localStorage.setItem('fh_nfired', JSON.stringify(NFIRED)); } catch (eN2) {}
+      let nA = 0; for (const _k3 in NARMED) nA++;
+      if (nA > 40) {
+        const _today2 = fk.split('|')[0];
+        const _cl2 = {};
+        for (const _k4 in NARMED) if (String(_k4).indexOf(_today2) === 0) _cl2[_k4] = 1;
+        NARMED = _cl2;
+      }
+      nfSaveMaps();
     } catch (eNF) {}
+  },
+  /* 3.5.45: кнопка «Нагадати за 1 хв» у тості (новий хост 3.5.45 повідомляє
+     сюди). Раніше логіка жила в хості й працювала криво: тост зникав,
+     з'являвся новий ОДРАЗУ, а нагадування за 60 с так і не приходило.
+     Тепер: запам'ятали вибір, зняли «вже сповіщено», перепланували урок
+     РІВНО на (початок − 60 с). Тост більше не з'явиться до того моменту. */
+  notifSnooze: function (t) {
+    try {
+      const fk = nfKeyNow(t);
+      delete NFIRED[fk];
+      NARMED[fk] = 1;
+      nfSaveMaps();
+      pushNotifSched(true);
+      try { toast('Нагадаю за 1 хвилину до початку уроку ✓'); } catch (eT45) {}
+    } catch (eS45) {}
   },
   notifAction: function (act, url2) {
     // кнопка «Зайти» в тості Windows -> відкриваємо той урок
