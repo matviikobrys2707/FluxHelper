@@ -268,7 +268,7 @@ function validS(x) {
 // вічно вважав себе старішим. Тепер версію підставляє build.sh з манифеста
 // (2.4.1 -> versionName), а ПІСЛЯ завантаження Java-міст AndroidHost.ver()
 // віддає СПРАВЖНЮ версію встановленого пакета (PackageManager) — найнадійніше.
-let APP_VER = '3.5.41';              // X.Y.Z — підставляється при збірці з манифеста
+let APP_VER = '3.5.42';              // X.Y.Z — підставляється при збірці з манифеста
 try {
   if (window.AndroidHost && AndroidHost.ver) {
     const jv = AndroidHost.ver();
@@ -2148,6 +2148,13 @@ function parseNotes(txt) {
 // пріоритет. Третій елемент пункта ('pc'/'android') — показувати лише
 // на одній платформі; без нього — на обох.
 const WHATS_NEW = {
+  '3.5.42': [
+    ['✦', 'ВХІД ЧЕРЕЗ GOOGLE ЯК У ChatGPT: знову нативна менюшка Google ПРЯМО В ПРОГРАМІ — всі твої акаунти з іконками й поштою, БЕЗ перекидання на сайт (працює на всіх телефонах)', '/'],
+    ['✦', 'ВИХІД з акаунта тепер ПОВНІСТЮ чистить сесію в базі: після виходу нічого не «воскресає» після перевстановлення програми', '/'],
+    ['✦', 'ЗБЕРЕЖЕНІ АКАУНТИ: на екрані входу — плитки останніх акаунтів (іконка, ім\'я, пошта) — один дотик і ти знову в акаунті', '/'],
+    ['✦', 'РОЗКЛАД: відступи «назва ↔ №кабінет ↔ ДАЛІ/ЗАРАЗ» стиснуті — точь-в-точь пропорційно до ПК', '/'],
+    ['✦', 'НИЖНЯ ПАНЕЛЬ: рівномірно САМА ТЕМНА, без градієнта — як раніше', '/'],
+  ],
   '3.5.41': [
     ['✦', 'ВХІД ЧЕРЕЗ GOOGLE — виправлено «заходить через раз»: програма більше не засинає під час входу, підтвердження підхоплюється миттєво щойно ви повернулись', '/'],
     ['✦', 'РОЗКЛАД: бейдж «ДАЛІ» і «ЗАРАЗ» — тепер красиві закруглені рамочки з відступом від назви (на ПК були квадратами)', '/'],
@@ -3301,6 +3308,9 @@ function gateStart() {
   const gt = byId('agGoT'); if (gt) gt.textContent = 'Увійти через Google';
   // 2.8.6: ПІДІГРІВ Credential Manager — 3.5.40 ВИДАЛЕНО: нативний CM після
   // явного виходу ПАДАВ (краш «Увійти через Google», скарга власника).
+  // 3.5.42: prewarm і далі НЕ кликаємо (свіжий CM-запит за натисканням),
+  // але плитки збережених акаунтів — малюємо щоразу.
+  try { accsRender(); } catch (eAGR42) {}
 }
 function gateIsOn() { return document.body.classList.contains('gate-on'); }
 function fhRandHex(nBytes) {
@@ -3361,6 +3371,49 @@ function rmConfirmNo() {
   setAgStat('Вхід скасовано — акаунт залишено невизначеним.', 'err');
   const g3 = byId('agGo'); if (g3) g3.disabled = false;
 }
+/* ================== 3.5.42: ЗБЕРЕЖЕНІ АКАУНТИ (просив власник) ==================
+   «Я тебя просил, чтобы сохранялись аккаунты на телефоне, но они не
+   сохранялись, если я вышел с аккаунта». Тепер профіль останніх акаунтів
+   (sub/ім'я/пошта/іконка) зберігається ЛОКАЛЬНО (fh_accs, до 3 штук) і
+   на екрані входу малюються плитки — один дотик запускає вхід Google.
+   Це НЕ сесія: жодних токенів, лише візуальна підказка. Локально = після
+   перевстановлення список чистий (без «чудес»). */
+function accsLoad() {
+  try { return JSON.parse(localStorage.getItem('fh_accs') || '[]') || []; } catch (eAL) { return []; }
+}
+function accsSave(a) { try { localStorage.setItem('fh_accs', JSON.stringify(a.slice(0, 3))); } catch (eAS) {} }
+function accsRemember(u) {
+  if (!u || !u.sub) return;
+  const a = accsLoad().filter(function (x) { return x && x.sub !== String(u.sub); });
+  a.unshift({ sub: String(u.sub), name: String(u.name || 'Користувач'), email: String(u.email || ''), pic: String(u.pic || u.picture || '') });
+  accsSave(a);
+}
+function accsRender() {
+  const w = byId('agAccs'); if (!w) return;
+  const a = accsLoad();
+  if (!a.length) { w.classList.add('hidden'); w.innerHTML = ''; return; }
+  let h = '<div class="ag-accs-t">нещодавно в цій програмі</div>';
+  for (let i = 0; i < a.length && i < 3; i++) {
+    const x = a[i];
+    h += '<button class="ag-acc" type="button" data-em="' + String(x.email || '').replace(/"/g, '&quot;') + '">' +
+      (x.pic ? '<img src="' + String(x.pic).replace(/"/g, '') + '" alt="">' : '<span class="ag-acc-ph">' + String(x.name || '?').replace(/[<>&]/g, '').charAt(0).toUpperCase() + '</span>') +
+      '<span class="ag-acc-n">' + String(x.name || 'Акаунт').replace(/[<>&]/g, '') + '</span>' +
+      '<span class="ag-acc-e">' + String(x.email || '').replace(/[<>&]/g, '') + '</span></button>';
+  }
+  w.classList.remove('hidden');
+  w.innerHTML = h;
+  const bs = w.querySelectorAll('.ag-acc');
+  for (let i2 = 0; i2 < bs.length; i2++) {
+    bs[i2].addEventListener('click', function () {
+      if (agState) return;
+      const em = this.getAttribute('data-em') || '';
+      toast('Відкриваю Google…');
+      try { this.disabled = true; } catch (eD) {}
+      setTimeout(function (b) { return function () { try { b.disabled = false; } catch (eE) {} }; }(this), 4000);
+      authStart(em);
+    });
+  }
+}
 let authKick = null;
 function authPollDb(st) {
   // 2.8.1: канал входу — сайт пише профіль у Firebase auth_cb/<state>,
@@ -3410,7 +3463,7 @@ function authPollDb(st) {
   tick();
   authKick = tick;
 }
-function authStart() {
+function authStart(hintEmail) {
   if (agState) return;
   agState = '';
   toast('Відкриваю Google…');
@@ -3432,11 +3485,34 @@ function authStart() {
      Прапорець вмикається ТІЛЬКИ після того, як власник додать redirect URI
      в Google Cloud Console; поки що 0 — кнопка на сторінці входу. */
   if (ANDROID) {
+    /* 3.5.42: НАТИВНИЙ ВХІД ПОВЕРНЕНО (просив власник: «менюшка від самого
+       Google, як у ChatGPT, без перекидання на сайт — як у минулих версіях»).
+       У dex (ОРИГІНАЛЬНОМУ, без патчів — 3.5.36+) повний цикл живий і
+       БЕЗПЕЧНИЙ: Host.login(state) → Credential Manager (autoSelect=0,
+       filterByAuthorizedAccounts=0 — пікер УСІХ акаунтів пристрою з
+       іконками/поштами) → idToken (aud = Web-клієнт k470…) → tokeninfo →
+       identitytoolkit signInWithIdp → профіль → window.__fh.authOk →
+       authAccept. Краш 28.10 давав dex-ПАТЧ 3.5.35 (тихий CM зі СТАРТУ,
+       autoSelect) — його більше не існує; оригінальний dex показує пікер
+       ЛИШЕ за явним натисканням кнопки. prewarm() свідомо НЕ кликаємо —
+       pendingCred лишається null, щоразу свіжий запит CM.
+       Страховки: dex сам має сторожа (CM → AccountPicker → браузер) та
+       чисту отмену («Вхід скасовано»); authPollDb лишається на випадок,
+       якщо сторож dexa піде браузерним шляхом (auth_cb підхопиться).
+       Якщо AndroidHost.login кине (немає GMS) — фолбек: браузерний
+       oneclick-потік 3.5.41 (прапорець auth_oneclick у хмарі). */
+    try {
+      AndroidHost.login(st);
+      authPollDb(st);
+      return;
+    } catch (eNat) { try { console.warn('native login fail', eNat); } catch (eW) {} }
     let openedOnce = false;
     const openAuth = function (oc) {
       if (openedOnce) return; openedOnce = true;
       try {
-        AndroidHost.open(SITE_URL + 'auth.html#s=' + encodeURIComponent(st) + '&prompt=select_account' + (oc ? '&oneclick=1' : ''));
+        AndroidHost.open(SITE_URL + 'auth.html#s=' + encodeURIComponent(st) +
+          (hintEmail ? '&h=' + encodeURIComponent(hintEmail) : '') +
+          '&prompt=select_account' + (oc ? '&oneclick=1' : ''));
         authPollDb(st);
         return;
       } catch (eO) {}
@@ -3705,6 +3781,7 @@ function authAccept(u) {
   if (!u || !u.sub) return;
   ACC.user = u;
   rememberWrite(u.sub, 0);   /* 3.5.38: остання дія = вхід (збереження акаунта) */
+  try { accsRemember(u); } catch (eAR42) {}   /* 3.5.42: плитка «нещодавно» на гейті */
   try { localStorage.setItem('fh_user', JSON.stringify(u)); } catch (e) {}
   try { localStorage.removeItem('fh_auth_state'); } catch (e) {}
   clearTimeout(agT);
@@ -3825,9 +3902,14 @@ function confirmAccountGone() {
 function authLogout() {
   /* 3.5.23: без віконця офлайну — вихід працює завжди (3.5.23) */
   paccSave();   // 3.4.5: знімок налаштувань ЦЬОГО аккаунта в кеш (до стирання)
-  /* 3.5.38: ЯВНИЙ вихід = акаунт більше не відновлюється сам (rm:<sub>.out=1):
-     після перевстановлення вхід потребуватиме підтвердження (rmAskConfirm) */
-  try { if (ACC.user && ACC.user.sub) rememberWrite(ACC.user.sub, 1); } catch (eRM1) {}
+  /* 3.5.42 (просив власник): ЯВНИЙ вихід = ПОВНЕ СТИРАННЯ СЕСІЇ З БАЗИ.
+     Раніше (3.5.38) лишали маркер rm:<sub>.out=1 — після перевстановлення
+     «чудом» повертався акаунт/підтвердження. Тепер рядок rm:<sub> ВИДАЛЯЄТЬСЯ
+     з таблиці keys — у хмарі не лишається ЖОДНОГО сліду сесії цього телефона:
+     після перевстановлення — чистий вхід, без підтверджень і без авто-restorу.
+     Сам профіль лишається ЛОКАЛЬНО у збережених акаунтах (fh_accs) —
+     швидкий повторний вхід одним дотиком (див. accsRemember/accsRender). */
+  try { if (ACC.user && ACC.user.sub) { cfExec('DELETE FROM keys WHERE k=?', [rmKeyOf(ACC.user.sub)], null); } } catch (eRM1) {}
   ACC.user = null; ACC.role = 'user';
   syncWatchStop();   // 2.8.6: годинник синку зупиняємо одразу
   // 2.8.5: ПОВНЕ стирання акаунта з телефона: профіль, state входу, часовий
