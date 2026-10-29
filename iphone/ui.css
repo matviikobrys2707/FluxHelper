@@ -338,9 +338,14 @@ body[data-theme="light"] .ns-val{background:linear-gradient(90deg,#7c3aed,#6366f
   /* 3.5.42: РІВНОМІРНО САМА ТЕМНА, БЕЗ ГРАДІЄНТА (просив власник: «вся панель
    была тёмная без вот этого градиента, как раньше») — суцільний глибокий
    колір, легкий фіолетовий відтінок лишається лише в рамці */
-  background:rgba(11,8,24,.94);
-  -webkit-backdrop-filter:blur(7px) saturate(155%);
-  backdrop-filter:blur(7px) saturate(155%);
+  /* 3.5.43: СКЛЯНА ПАНЕЛЬ (просив власник: «увеличь прозрачность, чтоб за ней
+   было видно хоть что-то, ну типа оттенки цветов, но было размытие») —
+   щільність бази 94% -> 60%: крізь панель м'яко проглядають відтінки
+   розкладки, блюр 7 -> 14px + saturate: контент за панеллю лишається
+   розмитою кольоровою плямою, текст панелі читається чітко */
+  background:rgba(11,8,24,.60);
+  -webkit-backdrop-filter:blur(14px) saturate(165%);
+  backdrop-filter:blur(14px) saturate(165%);
   border:1px solid rgba(139,92,246,.26);
   box-shadow:0 12px 34px rgba(0,0,0,.5),0 2px 10px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.07)}body.android #bnav{display:flex}body.gate-on #bnav{display:none!important}.bn-b{position:relative;flex:none;min-width:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
   padding:7px 10px 5px;border-radius:19px;background:transparent;border:0;color:#9aa0b4;
@@ -371,7 +376,7 @@ body[data-theme="light"] .ns-val{background:linear-gradient(90deg,#7c3aed,#6366f
    ТЕМИ (просив власник: «оно, во-первых, было прозрачное, во-вторых, оно
    размывалось, так же как и во время тёмной темы»). Щільність .82/.90 —
    крізь скло видно лише відтінки карток, текст НЕ просвічує. *//* 3.5.29: Liquid Glass — так само прозоріша (блюр 7px, тінт легший) *//* 3.5.30: Liquid Glass — СПРАВЖНЄ СКЛО (просив власник: «чтобы в теме Liquid Glass был Liquid Glass»):
-   глибокий блюр 22px + густий тінт — текст за панеллю більше не читається, але картки «плають» у склі */@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){#bnav{background:linear-gradient(180deg,rgba(44,35,84,.90),rgba(20,15,42,.95))}}body[data-theme="light"] .bn-b{color:#64748b}/* 3.5.29: фон активної кнопки малює «пилюля» #bnPill — фон кнопки знято */body[data-theme="light"] .bn-b.on{color:#6d28d9;background:transparent;box-shadow:none}/* шухляда більше не потрібна — вся навігація в нижній панелі */body.android #burger, body.android #drawer, body.android #dback{display:none!important}/* місце під нижню панель, щоб остання картка уроку не ховалась
+   глибокий блюр 22px + густий тінт — текст за панеллю більше не читається, але картки «плають» у склі */@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){/* 3.5.43: без блюра скло неможливе — тримаємо щільну темну 3.5.42 без градієнта */#bnav{background:rgba(11,8,24,.94)}}body[data-theme="light"] .bn-b{color:#64748b}/* 3.5.29: фон активної кнопки малює «пилюля» #bnPill — фон кнопки знято */body[data-theme="light"] .bn-b.on{color:#6d28d9;background:transparent;box-shadow:none}/* шухляда більше не потрібна — вся навігація в нижній панелі */body.android #burger, body.android #drawer, body.android #dback{display:none!important}/* місце під нижню панель, щоб остання картка уроку не ховалась
    (3.5.7: панель стала трохи вищою через підписи — 106px -> 120px) *//* 3.5.11: ФІКС «ЧОРНОГО КВАДРАТА» НА РОЗКЛАДІ (просив власник розібратись,
    чому на Налаштуваннях нема, а на Розкладі є): було 120px — контент
    ЗАКІНЧУВАВСЯ вище панелі, під склом лишалась порожнеча (#050508) і

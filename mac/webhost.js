@@ -33,7 +33,7 @@
    ============================================================ */
 (function () {
 'use strict';
-var VER = '3.5.42';
+var VER = '3.5.44';
 var BACKEND = 'https://fluxhelper-backend.onrender.com';
 var ORIGIN = 'https://fluxhelper.pages.dev';
 var DB_URL = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app';
@@ -86,9 +86,16 @@ try {
     '#bMin,#bClose,#btMin,#btClose{display:none!important}' +
     '#bnav{bottom:calc(12px + var(--fh-sab, env(safe-area-inset-bottom, 0px)))!important}' +   /* 3.5.26: динамічно, як у застосунку */
     '#secNotif,#nban,#bPerm,#bTestN,#rowNotif{display:none!important}' +
-    /* 3.5.40: Сповіщення на сайті сховано — порожню ліву колонку теж прибираємо:
-       сітка налаштувань на САЙТІ стає однією колонкою (у exe лишається 2 колонки) */
-    '.sw-duo.sw-col-b{display:none!important}.sw-grid{grid-template-columns:1fr!important}' +   /* 3.5.38: примусові grid-column ЗНЯТО — адаптивна сітка (2 колонки ≤859, 1 ≤699) тепер єдина для сайту й застосунку; раніше !important ламав media-запити й стискала картки до 1-2 слів у рядку (скрін власника) */
+    /* 3.5.40: Сповіщення на сайті сховано — порожню ліву колонку теж прибираємо.
+       3.5.44 (просив власник: «сделай две колонки… хотя бы два в ряд»):
+       примусову ОДНУ колонку 3.5.40 ЗНЯТО — вона й давала «по очереди».
+       Тепер на САЙТІ картки налаштувань теж у 2 КОЛОНКИ: «Запуск Zoom» |
+       «Підтверджувати захід», «Копіювання посилання» — на всю ширину;
+       на вузьких вікнах (<700px) — чесно стовпчиком. */
+    '.sw-duo.sw-col-b{display:none!important}' +
+    '.sw-duo.sw-col-a{grid-column:1/-1!important;display:grid!important;grid-template-columns:1fr 1fr!important;gap:13px!important}' +
+    '#secCpl{grid-column:1/-1!important}' +
+    '@media (max-width:699px){.sw-duo.sw-col-a{grid-template-columns:1fr!important}}' +
     '#secUpd{display:none!important}' +   /* 3.5.26: рамку «Оновлення» знесено з САЙТУ (потрібна лише застосункам) */
     'body:not(.fh-beta) .beta-only{display:none!important}' +
     /* «Автоматичний вхід у Zoom (тест)» — ЛИШЕ у Windows-програмі (3.5.21) */

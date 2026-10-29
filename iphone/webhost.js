@@ -33,7 +33,7 @@
    ============================================================ */
 (function () {
 'use strict';
-var VER = '3.5.42';
+var VER = '3.5.44';
 var BACKEND = 'https://fluxhelper-backend.onrender.com';
 var ORIGIN = 'https://fluxhelper.pages.dev';
 var DB_URL = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app';
