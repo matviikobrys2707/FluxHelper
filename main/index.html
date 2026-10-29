@@ -84,6 +84,38 @@
   /* страховка: якщо підтягування не вдалося за 12 с — одна переадресація */
   setTimeout(function () { if (!loaded) kick(); }, 12000);   /* 3.5.26: сторож живий ЛИШЕ поки контент не завантажився */
 
+  /* ============================================================
+     3.5.45 — ШВИДКИЙ СТАРТ (просив власник: «сайт загружается очень
+     долго, сделай так, чтобы он загружался максимально быстро»). Три
+     зміни, жодна не ламає APK (він читає свої файли з assets):
+     1) PRECONNECT: Firebase/Google гріються ще ДО завантаження версії.
+     2) PRELOAD: ui.css + webhost.js + ui.js + logo.png починають
+        качатися ПАРАЛЕЛЬНО з index.html версії — раніше браузер
+        знаходив їх тільки після document.write (2-3 зайвих RTT).
+     3) ?v= — ревізія ассетів: HTML лишається no-cache, а css/js/лого
+        кешуються на добу. При зміні ui.js/ui.css/webhost.js/logo.png
+        ПІДВИЩУЙ V — нова версия приїде миттєво, без очікування кеша.
+     ============================================================ */
+  var V = '3545';
+  try {
+    var hd = document.head;
+    var pre = [['ui.css', 'style'], ['webhost.js', 'script'], ['ui.js', 'script'], ['logo.png', 'image']];
+    for (var pi = 0; pi < pre.length; pi++) {
+      var lk = document.createElement('link');
+      lk.rel = 'preload'; lk.as = pre[pi][1];
+      lk.href = base + pre[pi][0] + '?v=' + V;
+      hd.appendChild(lk);
+    }
+    [['https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app', 1],
+     ['https://securetoken.googleapis.com', 1],
+     ['https://accounts.google.com', 0]].forEach(function (pc) {
+      var l2 = document.createElement('link');
+      l2.rel = 'preconnect'; l2.href = pc[0];
+      if (pc[1]) l2.crossOrigin = 'anonymous';
+      hd.appendChild(l2);
+    });
+  } catch (ePre) {}
+
   function tryLoad(attempt) {
     try {
       fetch(base + 'index.html', { cache: 'no-store' })
@@ -93,6 +125,13 @@
           /* <base> має стояти ПЕРШИМ у <head> — тоді webhost.js/ui.css/ui.js
              і всі відносні запити підвантажаться з правильної версії */
           html = String(html).replace(/<head([^>]*)>/i, '<head$1><base href="' + base + '">');
+          /* 3.5.45: ревізія ассетів — ті самі URL, що вже preload'нуто вище,
+             тож css/js/лого беруться з кеша миттєво, без повторного кача */
+          html = html
+            .replace(/href="ui\.css"/g, 'href="ui.css?v=' + V + '"')
+            .replace(/src="webhost\.js"/g, 'src="webhost.js?v=' + V + '"')
+            .replace(/src="ui\.js"/g, 'src="ui.js?v=' + V + '"')
+            .replace(/src="logo\.png"/g, 'src="logo.png?v=' + V + '"');
           setTimeout(function () {
             document.open();
             document.write(html);

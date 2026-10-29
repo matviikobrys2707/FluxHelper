@@ -37,3 +37,24 @@
   Cache-Control: no-cache
 /main/*
   Cache-Control: no-cache
+
+# 3.5.45: ревізовані ассети (?v=3545) кешуються на добу — повторні
+# відкриття сайту не качають 660KB css/js заново (просив власник:
+# «сайт загружается очень долго»). HTML лишається no-cache, тож нова
+# версія приїде одразу після деплою (/?v= змінюється разом з файлами).
+/iphone/ui.css
+  Cache-Control: public, max-age=86400
+/iphone/ui.js
+  Cache-Control: public, max-age=86400
+/iphone/webhost.js
+  Cache-Control: public, max-age=86400
+/iphone/logo.png
+  Cache-Control: public, max-age=604800
+/mac/ui.css
+  Cache-Control: public, max-age=86400
+/mac/ui.js
+  Cache-Control: public, max-age=86400
+/mac/webhost.js
+  Cache-Control: public, max-age=86400
+/mac/logo.png
+  Cache-Control: public, max-age=604800
