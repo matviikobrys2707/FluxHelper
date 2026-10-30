@@ -266,7 +266,7 @@ function validS(x) {
 })();
 
 
-const APP_VER = '3.5.47';                  
+const APP_VER = '3.5.48';                  
 
 
 
@@ -3492,23 +3492,17 @@ function wnClose() {
 
 function revealNow() {
   if (bootRevealed || updOpen()) return;
-  if (ACC.user && !dataVerified) {
-    
-
-
-
-
-
-
-
+  if (!ACC.user) return;   /* без акаунта розклад ніколи не показуємо */
+  if (!dataVerified) {
     try {
       const c0 = JSON.parse(localStorage.getItem('fh_cache') || 'null');
-      if (c0 && c0.data) { bootReady = true; return; }
+      if (c0 && c0.data && (S || paccRestore())) { bootReady = true; return; }
     } catch (e0) {}
-    return;   
+    return;
   }
   bootReady = true;
 }
+
 function showUpd(v, notes, testMode, pref, md5) {
   UPD.avail = true; UPD.ver = v; UPD.busy = false; UPD.pending = '';
   UPD.test = !!testMode;
@@ -4974,6 +4968,35 @@ function dlSafety() { setTimeout(function () { dlFinishing = true; }, 20000); }
 var fhSettling = false;      
 var fhPendingMaster = false; 
 var dataVerified = false;    
+let settleRetryT = 0, settleRetryN = 0, settleFailed = false;
+const SETTLE_ERR_TXT = 'Не вдалося завантажити дані акаунта — перевір інтернет і спробуй ще раз.';
+function settleFailGate() {
+  if (!ACC.user || dataVerified) return;
+  settleFailed = true;
+  dlMode = false;
+  dlFinishing = true;
+}
+function settleRetryStart() {
+  if (!ACC.user) return;
+  clearTimeout(settleRetryT);
+  settleRetryN = 0;
+  const tick = function () {
+    if (!ACC.user || dataVerified) return;
+    syncPull(false, function (dec) {
+      if (!ACC.user || dataVerified) return;
+      if (dec === 'ok' || dec === 'master') {
+        dataVerified = true;
+        settleFailed = false;
+        try { adm46Check('settle'); } catch (eA46) {}
+        settleDecide(dec);
+        return;
+      }
+      if (++settleRetryN <= 6) settleRetryT = setTimeout(tick, 5000);
+      else settleFailGate();
+    });
+  };
+  settleRetryT = setTimeout(tick, 5000);
+}
 function settleSync(cb) {
   fhSettling = true;
   let attempt = 0, done = false;
@@ -4982,22 +5005,32 @@ function settleSync(cb) {
     if (done) return;
     done = true;
     fhSettling = false;
-    dataVerified = true;
-    try { revealNow(); } catch (eRN) {}   
-    try { adm46Check('settle'); } catch (eA46) {}   
-    cb(dec);
-    
-
-
-    if (fhPendingMaster && dec !== 'master' && validS(S)) {
-      try { openGroups(); } catch (eOG) {}
+    if (!ACC.user) { cb('offline'); return; }
+    if (dec !== 'offline') {
+      dataVerified = true;
+      settleFailed = false;
+      try { adm46Check('settle'); } catch (eA46) {}
+      cb(dec);
+      if (fhPendingMaster && dec !== 'master' && validS(S)) {
+        try { openGroups(); } catch (eOG) {}
+      }
+      fhPendingMaster = false;
+      return;
     }
-    fhPendingMaster = false;
+    /* офлайн: локальні дані лишааються, майстер груп НЕ відкривається */
+    if (S || paccRestore()) {
+      dataVerified = true;
+      try { adm46Check('settle'); } catch (eA46b) {}
+      cb('offline');
+      return;
+    }
+    /* локальних даних нема — лишаємо лоадер і тихо доганяємо базу у фоні */
+    try { settleRetryStart(); } catch (eSR) {}
   };
   const go = function () {
     if (!ACC.user) { fin('offline'); return; }
     if (done) return;
-    if (Date.now() - t0 > 9000) { fin('offline'); return; }   
+    if (Date.now() - t0 > 15000) { fin('offline'); return; }
     syncPull(true, function (dec) {
       if (dec === 'offline' && attempt < 2 && ACC.user) {
         attempt += 1;
@@ -5009,8 +5042,6 @@ function settleSync(cb) {
   };
   go();
 }
-
-
 
 function fbAuthRegister(tok, cb) {
   try {
@@ -5090,16 +5121,9 @@ function authAccept(u, fromHost) {
   showDataLoad('Завантаження…', 'перевіряємо акаунт у базі');
   dlSafety();
   settleSync(function (dec) {
-    hideDataLoad();
-    if (!ACC.user) return;   
-    if (dec === 'master')      { showMain(true); AUTO_SETUP = true; openGroups(); }
-    
-
-
-    else if (S || paccRestore()) { showMain(); render(); }
-    else                       { showMain(true); AUTO_SETUP = true; openGroups(); }
+    if (!ACC.user) return;
+    settleDecide(dec);
     refreshAccUI();
-    
     try { if (window.FH_WEB && typeof window.__fhHashApply === 'function') window.__fhHashApply(); } catch (eHA2) {}
   });
   const rk = userKey(ACC.user);
@@ -5112,7 +5136,7 @@ function authAccept(u, fromHost) {
     cfExec('SELECT role, sync FROM users WHERE user_id=?', [rk], function (rows) {
       if (!ACC.user || ACC.user.sub !== sub0) return;
       if (rows && rows[0]) { accApplyAuth(rows); }
-      else if (rows === null && n < 2) { setTimeout(function () { roleFast(n + 1, sub0); }, 1500); }
+      else if (rows === null && n < 4) { setTimeout(function () { roleFast(n + 1, sub0); }, 2200); }
     });
   })(0, u.sub);
   
@@ -5359,17 +5383,12 @@ function settleDecide(dec) {
   hideDataLoad();
   if (!ACC.user) return;
   if (dec === 'master')        { showMain(true); AUTO_SETUP = true; openGroups(); render(false); }
-  else if (S || paccRestore()) { showMain(); render(); }   
+  else if (dec === 'ok')       { showMain(); render(); }
+  else if (S || paccRestore()) { showMain(); render(); }
   else                         { showMain(true); AUTO_SETUP = true; openGroups(); render(false); }
-  
-
-
   try { if (window.FH_WEB && typeof window.__fhHashApply === 'function') window.__fhHashApply(); } catch (eHA) {}
-  try { guardGroups(); } catch (eGGD) {}   
+  try { guardGroups(); } catch (eGGD) {}
 }
-
-
-
 
 function guardGroups() {
   try {
@@ -5734,7 +5753,7 @@ function fetchRole(k, cb, _n) {
     return;
   }
   cfExec('SELECT role, sync FROM users WHERE user_id=?', [k], function (rows) {
-    if (rows === null && n < 2 && ACC.user) { setTimeout(function () { fetchRole(k, cb, n + 1); }, 1400); return; }
+    if (rows === null && n < 4 && ACC.user) { setTimeout(function () { fetchRole(k, cb, n + 1); }, 2200); return; }
     if (cb) cb(rows);
   });
 }
@@ -5764,7 +5783,7 @@ function syncPull(force, cb, _try) {
     if (window.FH_WEB && typeof apiGetRow === 'function') {
       try { apiGetRow(function (row) { done(row ? [row] : null); }); return; } catch (eW45) {}
     }
-    cfExec('SELECT role, sync, settings, sts FROM users WHERE user_id=?', [k], done);
+    cfExec('SELECT role, sync, settings, sts FROM users WHERE user_id=?', [k], done, 12000);
   };
   runQuery(function (rows) {
     if (!ACC.user) { if (cb) cb('offline'); return; }
@@ -5802,7 +5821,7 @@ function syncPull(force, cb, _try) {
         
 
 
-        if (p.rs !== 1 && paccRestore() && validS(S)) {   
+        if ((!p || p.rs !== 1) && paccRestore() && validS(S)) {   
           FIRST = false;
           try { if (groupsOpen()) closeGroups(); } catch (eCR) {}   
           if (cb) cb('ok'); else { showMain(); render(); }
@@ -6020,8 +6039,6 @@ const bootRaf = (typeof requestAnimationFrame === 'function')
 function bootLoop() {
   let target;
   if (dlMode) {
-    
-
     const del = Date.now() - dlStart;
     target = dlFinishing ? 100 : Math.min(85, (del / 1500) * 85);
   } else {
@@ -6035,44 +6052,36 @@ function bootLoop() {
   if (pc) pc.textContent = Math.round(bootP) + '%';
   if (bootP >= 100) {
     if (!bootRevealed) {
-      bootRevealed = true;
       const b = byId('boot');
-      if (dlMode) {
-        
-
-
-        dlMode = false;
-        document.body.classList.add('ready');
-        document.body.classList.remove('booting');
-        try { gateHide(); } catch (eGH2) {}
-        if (b) { b.classList.add('off'); setTimeout(function () { b.classList.add('hidden'); }, 580); }
-        try { wnSchedule(900); } catch (eWN) {}   
+      const hideB = function () { if (b) { b.classList.add('off'); setTimeout(function () { b.classList.add('hidden'); }, 580); } };
+      /* дані акаунта ще не підтверджені — лоадер крутиться, розклад НЕ показуємо */
+      if (dlMode && ACC.user && !dataVerified && !settleFailed) {
+        dlFinishing = false;
+        bootRaf(bootLoop);
         return;
       }
-      
-      
-      
-      if (!ACC.user) {
-        
-        
-        if (!updOpen()) { try { gateShow(); } catch (e1) {} }
-        
-        document.body.classList.remove('booting');
-        if (b) { b.classList.add('off'); setTimeout(function () { b.classList.add('hidden'); }, 580); }
-      } else {
+      bootRevealed = true;
+      dlMode = false;
+      if (ACC.user && dataVerified && !settleFailed) {
         document.body.classList.add('ready');
-        
         document.body.classList.remove('booting');
-        
         try { gateHide(); } catch (eGH) {}
-        if (b) { b.classList.add('off'); setTimeout(function () { b.classList.add('hidden'); }, 580); }
-        try { wnSchedule(900); } catch (eWN2) {}   
+        hideB();
+        try { wnSchedule(900); } catch (eWN2) {}
+        return;
       }
+      /* без акаунта або з помилкою — тільки екран входу, розклад не показуємо */
+      document.body.classList.remove('booting');
+      try { gateShow(); gateStart(); } catch (e1) { try { gateStart(); } catch (e2) {} }
+      if (settleFailed) setAgStat(SETTLE_ERR_TXT, 'err');
+      hideB();
+      return;
     }
     return;
   }
   bootRaf(bootLoop);
 }
+
 function init() {
   
   
@@ -6196,7 +6205,7 @@ function init() {
 
 
   try {
-    const AH = __AUTH_JSON__;
+    const AH = (typeof window.__FH_AUTH_JSON__ !== 'undefined') ? window.__FH_AUTH_JSON__ : null;
     if (AH && AH.sub && !ACC.user) {
       const pA = { sub: String(AH.sub), name: String(AH.name || 'Користувач'), email: String(AH.email || ''), pic: String(AH.pic || '') };
       if (AH.fid) pA.fid = String(AH.fid);
@@ -6218,7 +6227,7 @@ function init() {
   accBoot();
   
   
-  try { const AERR = "__AUTH_ERR__"; if (AERR) agFail(String(AERR)); } catch (e) {}
+  try { const AERR = (typeof window.__FH_AUTH_ERR__ === 'string') ? window.__FH_AUTH_ERR__ : ''; if (AERR) agFail(String(AERR)); } catch (e) {}
   
   const sg1 = byId('segSched'); if (sg1) sg1.onclick = function () { showMain(); };
   const sg2 = byId('segSetup'); if (sg2) sg2.onclick = function () { showSetup(); };
@@ -6415,6 +6424,7 @@ function init() {
 
     setTimeout(function () {
       if (bootRevealed || dataVerified || updOpen()) return;
+      if (ACC.user && !(S || paccRestore())) return;   /* чекаємо дані акаунта — не відкриваємо порожнє вікно */
       try { dataVerified = true; hideDataLoad(); revealNow(); } catch (eCap) {}
     }, 4000);
     if (S) { showMain(); render(); }   
