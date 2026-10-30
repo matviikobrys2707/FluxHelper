@@ -1,36 +1,36 @@
-/* ============================================================
-   FluxHelper — ВЕБ-МІСТ (webhost.js) v3
-   ============================================================
-   Сторінки сайту (/iphone/ — телефонний UI з APK, /mac/ — десктопний
-   UI з Windows-програми) виконують ТОЙ САМИЙ код інтерфейсу, що й
-   застосунки. Застосунки спілкуються з системою через нативний міст
-   window.AndroidHost; на сайті його імітує цей файл.
 
-   3.5.18 — СИНХРОНІЗАЦІЯ ПОВЕРНЕНА ДО РОБОЧОЇ СХЕМИ САЙТУ 3.5.12
-   (просив власник: «вернись к версии, в которой всё работало — посмотри,
-   как там сделана логика синхронизации, и сделай точь-в-точь»):
 
-   • ВХІД — як на старому сайті: Google Identity Services ПРЯМО НА
-     СТОРІНЦІ (жодних попапів auth.html): initTokenClient -> access_token
-     -> userinfo -> FluxHelper Backend /api/auth/google -> Firebase
-     localId + idToken + refreshToken. Профіль пишеться в RTDB
-     update/auth_cb/<state> (канал входу застосунків) — далі працює
-     ВЛАСНИЙ вхід програми (authPollDb -> authAccept -> usersUpsert).
-   • ТРАНСПОРТ — як на старому сайті: /api/sync (op get/put) з Bearer
-     idToken користувача; фолбек — дзеркала RTDB update/web/<uid> +
-     update/settings_mirror/<uid> через /api/rtdb; роль — з бекенда (D1).
-   • OUTBOX — гарантована доставка знімка (як 3.5.8 на старому сайті):
-     невдалий запис кладеться в чергу localStorage і повторюється кожні
-     4 с, поки сервер не підтвердить; виштовхується при поверненні
-     мережі/фокусу.
-   • СЕМАНТИКА «РЯДОК/ОФЛАЙН»: чесна відповідь сервера «рядка нема» =
-     успіх з порожнім результатом (перший вхід -> майстер груп); ЛЮБИЙ
-     збій (мережа/401/холодний Render) = відмова -> застосунок лишає
-     локальний стан і ретраїть сам.
-   • Сайт-деталі: кнопки «Запуск Zoom» (Додаток/Браузер) прибираються —
-     на сайті вони не мають сенсу; екран «Немає інтернету» вимкнено
-     (він потрібен лише застосункам), дані тягнуться тихо.
-   ============================================================ */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 (function () {
 'use strict';
 var VER = '3.5.46';
@@ -39,14 +39,14 @@ var ORIGIN = 'https://fluxhelper.pages.dev';
 var DB_URL = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app';
 var GIS_CLIENT = '668834523935-k470ldmdv0r9am0720v6lgaatm6rtuf3.apps.googleusercontent.com';
 
-/* 3.5.40: ПРЯМІ канали Firebase — без Render-релею (ліміт трафіка Render
-   free ~5 ГБ/міс). FB_KEY — ПУБЛІЧНИЙ Firebase Web API key (він і так вшитий
-   в APK/додатки Firebase; у dex FluxHelper лежить відкритим текстом). */
+
+
+
 var FB_KEY = 'AIzaSyCDWpF3QTMEFBN9ravDxH_woKnBpcMRDvI';
 function tokRefreshRT(rt, cb) {
   try {
-    /* 3.5.46: ЖОРСТКИЙ ТАЙМАУТ 3.5 с — раніше запит міг висіти хвилинами
-       (погана мережа/файрвол school Wi-Fi), і весь старт чекав на нього. */
+    
+
     var ab = null;
     try { if (typeof AbortController === 'function') { ab = new AbortController(); setTimeout(function () { try { ab.abort(); } catch (eAB1) {} }, 3500); } } catch (eAB0) {}
     fetch('https://securetoken.googleapis.com/v1/token?key=' + FB_KEY, {
@@ -63,47 +63,47 @@ function tokRefreshRT(rt, cb) {
 
 window.FH_WEB = true;
 
-/* Сайт-адаптації (3.5.19 — просив власник):
-   • «Немає інтернету» — лише для застосунків;
-   • Mac-версія: кнопки «Згорнути»/«Закрити» (тітул + сплеш) — це контролі
-     ВІКНА Windows-програми, у браузері їх не буде;
-   • Нижня панель (/iphone/) — трохи вище від краю + безпечна зона Safari;
-   • Сповіщення про початок уроку — ЛИШЕ в застосунках (Android/Windows):
-     на сайті прибрано ВСЕ — банер «Увімкнути», секцію налаштувань, дозволи. */
+
+
+
+
+
+
+
 try {
   var st = document.createElement('style');
-  /* 3.5.20→3.5.22: ХТО СХОВАН І КОЛИ:
-     • #secNotif/#nban/#bPerm/#bTestN/#rowNotif — сповіщення лише в застосунках;
-     • .beta-only (нові красиві елементи) — на сайті видимі лише бета-адмінам
-       (клас body.fh-beta ставить ui.js після синку); у застосунках цих
-       правил просто нема — там новий дизайн ЗАВЖДИ.
+  
 
-     3.5.22 (просив власник):
-     • #secZoom («Запуск Zoom»: Додаток/Браузер) — ТЕПЕР ВИДНИЙ на сайті
-       для будь-якої версії («почему убрала? Это должно быть») — вибраний
-       режим відкриття уроків працює і на сайті;
-     • кнопка «Приєднатися» на картці уроку (.b-join) — 3.5.23: ПОВЕРНЕНА
-       на сайт у всіх версіях (власник: «почему убрала? Я не говорил её
-       убирать»). Режим відкриття (додаток/браузер/підтвердження) задає
-       рамка «Запуск Zoom». */
+
+
+
+
+
+
+
+
+
+
+
+
   st.textContent =
     '#neterr{display:none!important}' +
     '#bMin,#bClose,#btMin,#btClose{display:none!important}' +
-    /* 3.5.29: правло bottom ЗНЯТО — відступ панелі тепер виставляє ui.js
-       (gapFix: з кнопковою навігацією щільніше до системних кнопок, з жестами — як було). */
+    
+
     '#secNotif,#nban,#bPerm,#bTestN,#rowNotif{display:none!important}' +
-    /* 3.5.40: Сповіщення на сайті сховано — порожню ліву колонку теж прибираємо:
-       сітка налаштувань на САЙТІ стає однією колонкою (у exe лишається 2 колонки) */
+    
+
     '.sw-duo.sw-col-b{display:none!important}.sw-grid{grid-template-columns:1fr!important}' +
-    '#secUpd{display:none!important}' +   /* 3.5.26: рамку «Оновлення» знесено з САЙТУ (потрібна лише застосункам) */
+    '#secUpd{display:none!important}' +   
     'body:not(.fh-beta) .beta-only{display:none!important}';
-  /* 3.5.23: правило, що ховало кнопку «Приєднатися» на картці (.b-join),
-     ЗНЯТО — власник повертає кнопку на сайт («почему убрала? Я не говорил
-     её убирать»). Кнопка тепер на сайті в УСІХ версій. */
+  
+
+
   (document.head || document.documentElement).appendChild(st);
 } catch (eS) {}
 
-/* ───────────────────────── сесія ───────────────────────── */
+
 var tokState = null;
 function jget(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
 function sessGet() { return jget('fh_web_session'); }
@@ -116,7 +116,7 @@ function bootTok() {
     var u = jget('fh_user');
     if (u && u.rtok) tokState = { tok: String(u.tok || ''), rtok: String(u.rtok), tokT: parseInt(u.tokT, 10) || 0 };
     else {
-      var b = jget('fh_rtok_backup');   /* сесія на час перелогіна */
+      var b = jget('fh_rtok_backup');   
       if (b && b.rtok) tokState = b;
     }
   } catch (e) {}
@@ -126,7 +126,7 @@ function ensureTok(cb) {
   if (tokState && tokState.tok && tokState.tokT && Date.now() < tokState.tokT - 30000) { cb(true); return; }
   if (!tokState || !tokState.rtok) { cb(false); return; }
   try {
-    /* 3.5.40: прямий securetoken — без /api/auth/refresh на Render */
+    
     tokRefreshRT(tokState.rtok, function (j) {
       if (j && j.idToken) {
         tokState.tok = String(j.idToken);
@@ -139,14 +139,14 @@ function ensureTok(cb) {
     });
   } catch (e) { cb(false); }
 }
-/* синхронне оновлення токена — для синхронного fbPut (як у нативному мосту) */
+
 function ensureTokSync() {
   bootTok();
   if (tokState && tokState.tok && tokState.tokT && Date.now() < tokState.tokT - 30000) return true;
   if (!tokState || !tokState.rtok) return false;
   try {
     var x = new XMLHttpRequest();
-    /* 3.5.40: прямий securetoken — без /api/auth/refresh на Render */
+    
     x.open('POST', 'https://securetoken.googleapis.com/v1/token?key=' + FB_KEY, false);
     x.setRequestHeader('Content-Type', 'application/json');
     x.send(JSON.stringify({ grant_type: 'refresh_token', refresh_token: tokState.rtok }));
@@ -166,7 +166,7 @@ function ensureTokSync() {
 function rtdbSync(op, path, data) {
   if (!ensureTokSync() || !tokState || !tokState.tok) return false;
   try {
-    /* 3.5.40: прямий RTDB REST — без /api/rtdb на Render */
+    
     var x = new XMLHttpRequest();
     x.open(op.toUpperCase(), DB_URL + '/' + normPath(path) + '.json?auth=' + encodeURIComponent(tokState.tok), false);
     x.setRequestHeader('Content-Type', 'application/json');
@@ -177,11 +177,11 @@ function rtdbSync(op, path, data) {
 function rtdbAsync(op, path, data, cb) {
   ensureTok(function (ok) {
     if (!ok || !tokState || !tokState.tok) { cb(null); return; }
-    /* 3.5.40: прямий RTDB REST — без /api/rtdb на Render */
+    
     var init = { method: op.toUpperCase(), headers: { 'Content-Type': 'application/json' } };
     if (op === 'put' || op === 'patch') init.body = JSON.stringify(data === undefined ? null : data);
-    /* 3.5.46: ТАЙМАУТ 4 с — старт більше НІКОЛИ не залежить від завислого
-       запита; погана мережа більше не тримає «85%» хвилинами. */
+    
+
     var ab = null;
     try { if (typeof AbortController === 'function') { ab = new AbortController(); setTimeout(function () { try { ab.abort(); } catch (eRA1) {} }, 4000); } } catch (eRA0) {}
     init.signal = ab ? ab.signal : undefined;
@@ -192,7 +192,7 @@ function rtdbAsync(op, path, data, cb) {
   });
 }
 
-/* ───────────────────── Firebase->bridge формат ───────────────────── */
+
 function normPath(p) {
   var s = String(p || '').replace(/\.json(\?.*)?$/, '');
   if (s.charAt(0) === '/') s = s.slice(1);
@@ -205,7 +205,7 @@ function myFid() {
     return (u && u.fid) ? String(u.fid) : '';
   } catch (e) { return ''; }
 }
-/* будь-який вузол дзеркала -> знімок (як rawToSnap старого сайту) */
+
 function rawToSnap(j) {
   if (!j || typeof j !== 'object') return null;
   if (j.d && typeof j.d === 'object' && typeof j.d.settings === 'string') {
@@ -215,7 +215,7 @@ function rawToSnap(j) {
   return (j && typeof j === 'object' && (j.g || j.n || j.th || j.z)) ? j : null;
 }
 
-/* ───────────────────── D1-відповідь у форматі хоста ───────────────────── */
+
 function cfReply(id, ok, rows) {
   var json = ok ? JSON.stringify({ success: true, result: [{ results: rows || [] }] }) : null;
   setTimeout(function () {
@@ -227,15 +227,15 @@ function cfReply(id, ok, rows) {
 }
 function snapOk(p) { return !!(p && typeof p === 'object' && (p.g || p.n || p.th || p.z)); }
 
-/* РЯДОК з /api/sync op:get. Якщо бекенд недоступний/401 — ФОЛБЕК на
-   дзеркала RTDB (роль+синк+знімок живуть і там). Якщо і дзеркала
-   недоступні — cb(null) = «офлайн» (застосунок лишає локальний стан). */
+
+
+
 function apiGetRow(cb) {
-  /* 3.5.46: ГОЧКА «ДЗЕРКАЛО || БЕКЕНД» — ОБИДВА канали летять ПАРАЛЕЛЬНО,
-     перемагає той, хто відповів ПЕРШИМ. Раніше бекенд (Render) ішов першим
-     і лише після 5 с сбою стартував дзеркало: холодний Render = +5 с до
-     КАЖДОГО старту, завислий fetch = хвилини на «85%». Тепер старт = RTT
-     найшвидшого канала (зазвичай 150-400 мс), фініш гонки — ОДИН раз. */
+  
+
+
+
+
   var done46 = false;
   var finish = function (row) { if (done46) return; done46 = true; cb(row); };
   var viaMirror = function () {
@@ -243,7 +243,7 @@ function apiGetRow(cb) {
     if (!k) { finish(null); return; }
     var wk = 'update/web/' + encodeURIComponent(k);
     var sk = 'update/settings_mirror/' + fbEncUid(k);
-    /* 3.5.46: обидва GET дзеркала — ПАРАЛЕЛЬНО (раніше послідовно = 2 RTT) */
+    
     var msa = null, msb = null, mleft = 2;
     var mpick = function () {
       if (--mleft > 0) return;
@@ -262,13 +262,13 @@ function apiGetRow(cb) {
     rtdbAsync('get', wk, null, function (a) { msa = a; mpick(); });
     rtdbAsync('get', sk, null, function (b) { msb = b; mpick(); });
   };
-  /* 3.5.46: дзеркало стартує ОДРАЗУ, а не «після сбою бекенда» */
+  
   try { viaMirror(); } catch (eM46) {}
   ensureTok(function (ok) {
     if (!ok || !tokState || !tokState.tok) { viaMirror(); return; }
-    /* 3.5.45: Render може холодно прокидатись 30-90 с — фетч із АБОРТОМ 5 с */
+    
     var ab = null;
-    try { if (typeof AbortController === 'function') { ab = new AbortController(); setTimeout(function () { try { ab.abort(); } catch (eA0) {} }, 3500); } } catch (eAB) {}   /* 3.5.46: 5 с -> 3.5 с — старт не чекає холодний Render */
+    try { if (typeof AbortController === 'function') { ab = new AbortController(); setTimeout(function () { try { ab.abort(); } catch (eA0) {} }, 3500); } } catch (eAB) {}   
     fetch(BACKEND + '/api/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tokState.tok },
@@ -276,7 +276,7 @@ function apiGetRow(cb) {
       signal: ab ? ab.signal : undefined
     }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
       .then(function (j) {
-        if (!j || !j.ok) { viaMirror(); return; }   /* збій -> фолбек, НЕ «порожній рядок» */
+        if (!j || !j.ok) { viaMirror(); return; }   
         var set = (j.settings && typeof j.settings === 'object') ? j.settings : null;
         var setStr = set ? JSON.stringify(set) : '';
         finish({
@@ -290,8 +290,8 @@ function apiGetRow(cb) {
 }
 function apiPutSnap(snap, profile, cb) {
   var done = function (ok) { cb(ok); };
-  /* 3.5.40: дзеркало Firebase ПЕРШИМ ділом (миттєвий sync інших веб-пристроїв
-     через маркер websts), потім D1 через бекенд (надійний канал, outbox) */
+  
+
   var k0 = myFid();
   if (k0) {
     try {
@@ -322,9 +322,9 @@ function apiPutSnap(snap, profile, cb) {
   });
 }
 
-/* ───────────────── OUTBOX: гарантована доставка (3.5.8) ─────────────────
-   Як на старому сайті: невдалий запис знімка не гине зміну — черга в
-   localStorage, повтор кожні 4 с, виштовхування при поверненні мережі. */
+
+
+
 var outboxT = 0, outboxBusy = false;
 function outboxStash(snap, profile) {
   try { localStorage.setItem('fh_outbox', JSON.stringify({ snap: snap, profile: profile || null, ts: Date.now() })); } catch (e) {}
@@ -344,10 +344,10 @@ function outboxDrain() {
   apiPutSnap(job.snap, job.profile || null, function (ok) {
     outboxBusy = false;
     if (ok) { outboxClear(); return; }
-    outboxKick(4000);   /* сервер спить / мережа блимнула — повторимо */
+    outboxKick(4000);   
   });
 }
-/* запис налаштувань з outbox-страховкою (усі маршрути UPDATE/INSERT settings) */
+
 function putWithOutbox(snap, profile, cb) {
   apiPutSnap(snap, profile, function (ok) {
     if (ok) { outboxClear(); if (cb) cb(true); return; }
@@ -360,15 +360,15 @@ document.addEventListener('visibilitychange', function () {
 });
 window.addEventListener('online', function () { if (myFid()) outboxKick(200); });
 
-/* ───────────────── мапінг відомих SQL-запитів інтерфейсу ─────────────────
-   3.5.18 ВИПРАВЛЕНО: «SELECT user_id FROM users WHERE user_id=?» більше не
-   бреше «рядок є» — чесна перевірка через apiGetRow (раніше INSERT міг
-   тихо провалитись, а наступний SELECT казав «рядок є» -> акаунт «зник»
-   з бази і програма викидала на вхід). */
-/* 3.5.40: ГАРЯЧІ запити (sts щотіка ~16 с) — з дзеркала Firebase, БЕЗ бекенда.
-   Сайт полінгує крихітний маркер update/websts/<uid> (~25 Б, пишуть застосунки
-   у syncUp і веб у apiPutSnap); повний знімок update/web/<uid> читається
-   ЛИШЕ коли маркер змінився. Роль/вхід — як і було, через /api/sync (рідко). */
+
+
+
+
+
+
+
+
+
 var mirCache = { mark: -1, sts: 0, snap: null, snapT: 0, missT: 0 };
 function mirStsCheck(cb) {
   var k = myFid();
@@ -389,7 +389,7 @@ function mirStsCheck(cb) {
           if (snap && typeof snap === 'object' && snapOk(snap)) {
             mirCache.snap = snap; mirCache.sts = parseInt(snap.t, 10) || 0; mirCache.snapT = Date.now();
             cb({ sts: mirCache.sts, has: true });
-          } else cb({ sts: 0, has: true });   /* дзеркала ще нема — «рядок є, sts 0», без фейкових викидів */
+          } else cb({ sts: 0, has: true });   
         })
         .catch(function () { cb(null); });
     })
@@ -426,13 +426,13 @@ function cfRoute(id, payload) {
   if (/^SELECT role, sync FROM users/i.test(sql)) {
     apiGetRow(function (r) { cfReply(id, r !== null, r ? [{ role: r.role, sync: r.sync }] : []); }); return;
   }
-  /* 3.5.40: гарячі шляхи — з дзеркала Firebase (без бекенда); роль/логін — як було */
+  
   if (/^SELECT settings FROM users/i.test(sql)) { mirSnap(function (s) { cfReply(id, s !== null, s ? [{ settings: s }] : []); }); return; }
   if (/^SELECT sts FROM users/i.test(sql)) { mirStsCheck(function (r) { cfReply(id, r !== null, r ? [{ sts: r.sts }] : []); }); return; }
   if (/^SELECT user_id FROM users WHERE user_id=/i.test(sql)) {
-    /* 3.5.18: ЧЕСНА перевірка існування рядка (перевірка INSERT у usersUpsert) */
+    
     apiGetRow(function (r) {
-      if (r === null) { cfReply(id, false, null); return; }   /* офлайн -> ретрай застосунку */
+      if (r === null) { cfReply(id, false, null); return; }   
       var has = false;
       try { has = !!(r.settings && snapOk(JSON.parse(r.settings))); } catch (e) {}
       cfReply(id, true, has ? [{ user_id: String(p0(0) || '') }] : []);
@@ -451,7 +451,7 @@ function cfRoute(id, payload) {
   if (/^UPDATE users SET sync=/i.test(sql)) {
     var want = (p0(0) === 1 || p0(0) === '1' || p0(0) === true) ? 1 : 0;
     apiGetRow(function (r) {
-      if (r === null) { cfReply(id, false, null); return; }   /* офлайн — не затираємо нічого */
+      if (r === null) { cfReply(id, false, null); return; }   
       var s0 = null;
       try { s0 = JSON.parse(r.settings || 'null'); } catch (e) {}
       if (!snapOk(s0)) s0 = { g: {}, n: { on: true, min: 5, snd: true, off: false }, th: 'standard', z: 'app', t: Date.now(), v: VER, sync: want };
@@ -464,10 +464,10 @@ function cfRoute(id, payload) {
     var up = { name: String(p0(1) || ''), email: String(p0(2) || ''), pic: String(p0(3) || '') };
     var ds = asSnap(p0(7));
     apiGetRow(function (cur) {
-      if (cur === null) { cfReply(id, false, null); return; }   /* офлайн — ретрай застосунку */
+      if (cur === null) { cfReply(id, false, null); return; }   
       var exists = false;
       try { exists = !!(cur.settings && snapOk(JSON.parse(cur.settings))); } catch (e) {}
-      if (exists) { cfReply(id, true, []); return; }            /* рядок уже є — ON CONFLICT НЕ чіпає settings */
+      if (exists) { cfReply(id, true, []); return; }            
       if (!ds) { cfReply(id, true, []); return; }
       ds.t = Date.now(); ds.v = VER; ds.sync = 1;
       putWithOutbox(ds, up, function (ok) { cfReply(id, ok, []); });
@@ -481,14 +481,14 @@ function cfRoute(id, payload) {
     return;
   }
 
-  cfReply(id, true, []);   // невідомий запит — успішно й порожньо
+  cfReply(id, true, []);   
 }
 
-/* ─────────── ВХІД: Google Identity Services ПРЯМО НА СТОРІНЦІ ───────────
-   Точнісінько як на сайті 3.5.12 (він працював): initTokenClient ->
-   access_token -> userinfo -> /api/auth/google (бекенд обмінює на Firebase
-   idToken/refreshToken) -> профіль у RTDB update/auth_cb/<state> — канал
-   входу ЗАСТОСУНКІВ, далі все робить власний код програми. */
+
+
+
+
+
 function ensureGis(fn) {
   if (window.google && window.google.accounts && window.google.accounts.oauth2) { fn(); return; }
   var tries = 0;
@@ -502,12 +502,12 @@ function agStat(msg, cls) {
   try { if (typeof setAgStat === 'function') setAgStat(msg, cls); return; } catch (e) {}
   try { if (cls === 'err' && typeof agFail === 'function') agFail(msg); } catch (e2) {}
 }
-/* 3.5.19: ПІСЛЯ ВИБОРУ АКАУНТА GOOGLE — ОДРАЗУ ЕКРАН ЗАВАНТАЖЕННЯ
-   (просив власник: «чтобы не было текста „перевіряємо аккаунт“ — сразу
-   появлялся экран загрузки, и во время него оно всё проверяло»).
-   webDlStart піднімає #boot НАД гейтом (body.dl-over, z 320 > 260/230),
-   далі показує звичайний сплеш із смугою прогресу; усі перевірки
-   (профіль -> бекенд -> auth_cb -> прийом) ідуть ПІД ним, жодних текстів. */
+
+
+
+
+
+
 function webDlStart() {
   try { document.body.classList.add('dl-over'); } catch (eD1) {}
   try { if (typeof showDataLoad === 'function') showDataLoad(); } catch (eD2) {}
@@ -523,7 +523,7 @@ function agErr(msg) {
 }
 function webLogin(st) {
   try {
-    /* бекап старої сесії — новий вхід НЕ знищить rtok до підтвердження */
+    
     try {
       var u0 = jget('fh_user');
       if (u0 && u0.rtok && !(sessGet() && sessGet().rtok)) sessSave({ tok: String(u0.tok || ''), rtok: String(u0.rtok), tokT: parseInt(u0.tokT, 10) || 0, sub: String(u0.sub || ''), email: String(u0.email || '') });
@@ -539,8 +539,8 @@ function webLogin(st) {
           prompt: 'select_account',
           callback: function (resp) {
             if (!resp || !resp.access_token) { agErr('Google не повернув доступ. Натисни кнопку ще раз.'); return; }
-            /* 3.5.19: акаунт вибрано — МИТТЄВО екран завантаження (без текстів
-               «Перевіряємо акаунт…»/«Заходимо…»): усе далі — під сплешем */
+            
+
             try { setAgStat(''); } catch (eClr) {}
             webDlStart();
             var at = String(resp.access_token);
@@ -550,9 +550,9 @@ function webLogin(st) {
                 if (!p || !p.sub) { agErr('Не вдалося прочитати профіль Google. Спробуй ще раз.'); return; }
                 var name = String(p.name || ''), email = String(p.email || '');
                 if (!name && email) name = email.split('@')[0];
-                /* 3.5.12: бекенд обмінює Google-токен на Firebase (localId +
-                   idToken + refreshToken) — той самий виклик, що на старому сайті */
-                /* 3.5.40: прямий identitytoolkit — без /api/auth/google на Render */
+                
+
+                
                 fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=' + FB_KEY, {
                   method: 'POST', headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ postBody: 'id_token=' + encodeURIComponent(at) + '&providerId=google.com', requestUri: 'http://localhost', returnSecureToken: true })
@@ -567,20 +567,20 @@ function webLogin(st) {
                       sub: String(p.sub), email: email
                     };
                     sessSave(tokState);
-                    /* профіль у канал входу застосунків: програма сама його
-                       забере (authPollDb -> authAccept) і зареєструє в базі */
+                    
+
                     var node = {
                       d: {
                         sub: String(p.sub), name: name, email: email,
                         picture: String(p.picture || ''), fid: String(j.localId),
-                        tok: at   /* legacy-шлях ПК (2.8.7): добудова fid */
+                        tok: at   
                       },
                       rtok: tokState.rtok, tokT: tokState.tokT, t: Date.now()
                     };
                     fetch(DB_URL + '/update/auth_cb/' + encodeURIComponent(st) + '.json', {
                       method: 'PUT', body: JSON.stringify(node)
                     }).catch(function () {});
-                    /* 3.5.19: жодного «Заходимо…» — екран завантаження вже показано */
+                    
                   });
               })
               .catch(function () { agErr('Немає зв’язку з Google. Перевір інтернет і спробуй ще раз.'); });
@@ -599,17 +599,17 @@ function webLogin(st) {
   } catch (e) { agErr('Не вдалося почати вхід. Спробуй ще раз.'); }
 }
 
-/* 3.5.20: «Запуск Zoom» більше НЕ вирізається з розмітки — картка
-   #secZoom просто ховається CSS'ом вище (iPhone — завжди, Mac — поки
-   користувач не бета-адмін). Так картку можна ПОКАЗАТИ назад одразу,
-   щойно бета-прапорець доїде з бази (body.fh-beta), без перезавантаження. */
 
-/* 3.5.19: СПОВІЩЕННЯ НА САЙТІ НЕМАЄ (просив власник: «убери функцию
-   сповіщення про початок уроку в веб-версии — она только на Андроиде
-   и Windows»). webNotify і планування notifTimers видалено повністю;
-   міст каже, що дозвіл начебто є — жодних банерів/рамок дозволу. */
 
-/* ───────────────────── сам міст ───────────────────── */
+
+
+
+
+
+
+
+
+
 window.AndroidHost = {
   ver: function () { return VER; },
   isWeb: function () { return true; },
@@ -661,16 +661,16 @@ window.AndroidHost = {
     cfRoute(id, pl);
   },
   hasNotifPerm: function () {
-    /* 3.5.19: на сайті сповіщень нема — «дозвіл начебто є», щоб банери
-       і рамки дозволу ніколи не показувались (сама функція прибрана) */
+    
+
     return true;
   },
   requestNotifPerm: function () {},
   setNotif: function () {
-    /* 3.5.19: на сайті нічого не плануємо — заглушка */
+    
   },
   testNotif: function () {
-    /* 3.5.19: тесту сповіщення на сайті нема */
+    
   },
   devInfo: function () {
     try {
@@ -686,9 +686,9 @@ window.AndroidHost = {
   prewarm: function () {},
   markLesson: function () {},
   upd: function () {
-    /* веб-сторінка оновлюється сама: новий деплой = нова версія.
-       3.5.23: страховка — для однієї версії перезавантаження ОДИН раз
-       за сесію, щоб ніколи не виходило циклу оновлень. */
+    
+
+
     try {
       var uk = 'fh_webupd_' + VER;
       if (sessionStorage.getItem(uk)) return;
@@ -700,33 +700,33 @@ window.AndroidHost = {
 };
 })();
 
-/* ============================================================
-   3.5.21: URL-ХЕШІ ВКЛАДОК АНГЛІЙСЬКОЮ (просив власник: «в URL
-   название вкладки, например, розклад, налаштування, пиши на
-   английском, чтобы оно всё менялось»).
-   Перемикання вкладок оновлює адресу:
-     Розклад      -> #schedule
-     Налаштування -> #settings
-     Профіль      -> #account
-     Адмін        -> #admin
-   А на старті хеш із посилання відкриває потрібну вкладку одразу
-   (наприклад, fluxhelper.pages.dev/main#settings -> Налаштування).
-   ТІЛЬКИ САЙТ: у застосунках (APK/EXE) webhost.js відсутній,
-   там адреси нема і нічого не змінюється.
-   ============================================================ */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 (function () {
   var TABS = { schedule: 1, settings: 1, account: 1, admin: 1 };
-  /* 3.5.26: знімок вкладки НА СТАРТІ — якщо живий хеш десь затерся,
-     відновлення іде за ним (фікс «перезавантаження скидає на Розклад») */
+  
+
   var BOOT_TAB = (function () {
     try { var h0 = String(location.hash || '').replace(/^#/, ''); return TABS[h0] ? h0 : ''; }
     catch (e0) { return ''; }
   })();
   function setHash(name) {
     try {
-      /* 3.5.26: під час бута хеш НЕ перезаписуємо — інакше стартовий
-         showMain() затирає #settings до __fhHashApply, і після
-         перезавантаження користувача викидає на Розклад */
+      
+
+
       var b0 = (window.__fh && window.__fh.boot) ? window.__fh.boot() : null;
       if (b0 && !b0.revealed) return;
       if (TABS[name] && location.hash !== '#' + name) {
@@ -746,7 +746,7 @@ window.AndroidHost = {
   function applyHash() {
     try {
       var h = String(location.hash || '').replace(/^#/, '');
-      if (!TABS[h]) h = BOOT_TAB;   /* 3.5.26: живий хеш затерто — беремо стартовий */
+      if (!TABS[h]) h = BOOT_TAB;   
       if (!TABS[h]) return;
       if (h === 'schedule' && typeof window.showMain === 'function') window.showMain();
       else if (h === 'settings' && typeof window.showSetup === 'function') window.showSetup();
@@ -758,15 +758,15 @@ window.AndroidHost = {
       else if (h === 'admin' && typeof window.admShow === 'function') window.admShow();
     } catch (e) {}
   }
-  /* 3.5.23: ui.js викликає це ПІСЛЯ синк-продовжень старту — інакше
-     перезавантаження на вкладці «Профіль» перекидало назад на Розклад */
+  
+
   window.__fhHashApply = applyHash;
   window.addEventListener('load', function () {
     wrap('showMain', 'schedule');
     wrap('showSetup', 'settings');
     wrap('showAcc', 'account');
     wrap('admShow', 'admin');
-    /* відкриваємо вкладку з посилання, щойно стартовий екран зник */
+    
     var t = 0, tries = 0;
     var tick = setInterval(function () {
       ++tries;
@@ -775,6 +775,6 @@ window.AndroidHost = {
         if ((b && (b.revealed || b.p >= 100)) || tries > 12) { clearInterval(tick); applyHash(); }
       } catch (e) { clearInterval(tick); }
     }, 350);
-    setTimeout(function () { clearInterval(tick); applyHash(); }, 4500);   /* гарантія */
+    setTimeout(function () { clearInterval(tick); applyHash(); }, 4500);   
   });
 })();

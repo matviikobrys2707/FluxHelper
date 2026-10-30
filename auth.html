@@ -36,7 +36,7 @@ body {
   padding: 30px 20px;
 }
 
-/* Центральний контейнер — точна копія екранного #agate з програми */
+
 .gate-card {
   position: relative;
   width: 100%;
@@ -145,7 +145,7 @@ h2 {
 }
 .ag-mini span svg { opacity: .8; flex: none; }
 
-/* Картка обраного акаунта за наявності hint */
+
 .who {
   display: none;
   align-items: center;
@@ -177,7 +177,7 @@ h2 {
 .who .tt b { display: block; font-size: 12.5px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .who .tt span { display: block; font-size: 10.5px; color: #8b8fa3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* Кнопка Google входу — копія .ag-go */
+
 .ag-go {
   width: 100%;
   max-width: 300px;
@@ -231,7 +231,7 @@ h2 {
 }
 @keyframes fhsp { to { transform: rotate(360deg); } }
 
-/* Стан готовності (успішний вхід) */
+
 .done-box {
   animation: agIn .55s cubic-bezier(.16,1,.3,1) both;
 }
@@ -265,7 +265,7 @@ h2 {
 <div class="gate-card">
   <div class="ag-glow"></div>
 
-  <!-- Основна форма авторизації -->
+  
   <div id="stForm" style="width:100%;display:flex;flex-direction:column;align-items:center;">
     <div class="us-logo">
       <img src="icon-192.png" alt="FluxHelper" onerror="this.src='favicon-32.png'">
@@ -310,7 +310,7 @@ h2 {
     <div class="ag-stat" id="stat"></div>
   </div>
 
-  <!-- Екран успіху -->
+  
   <div id="stDone" style="display:none;width:100%" class="done-box">
     <div class="done-icon">
       <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
@@ -325,21 +325,21 @@ h2 {
   'use strict';
   var h = {}, seg = (location.hash || '').replace(/^#/, '').split('&');
   for (var i = 0; i < seg.length; ++i) { var kv = seg[i].split('='); if (kv[0]) h[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1] || ''); }
-  /* 3.5.41: ВХІД В ОДИН КЛІК — auth.html може ОДРАЗУ переадресовувати на
-     сторінку вибору акаунта Google (топ-рівнева навігація — не спливане
-     вікно, тому працює на всіх телефонах і ніде не блокується).
-     • Застосунок додає &oneclick=1 ЛИШЕ коли в D1 (_meta.auth_oneclick='1').
-     • Прапорець можна вмикати лише після того, як у Google Cloud Console
-       → APIs & Services → Credentials → цей Web-клієнт → «Authorized
-       redirect URIs» додано https://fluxhelper.pages.dev/auth.html
-       (інакше Google покаже помилку redirect_uri_mismatch).
-     • Повернення з Google: хеш містить #access_token=...&state=... —
-       сторінка сама завершує вхід (профіль → auth_cb/<state>). */
+  
+
+
+
+
+
+
+
+
+
   var GH = h.access_token || h.error ? h : null;
   var STATE = h.s || (GH ? (h.state || '') : ''), PORT = h.p || '', HINT = h.h || '';
-  /* 3.5.40: FH_BACKEND (Render) більше не використовується — вхід іде
-   напряму: identitytoolkit (Web key публічний) + Firebase auth_cb */
-  var FB_KEY = 'AIzaSyCDWpF3QTMEFBN9ravDxH_woKnBpcMRDvI';   /* публічний Firebase Web API key */
+  
+
+  var FB_KEY = 'AIzaSyCDWpF3QTMEFBN9ravDxH_woKnBpcMRDvI';   
   var GIS_CLIENT = '668834523935-k470ldmdv0r9am0720v6lgaatm6rtuf3.apps.googleusercontent.com';
 
   var go = document.getElementById('go'), goT = document.getElementById('goT'),
@@ -348,9 +348,9 @@ h2 {
   function setStat(t, cls) { stat.className = 'ag-stat' + (cls ? ' ' + cls : ''); stat.innerHTML = t || ''; }
   function busy(on, txt) { go.disabled = !!on; goT.textContent = txt; }
 
-  /* ===== 3.5.41: ПОВЕРНЕННЯ З GOOGLE (oneclick-редірект) =====
-     токен уже в хеші — одразу тягнемо профіль і передаємо в програму,
-     ніякої кнопки користувач більше не тискає */
+  
+
+
   if (GH) {
     if (GH.error === 'access_denied') setStat('Вхід скасовано. Поверніться у FluxHelper і натисніть «Увійти через Google» ще раз.', 'err');
     else if (!GH.access_token) setStat('Google не підтвердив вхід. Поверніться у FluxHelper і спробуйте ще раз.', 'err');
@@ -358,7 +358,7 @@ h2 {
     return;
   }
 
-  /* ===== 3.5.41: ONECLICK — миттєва переадресація на вибір акаунта ===== */
+  
   if (STATE && h.oneclick === '1') {
     var ru = location.origin + '/auth.html';
     var gu = 'https://accounts.google.com/o/oauth2/v2/auth?client_id=' + encodeURIComponent(GIS_CLIENT) +
@@ -371,13 +371,13 @@ h2 {
     return;
   }
 
-  /* ===== 3.4.12: ЖИВІСТЬ СТОРІНКИ ВХОДУ =====
-     Програма (ПК) чекає відповідь на локальному слухачі 127.0.0.1. Раніше,
-     якщо користувач ЗАКРИВАВ цю вкладку, кнопка «Увійти через Google» у
-     програмі залишалась неактивною аж до 4-хвилинного таймауту. Тепер:
-     • поки сторінка жива — вона кожні 2.5 с стукає GET /hb (серцебиття);
-     • при закритті вкладки/переході — sendBeacon('/bye') миттєво повідомляє
-       програму, і кнопка ОДРАЗУ знову стає активною («Спробувати ще раз»). */
+  
+
+
+
+
+
+
   if (STATE && PORT) {
     var HB_URL = 'http://127.0.0.1:' + PORT + '/hb?state=' + encodeURIComponent(STATE);
     var BYE_URL = 'http://127.0.0.1:' + PORT + '/bye?state=' + encodeURIComponent(STATE);
@@ -396,7 +396,7 @@ h2 {
       try { navigator.sendBeacon && navigator.sendBeacon(BYE_URL); } catch (e) { }
       try { fetch(BYE_URL, { mode: 'cors', keepalive: true }).catch(function () { }); } catch (e) { }
     });
-    /* delivHook — deliver() позначає delivered, щоб серцебиття не йшли після успіху */
+    
     window.__fhHbStop = function () {
       delivered = true;
       try { clearInterval(hbTimer); } catch (e) { }
@@ -424,12 +424,12 @@ h2 {
   }
 
   function deliver(prof, ok, fail) {
-    /* 3.5.40: 2 канали (localhost — ПК-хост; Firebase auth_cb — прямий PUT).
-       Релей на Render і канал КОДУ (manlogin) ЗНЕСЕНО — просив власник:
-       вхід кодом зі сайту більше неможливий, а Render не потрібен у
-       ланцюжку входу (прямий PUT до Firebase досягає бази завжди). */
+    
+
+
+
     var sent = false, pending = 0, decided = false;
-    try { if (window.__fhHbStop) window.__fhHbStop(); } catch (eHB) { }   // 3.4.12: серцебиття більше не потрібне
+    try { if (window.__fhHbStop) window.__fhHbStop(); } catch (eHB) { }   
     function fin(good) { pending--; if (good) sent = true; if (!decided && pending <= 0) { decided = true; (sent ? ok : fail)(); } }
     function chan(fn) { pending++; try { fn(); } catch (e) { fin(false); } }
     setTimeout(function () { if (!decided && sent) { decided = true; ok(); } }, 2500);
@@ -441,10 +441,10 @@ h2 {
           .catch(function () { fin(false); });
       });
     }
-    /* 3.5.24: ПРЯМИЙ канал у Firebase RTDB — застосунки опитують
-       update/auth_cb/<state> і підхоплюють профіль за 1-2 с.
-       3.5.41: до 3 спроб — слабка мережа на старих телефонах більше не
-       зриває передачу профілю (одна невдала спроба не «вбиває» вхід). */
+    
+
+
+
     chan(function () {
       var putUrl = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app/update/auth_cb/' + encodeURIComponent(STATE) + '.json';
       var tries = 0;
@@ -477,8 +477,8 @@ h2 {
   function fbRegister(accessTok) {
     return new Promise(function (res) {
       try {
-        /* 3.5.40: прямий identitytoolkit (той самий виклик, що робить dex
-           застосунка) — без Render-релею; Web key публічний */
+        
+
         fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=' + encodeURIComponent(FB_KEY), {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ postBody: 'id_token=' + encodeURIComponent(accessTok) + '&providerId=google.com', requestUri: 'http://localhost', returnSecureToken: true })
@@ -488,8 +488,8 @@ h2 {
       } catch (e) { res(null); }
     });
   }
-  /* 3.5.16: веб-сесія для webhost.js (сайт = той самий код, що й застосунки;
-     мосту потрібні Firebase id/refresh токени для /api/sync і /api/rtdb) */
+  
+
   function saveWebSession(fr, prof) {
     try {
       if (!fr || !fr.resp || !fr.resp.idToken) return;
@@ -522,9 +522,9 @@ h2 {
       if (!u || !u.sub) throw new Error('profile');
       var prof = { sub: String(u.sub), name: String(u.name || ''), email: String(u.email || ''), picture: String(u.picture || ''), fid: fid || '' };
       saveWebSession(fr, prof);
-      /* 3.5.17: токени сесії їдуть І в auth_cb — webhost.js добирає їх звідти
-         (другий канал, якщо localStorage сторінки застосунку недоступний).
-         Застосунки зайві поля просто ігнорують (беруть sub/name/email/pic/fid). */
+      
+
+
       if (fr && fr.resp && fr.resp.idToken) {
         var exp17 = parseInt(fr.resp.expiresIn, 10) || 3600;
         prof.tok = String(fr.resp.idToken);

@@ -18,22 +18,22 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a12;color:#eef0f
 </head>
 <body>
 <div class="w">
-  <!-- 2.9.2: справжня іконка застосунку замість порожнього тексту -->
+  
   <img src="icon-192.png" alt="FluxHelper">
   <span class="t">…</span>
 </div>
 <script>
-/* ================================================================
-   FluxHelper 2.8.3 — fbauth.html (міст Firebase Authentication)
-   Програма (ПК/телефон) відкриває цю сторінку в ПРИХОВАНОМУ iframe:
-       https://fluxhelper.pages.dev/fbauth.html#t=<id_token | access_token>
-   Тільки запити з реферером fluxhelper.pages.dev пропускає ключ Firebase,
-   тому реєстрація користувача в Authentication -> Users робиться ЗВІДСИЛЬ.
-   2.8.3: підтримано id_token (JWT від Credential Manager — головний канал
-   нативного входу на телефоні) і access_token (браузерний шлях).
-   Результат повертається батьку: postMessage({__fhFb:{ok, localId, email}}, '*'),
-   де localId — UID користувача у Firebase Authentication (ключ запису в D1).
-   ================================================================ */
+
+
+
+
+
+
+
+
+
+
+
 (function () {
   'use strict';
   var h = {}, seg = (location.hash || '').replace(/^#/, '').split('&');
@@ -42,8 +42,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a12;color:#eef0f
     if (kv[0]) h[decodeURIComponent(kv[0])] = decodeURIComponent((kv[1] || '').replace(/\+/g, ' '));
   }
   var T = h.t || '';
-  /* 3.5.40: прямий identitytoolkit — без Render-релею (Web key публічний,
-     він і так вшитий в APK). id_token (JWT) або access_token — як і бекенд */
+  
+
   var FB_KEY = 'AIzaSyCDWpF3QTMEFBN9ravDxH_woKnBpcMRDvI';
 
   function reply(ok, extra) {
@@ -56,7 +56,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a12;color:#eef0f
   var el = document.querySelector('.t');
   if (el) el.textContent = 'FluxHelper: підтверджуємо вхід…';
 
-  // JWT (дві крапки) -> id_token; інакше вважаємо це access_token (шлях 2.8.2)
+  
   var isJwt = String(T).split('.').length === 3;
   fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=' + encodeURIComponent(FB_KEY), {
     method: 'POST', headers: { 'Content-Type': 'application/json' },

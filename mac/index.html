@@ -11,32 +11,32 @@
 <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3518">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=3518">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3518">
-<!-- 3.5.18: Google Identity Services — вхід як на сайті 3.5.12 -->
+
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<!-- 3.5.18: ВЕБ-МІСТ v3 (синхронізація = схема сайту 3.5.12) + диспетчер -->
+
 <script src="webhost.js"></script>
 <script>
-/* 3.5.22: ЄДИНИЙ URL — /main (просив власник: «убери все URL типа /iphone/,
-   /mac/ — щоб був один URL, який сам відкриває потрібну версію»).
-   /iphone/ та /mac/ більше НЕ окремі сторінки: вони лише джерела вмісту,
-   які сторінка /main підтягує собі (fetch + <base href>). Прямий вхід
-   на /mac/... чи /iphone/... миттю переадресовує на /main/ — там сам
-   визначається телефон чи комп'ютер/планшет. Хеш вкладки зберігається.
-   У застосунках (APK/EXE) цей файл-сирець не використовується як є,
-   а перевірка протоколу страховує file:// збірки. */
+
+
+
+
+
+
+
+
 (function () {
   try {
-    if (!/^https?:$/.test(location.protocol)) return;              /* file:// (застосунок) — не чіпаємо */
-    if (/^\/main(\/|$|\?|#)/.test(location.pathname + location.search)) return;  /* вже /main — ок */
+    if (!/^https?:$/.test(location.protocol)) return;              
+    if (/^\/main(\/|$|\?|#)/.test(location.pathname + location.search)) return;  
     location.replace('/main/' + (location.hash || ''));
   } catch (e) {}
 })();
 </script>
 <script>
-/* 2.9.2: РАНІЙ ЗАХИСТ — поза застосунком (звичайний браузер) розмітка
-   приховується ще ДО завантаження ui.js: використати інтерфейс у
-   браузері неможливо. Далі ui.js малює повноцінний екран-замок
-   з кнопками завантаження стабільного релізу. */
+
+
+
+
 (function(){var ok=false;try{ok=!!((window.chrome&&window.chrome.webview&&window.chrome.webview.postMessage)||(window.AndroidHost&&window.AndroidHost.ver));}catch(e){ok=false;}
 if(!ok){var s=document.createElement('style');s.id='fhEarlyHide';s.textContent='body>*{display:none!important}body{background:#050508!important}';(document.head||document.documentElement).appendChild(s);
 var m=function(){var b=document.body;if(b&&!document.getElementById('fhEarlyHide')){(document.head||document.documentElement).appendChild(s);}};setInterval(m,600);}})();
@@ -44,11 +44,11 @@ var m=function(){var b=document.body;if(b&&!document.getElementById('fhEarlyHide
 </head>
 <body class="booting" data-theme=''>
 <script>
-/* тема ДО першого кадру, без спалаху. Пріоритет 2.8.8:
-   1) data-theme на <body>, який хост підставив із __BOOT_THEME__ (тема
-      цього аккаунта, свіжозавантажена з хмари ще ДО показу вікна);
-   2) localStorage (тема з минулого запуску на цьому пристрої);
-   3) standard. Обраний варіант пишемо назад у body + localStorage */
+
+
+
+
+
 try{
   var _t=document.body.getAttribute('data-theme')||'';
   if(['standard','light'].indexOf(_t)<0){
@@ -59,12 +59,7 @@ try{
   localStorage.setItem('fh_theme',_t);
 }catch(e){try{document.body.setAttribute('data-theme','standard')}catch(e2){}}
 </script>
-<!-- 2.9.0: ТИТУЛЬНУ ПАНЕЛЬ ВИНЕСЕНО З #app (тепер #tbar — безпосередня дитина body).
-     Чому: applyScale() ставить CSS zoom на #app, і WebView2 у цьому випадку малює
-     #agate (гейт входу) ПОВЕРХ панелі — власник бачив екран входу БЕЗ лого і кнопок.
-     Панель поза #app = не масштабується і завжди верхня (z 400 > гейт 230):
-     лого + «Згорнути»/«Закрити» — ПІКСЕЛЬ-У-ПІКСЕЛЬ ті самі на всіх екранах
-     (сплеш/гейт/меню/помилка мережі/оновлення), як просив власник. -->
+
 <div id="tbar">
   <div class="tb-l">
     <span class="lmark" id="logo" aria-hidden="true"><img src="logo.png" width="27" height="27" alt="" decoding="sync" style="display:block;border-radius:8px"></span>
@@ -147,9 +142,8 @@ try{
         <div id="sumRows"></div>
       </section>
 
-      <!-- 3.5.21: КОПІЮВАННЯ ПОСИЛАННЯ НА УРОК — перемикач функції:
-         ПКМ по уроку в розкладі = посилання в буфері обміну -->
-      <div class="sw-duo sw-col-b"><!-- 3.5.40: Сповіщення — ліва колонка (не розтягнута на всю ширину) -->
+      
+      <div class="sw-duo sw-col-b">
 <section class="sw-card" id="secNotif">
         <div class="sw-c-head">
           <span class="sw-c-ic grad"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span>
@@ -197,14 +191,11 @@ try{
         <button class="su-perm hidden" id="bPerm">Надати дозвіл на сповіщення</button>
       </section>
 
-            <!-- 2.3.8: картку «Акаунт і синхронізація» прибрано -->
+            
 
-<!-- 3.5.20: «Запуск Zoom» — окрема картка (id=secZoom). Сайт:
-             iPhone — завжди схована, Mac — лише для бета-адмінів (webhost.js);
-             у Windows-програмі картка на місці ЗАВЖДИ: додаток = посилання
-             zoommtg:// з бази, браузер = одразу веб-версія Zoom -->
+
       
-</div><div class="sw-duo sw-col-a"><!-- 3.5.40: правий стовпчик — Zoom / захід / посилання (порядок як просив власник) -->
+</div><div class="sw-duo sw-col-a">
 <section class="sw-card" id="secZoom">
         <div class="sw-c-head">
           <span class="sw-c-ic grad"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></span>
@@ -264,9 +255,7 @@ try{
         </div>
       </section>
 
-      <!-- 2.9.1: ПУСТИЙ КВАДРАТ ПІСЛЯ РАМКИ ТЕМИ ПРИБРАНО — секцію #ac2Card
-           (залишок 2.8.0: вміст давно видалено, а секція показувалась після
-           входу) знесено повністю -->
+      
 
       <section class="sw-card sw-wide" id="secUpd">
         <div class="sw-c-head">
@@ -282,21 +271,19 @@ try{
         </div>
       </section>
 
-      <!-- 3.5.44: рамку «Про програму» («розклад 8-го Б класу») ЗНЕСЕНО — просив власник -->
+      
 
     </div>
 
   </div>
 </div>
 
-<!-- 2.3.8: СТОРІНКА ПРОФІЛЮ — акаунт + синхронізація + вихід живуть тут,
-     у «Налаштуваннях» їх більше немає (власник попросив окрему сторінку) -->
 
-<!-- 2.8.3: сторінка акаунта — профіль + синхронізація. Всередині #app
-     (раніше була зовні й ділила екран навпіл із розкладом) -->
+
+
 <div id="vAcc" class="view hidden">
   <div class="acc-wrap">
-    <!-- 3.5.20: accBack («Назад») прибрано — сегментний переремикач завжди зверху -->
+    
     <div class="acc-hero-card">
       <span class="acc-ava-big" id="acAva">?</span>
       <div class="acc-id">
@@ -307,7 +294,7 @@ try{
     </div>
     <div class="acc-stats">
       <div class="acc-stat"><b id="acStSync">—</b><span>синхронізація</span></div>
-      <!-- 3.5.21: «Пристрой» — лише ім'я пристрою, без іконки платформи -->
+      
       <div class="acc-stat acc-dev"><b id="acStDev">—</b><span>пристрій</span></div>
       <div class="acc-stat"><b id="acStVer">—</b><span>версія</span></div>
     </div>
@@ -324,9 +311,7 @@ try{
           </div>
           <label class="sw" title="Увімкнути/вимкнути синхронізацію" style="flex:none"><input type="checkbox" id="acSync"><i></i></label>
         </div>
-        <!-- 3.4.5: перемикач бета-оновлень — показується ЛИШЕ адмінам/розробнику
-             (видимість керує refreshAccUI за роллю); звичайні акаунти і без
-             входу отримують тільки релізні версії -->
+        
         <div class="ms-row hidden" id="rowBeta">
           <span class="ms-tile" style="background:linear-gradient(135deg,#f59e0b,#f97316)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.5L4.5 19a2 2 0 0 0 1.7 3h11.6a2 2 0 0 0 1.7-3L14 9.5V2"/><path d="M8.5 2h7"/><path d="M7 15h10"/></svg>
@@ -337,11 +322,9 @@ try{
           </div>
           <label class="sw" title="Бета-оновлення" style="flex:none"><input type="checkbox" id="acBeta"><i></i></label>
         </div>
-        <!-- 3.4.0: бета-канал переїхав у «Налаштування» -> картку «Оновлення» -->
-        <!-- 2.8.6: кнопку «Завантажити з хмари» прибрано — налаштування
-             підтягуються з акаунта АВТОМАТИЧНО (під час входу і далі
-             в реальному часі, див. syncWatch) -->
-        <!-- 3.4.8: скидання налаштувань акаунта (rs:1 на сервері + чистий майстер груп) -->
+        
+        
+        
         <div class="ms-row" id="acReset" role="button" title="Скинути налаштування акаунта">
           <span class="ms-tile" style="background:linear-gradient(135deg,#38bdf8,#6366f1)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
@@ -360,15 +343,11 @@ try{
   </div>
 </div>
 
-<!-- ============================================================
-     3.0.0 — АДМІН-ПАНЕЛЬ (видима лише з роллю admin/developer,
-     роль видається в базі: users.role). У браузері недоступна.
-     ============================================================ -->
+
 <div id="vAdmin" class="view hidden">
   <div class="adm-wrap">
-    <!-- 3.5.20: admBack («До розкладу») прибрано -->
-    <!-- 3.4.0: ВЕЛИКА РАМКА «Редагування розкладу» — усередині три вкладки
-         (Розклад / Zoom / Вчителі іконки); тижні — окремою рамкою нижче -->
+    
+    
     <section class="adm-card adm-frame">
       <div class="adm-c-head"><span class="sw-c-ic grad"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.6" y="5" width="16.8" height="15.4" rx="2"/><path d="M3.6 10h16.8"/><path d="M8.2 2.8v4M15.8 2.8v4"/></svg></span>
         <div class="sw-c-tt"><b>Редагування розкладу</b><span>зміни летять у базу — клас отримує їх миттєво</span></div>
@@ -388,7 +367,7 @@ try{
   <div class="adm-backdrop" id="admBackDrop"></div>
   <div class="adm-modal" id="admModalBox"></div>
 </div>
-</div><!-- /#app -->
+</div>
 
 <div id="mwrap" class="hidden">
   <div class="mback" id="mback"></div>
@@ -418,9 +397,7 @@ try{
   </div>
 </div>
 
-<!-- 3.5.1: «ЩО НОВОГО» — віконце змін, яке зустрічає користувача після
-     оновлення (перший запуск нової версії). Маркери: + додали, − прибрали,
-   / переділали, ✦ виправили — кожен пункт у своїй рамочці. -->
+
 <div id="wn" class="hidden">
   <div class="mback" id="wnBack"></div>
   <div class="modal wn-modal">
@@ -438,7 +415,7 @@ try{
 
 <div id="toast"></div>
 
-<!-- підтвердження заходу на урок (можно ввімкнути в налаштуваннях) -->
+
 <div id="cwrap" class="hidden">
   <div class="mback" id="cback"></div>
   <div class="modal cmodal">
@@ -457,14 +434,8 @@ try{
   </div>
 </div>
 
-<!-- 2.7.3: гейт входу — закрити неможливо, доки не увійдеш; вкладки сховані -->
-<!-- 3.3.2: гейт входу — як на телефоні:
-     титульна панель (#tbar) залишається ВГОРІ — зліва лого + назва (як на всіх
-     інших сторінках), справа кнопки вікна; вкладки й акаунт сховані (CSS).
-     Фон = ТОЙ САМИЙ, що й в основної частини, гейт починається ПІД панеллю.
-     У центрі — ОДНА іконка (лого FluxHelper), без Google і без «+».
-     Ідентифікатори agLogo/agGo/agGoT/agStat/agSub НЕ змінено (ui.js і main.cpp
-     очікують саме їх, зокрема ReplaceFirst у main.cpp). -->
+
+
 <div id="agate" class="hidden">
   <div class="ag-glow"></div>
   <div class="us-logo" id="agLogo"></div>
@@ -481,9 +452,9 @@ try{
     <span id="agGoT">Увійти через Google</span>
   </button>
     <div class="ag-stat" id="agStat"></div>
-  <!-- 3.5.28: РУЧНИЙ ВХІД КОДОМ ЗІ САЙТУ (якщо автоматична передача профілю не спрацювала) -->
-  <!-- 3.5.40: вхід кодом зі сайту ЗНЕСЕНО (просив власник) -->
-  <!-- 3.5.19: у підвалі входу — лише «вхід захищає Google» (без версії) -->
+  
+  
+  
   <div class="ag-foot">вхід захищає Google</div>
 </div>
 <div id="boot" class="pre">
@@ -506,10 +477,7 @@ try{
   </div>
 </div>
 
-<!-- 3.5.20: ЕКРАН «НЕМАЄ ІНТЕРНЕТУ» ЗНЕСЕНО НАПОВНІСТЬ (просив власник:
-     «убери цю помилку повністю, щоб вона перестала вискакувати»). Натомість —
-     спокійне закривне віконце, яке з'являється ЛИШЕ при дії без мережі
-     (зайти на урок, вийти з акаунта, скинути налаштування, змінити тему) -->
+
 <div id="offl" class="hidden">
   <div class="offl-back" id="offlBack"></div>
   <div class="offl-card">
@@ -529,11 +497,10 @@ try{
     <div class="us-prog" id="updProg"><i id="upFill"></i></div>
     <div class="us-row"><span id="uStat">готово до встановлення</span><span id="upPct"></span></div>
     <button class="us-btn" id="updGo">Оновити</button>
-    <!-- 3.5.5: помилка завантаження — замість «Оновити» два рядки: повтор і ручне завантаження -->
+    
     <button class="us-btn alt hidden" id="updRetry" type="button">Повторити знову</button>
     <button class="us-btn alt2 hidden" id="updMan" type="button">Завантажити оновлення вручну</button>
-    <!-- 3.5.15: вихід БЕЗ оновлення — модалка більше не замкнює користувача
-         (просив власник: «не могу зайти в программу» через вічне оновлення) -->
+    
     <p class="us-sub" id="updWarn" hidden style="color:#fbbf24;font-weight:600;margin:6px 0 0">автооновлення не вдалося кілька разів поспіль — натисни «Завантажити оновлення вручну» або «Пізніше»</p>
     <button class="us-btn ghost" id="updLater" type="button">Пізніше — увійти без оновлення</button>
   </div>
