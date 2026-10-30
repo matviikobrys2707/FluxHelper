@@ -33,7 +33,7 @@
 
 (function () {
 'use strict';
-var VER = '3.5.50';
+var VER = '3.5.51';
 var BACKEND = 'https://fluxhelper-backend.onrender.com';
 var ORIGIN = 'https://fluxhelper.pages.dev';
 var DB_URL = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app';
@@ -462,9 +462,16 @@ function cfRoute(id, payload) {
 
   if (/^INSERT INTO users \(user_id, name, email, pic, ts, logins, created, settings, sver, sts\)/i.test(sql)) {
     var up = { name: String(p0(1) || ''), email: String(p0(2) || ''), pic: String(p0(3) || '') };
-    var ds = asSnap(p0(7));
+    var ds = asSnap(p0(6));   /* 3.5.51: settings = индекс 6 (был 7) — потому строка и не создавалась */
     apiGetRow(function (cur) {
-      if (cur === null) { cfReply(id, false, null); return; }   
+      /* 3.5.51: строка ещё НЕ существует — СОЗДАЁМ её (раньше cur===null означал отказ,
+         из-за чего новый пользователь сайта не мог зарегистрироваться и вечно грузился */
+      if (cur === null) {
+        if (!ds) { cfReply(id, true, []); return; }
+        ds.t = Date.now(); ds.v = VER; ds.sync = 1;
+        putWithOutbox(ds, up, function (ok) { cfReply(id, ok, []); });
+        return;
+      }
       var exists = false;
       try { exists = !!(cur.settings && snapOk(JSON.parse(cur.settings))); } catch (e) {}
       if (exists) { cfReply(id, true, []); return; }            
@@ -473,10 +480,14 @@ function cfRoute(id, payload) {
       putWithOutbox(ds, up, function (ok) { cfReply(id, ok, []); });
     }); return;
   }
+  /* 3.5.51: проверка существования строки после INSERT (usersUpsert-verify) */
+  if (/^SELECT user_id FROM users WHERE user_id=\?/i.test(sql)) {
+    apiGetRow(function (r) { cfReply(id, r !== null, r ? [{ user_id: myFid() }] : []); }); return;
+  }
   if (/^INSERT INTO users \(user_id, settings, sver, sts, email, name, pic, ts\)/i.test(sql)) {
-    var s2 = asSnap(p0(1));
+    var s2 = asSnap(p0(0));   /* 3.5.51: settings = индекс 0 (был 1), профиль — 3/4/5 (было 4/5/6) */
     if (!s2) { cfReply(id, false, null); return; }
-    putWithOutbox(s2, { email: String(p0(4) || ''), name: String(p0(5) || ''), pic: String(p0(6) || '') },
+    putWithOutbox(s2, { email: String(p0(3) || ''), name: String(p0(4) || ''), pic: String(p0(5) || '') },
       function (ok) { cfReply(id, ok, []); });
     return;
   }
@@ -553,11 +564,26 @@ function webLogin(st) {
                 
 
                 
-                fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=' + FB_KEY, {
-                  method: 'POST', headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ postBody: 'id_token=' + encodeURIComponent(at) + '&providerId=google.com', requestUri: 'http://localhost', returnSecureToken: true })
-                }).then(function (r) { return r.json(); }).catch(function () { return null; })
-                  .then(function (j) {
+                /* 3.5.51: GIS token-клиент отдаёт access_token; правильные форматы postBody —
+                   access_token=<at> или id_token=<JWT>. Раньше access-токен всегда шли в
+                   id_token= — identitytoolkit часто отклонял пару и вход зацикливался.
+                   Теперь: JWT если есть, иначе access_token=, + один ретрай другим форматом. */
+                var idTok0 = '';
+                try { if (resp.id_token && String(resp.id_token).split('.').length === 3) idTok0 = String(resp.id_token); } catch (eIT0) {}
+                var exch51 = function (pb, cb51) {
+                  fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=' + FB_KEY, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ postBody: pb, requestUri: 'http://localhost', returnSecureToken: true })
+                  }).then(function (r) { return r.json(); }).catch(function () { return null; }).then(cb51);
+                };
+                exch51(idTok0 ? ('id_token=' + encodeURIComponent(idTok0)) : ('access_token=' + encodeURIComponent(at)), function (j51) {
+                  if (!j51 || !j51.localId) {
+                    exch51(idTok0 ? ('access_token=' + encodeURIComponent(at)) : ('id_token=' + encodeURIComponent(at)), function (j) { fin51(j); });
+                    return;
+                  }
+                  fin51(j51);
+                });
+                var fin51 = function (j) {
                     if (!j || !j.localId) { agErr('Сервер входу не відповів. Спробуй ще раз за хвилину.'); return; }
                     var exp = parseInt(j.expiresIn, 10) || 3600;
                     tokState = {
@@ -584,7 +610,7 @@ function webLogin(st) {
                     } catch (eAO49) {}
                     try { rtdbSync('delete', 'update/auth_cb/' + encodeURIComponent(st), null); } catch (eDEL49) {}
                     
-                  });
+                  };
               })
               .catch(function () { agErr('Немає зв’язку з Google. Перевір інтернет і спробуй ще раз.'); });
           },

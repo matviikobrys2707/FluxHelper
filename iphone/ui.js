@@ -285,7 +285,7 @@ function validS(x) {
 
 
 
-let APP_VER = '3.5.50';              
+let APP_VER = '3.5.51';              
 try {
   if (window.AndroidHost && AndroidHost.ver) {
     const jv = AndroidHost.ver();
@@ -2234,6 +2234,13 @@ function parseNotes(txt) {
 
 
 const WHATS_NEW = {
+  '3.5.51': [
+    '\u2705 \u0421\u0410\u0419\u0422 \u2014 \u0437\u043d\u044f\u0442\u043e \u0437\u0430\u0446\u0438\u043a\u043b\u044e\u0432\u0430\u043d\u043d\u044f \u0432\u0445\u043e\u0434\u0443: \u043e\u0431\u043c\u0456\u043d \u0442\u043e\u043a\u0435\u043d\u0430 \u0422\u0415\u041f\u0415\u0420 \u0432 \u043f\u0440\u0430\u0432\u0438\u043b\u044c\u043d\u043e\u043c\u0443 \u0444\u043e\u0440\u043c\u0430\u0442\u0456 (access_token/id_token + \u0440\u0435\u0442\u0440\u0430\u0439), \u043d\u043e\u0432\u0438\u0439 \u0430\u043a\u0430\u0443\u043d\u0442 \u0441\u0442\u0432\u043e\u0440\u044e\u0454\u0442\u044c\u0441\u044f \u0443 \u0445\u043c\u0430\u0440\u0456 \u0437 \u043f\u0435\u0440\u0448\u043e\u0433\u043e \u0440\u0430\u0437\u0443',
+    '\u2705 \u041d\u0415\u041c\u0410\u0404 \u0432\u0456\u0447\u043d\u043e\u0433\u043e \u0437\u0430\u0432\u0430\u043d\u0442\u0430\u0436\u0435\u043d\u043d\u044f: \u044f\u043a\u0449\u043e \u0445\u043c\u0430\u0440\u0430 \u043d\u0435 \u0432\u0456\u0434\u043f\u043e\u0432\u0456\u043b\u0430 \u2014 \u043f\u0440\u043e\u0433\u0440\u0430\u043c\u0430 \u0432\u0456\u0434\u043a\u0440\u0438\u0432\u0430\u0454\u0442\u044c\u0441\u044f \u0431\u0443\u0434\u044c\u2010\u0449\u043e \u0456 \u0434\u0430\u043d\u0456 \u0434\u043e\u0433\u0430\u043d\u044f\u044e\u0442\u044c\u0441\u044f \u0443 \u0444\u043e\u043d\u0456',
+    '\u2705 \u041b\u041e\u0413\u041e\u0422\u0418\u041f \u043f\u043e\u0432\u0435\u0440\u043d\u0443\u0432\u0441\u044f \u043d\u0430 \u0435\u043a\u0440\u0430\u043d \u0437\u0430\u0432\u0430\u043d\u0442\u0430\u0436\u0435\u043d\u043d\u044f \u0442\u0435\u043b\u0435\u0444\u043e\u043d\u0430 \u0456 \u0441\u0430\u0439\u0442\u0443 (\u0432\u043c\u043e\u043d\u0442\u043e\u0432\u0430\u043d\u043e \u0432\u0435\u0437\u0434\u0435)',
+    '\u2705 \u0422\u0435\u043b\u0435\u0444\u043e\u043d: \u0441\u0442\u043e\u0440\u043e\u0436 JS \u0432\u0445\u043e\u0434\u0443 \u2014 \u043a\u043d\u043e\u043f\u043a\u0430 \u043d\u0456\u043a\u043e\u043b\u0438 \u043d\u0435 \u00ab\u0437\u0430\u0432\u0456\u0441\u043d\u0435\u00bb \u043d\u0430\u0437\u0430\u0432\u0436\u0434\u0438',
+    '/ \u041e\u0444\u0456\u0446\u0456\u0439\u043d\u0438\u0439 \u043f\u0456\u0434\u043f\u0456\u0441 6871f0d5; dex \u043d\u0435 \u0437\u043c\u0456\u043d\u044e\u0432\u0430\u0432\u0441\u044f (=3.5.50)'
+  ],
   '3.5.50': [
     ['✦', 'ТЕЛЕФОН: краш/ANR при відкритті меню Google знесено — вхід більше не "вилітає через раз", меню не залишається висіти', 'android'],
     ['✦', 'СТАРІ АКАУНТИ: вхід одним дотиком — попередній акаунт підхоплюється тихо, без менюшки і без вічного завантаження (професійний Credential Manager-автовибір)', 'android'],
@@ -3662,6 +3669,17 @@ function authStart(hintEmail) {
       } else {
         AndroidHost.login(st);
       }
+      /* 3.5.51: сторож JS — якщо натива не відповіла за 22с (процес убито тощо),
+         знімаємо спінер і повертаємо кнопку, щоб вхід не «висів» назавжди */
+      (function (stW51) {
+        setTimeout(function () {
+          if (agState !== stW51) return;
+          spinOff();
+          agState = '';
+          try { localStorage.removeItem('fh_auth_state'); } catch (eLR51) {}
+          try { setAgStat('Google не відповів вчасно — натисни «Увійти через Google» ще раз.', 'err'); } catch (eS51) {}
+        }, 22000);
+      })(st);
     } catch (eNat47) {
       spinOff();
       agState = '';
@@ -4341,8 +4359,9 @@ function settleSync(cb) {
       cb('offline');
       return;
     }
-    /* локальних даних нема — лишаємо лоадер і тихо доганяємо базу у фоні */
-    try { settleRetryStart(); } catch (eSR) {}
+    /* локальних даних нема — 3.5.51: НЕ крутим лоадер вічно. Відкриваємо програму
+       (майстер груп відкриє guardGroups) і тихо доганяємо базу у фоні */
+    try { settleFailGate(); } catch (eSF51) { try { settleRetryStart(); } catch (eSR) {} }
   };
   const go = function () {
     if (!ACC.user) { fin('offline'); return; }
@@ -4733,6 +4752,10 @@ setTimeout(function () {
     if (!bootReady && !(ACC.user && !dataVerified)) bootReady = true;
   } catch (eWD) {}
 }, 9500);
+/* 3.5.51: жёсткий cap — boot-экран не имеет права крутиться дольше 13с */
+setTimeout(function () {
+  try { if (!bootReady) bootReady = true; } catch (eWD51) {}
+}, 13000);
 
 
 function avaHtml(u) {
@@ -6687,7 +6710,15 @@ function init() {
 
     setTimeout(function () {
       if (bootRevealed || dataVerified || updOpen()) return;
-      if (ACC.user && !(S || paccRestore())) return;   /* чекаємо дані акаунта — не відкриваємо порожнє вікно */
+      if (ACC.user && !(S || paccRestore())) {
+        /* 3.5.51: локальних даних нема — даємо хмарі ще 6с, потім відкриваємо
+           програму будь-що (settleFailGate), щоб НІКОЛИ не крутити лоадер вічно */
+        setTimeout(function () {
+          if (bootRevealed || dataVerified || updOpen()) return;
+          try { settleFailGate(); } catch (eF51) { try { dataVerified = true; hideDataLoad(); revealNow(); } catch (eF52) {} }
+        }, 6000);
+        return;
+      }
       try { dataVerified = true; hideDataLoad(); revealNow(); } catch (eCap) {}
     }, 4000);
     if (S) { showMain(); render(); }   
