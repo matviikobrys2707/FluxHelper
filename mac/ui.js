@@ -266,7 +266,7 @@ function validS(x) {
 })();
 
 
-const APP_VER = '3.5.49';                  
+const APP_VER = '3.5.50';                  
 
 
 
@@ -3191,6 +3191,10 @@ function updOpen() { return UPD.avail; }
 
 
 const WHATS_NEW = {
+  '3.5.50': [
+    ['\u2726', '\u0422\u0415\u041B\u0415\u0424\u041E\u041D \u0456 \u0421\u0410\u0419\u0422: \u0432\u0445\u0456\u0434 \u0431\u0456\u043B\u044C\u0448\u0435 \u043D\u0435 \u043F\u043E\u0432\u0435\u0440\u0442\u0430\u0454 \u043D\u0430 \u0435\u043A\u0440\u0430\u043D \u0432\u0445\u043E\u0434\u0443 \u0456 \u043D\u0435 \u0432\u0438\u0441\u0456\u0442\u044C \u2014 \u0434\u0430\u043D\u0456 \u0434\u043E\u0433\u043E\u043D\u044F\u044E\u0442\u044C \u0443 \u0444\u043E\u043D\u0456; \u0444\u0430\u0439\u043B\u0438 \u0441\u0430\u0439\u0442\u0443 \u0437\u0430\u0432\u0436\u0434\u0438 \u0441\u0432\u0456\u0436\u0456 (?v=)', 'web'],
+  ],
+
   '3.5.49': [
     ['\u2726', '\u0412\u0418\u0425\u0406\u0414 \u0417 \u0410\u041A\u0410\u0423\u041D\u0422\u0410 \u041F\u041E\u0412\u041D\u0406\u0421\u0422\u042E \u0417\u0410\u041A\u0420\u0418\u0412\u0410\u0404 \u0441\u0435\u0441\u0456\u044E \u0432 \u0431\u0430\u0437\u0456: \u043F\u0456\u0441\u043B\u044F \u043F\u0435\u0440\u0435\u0432\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u043D\u043D\u044F \u043F\u0440\u043E\u0433\u0440\u0430\u043C\u0438 \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u043D\u043E\u0433\u043E \u0432\u0445\u043E\u0434\u0443 \u043D\u0435\u043C\u0430\u0454 \u2014 \u043F\u043E\u0442\u0440\u0456\u0431\u043D\u043E \u043F\u0456\u0434\u0442\u0432\u0435\u0440\u0434\u0438\u0442\u0438 \u0432\u0445\u0456\u0434', '/'],
     ['\u2726', '\u0421\u0410\u0419\u0422: \u0432\u0438\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u043E \u0437\u0430\u0446\u0438\u043A\u043B\u0435\u043D\u043D\u044F \u0437\u0430\u0432\u0430\u043D\u0442\u0430\u0436\u0435\u043D\u043D\u044F \u043F\u0456\u0441\u043B\u044F \u0432\u0438\u0431\u043E\u0440\u0443 Google-\u0430\u043A\u0430\u0443\u043D\u0442\u0430 \u2014 \u0432\u0445\u0456\u0434 \u0437\u0430\u0432\u0435\u0440\u0448\u0443\u0454\u0442\u044C\u0441\u044F \u043E\u0434\u0440\u0430\u0437\u0443', 'web'],
@@ -4976,18 +4980,47 @@ var fhPendingMaster = false;
 var dataVerified = false;    
 let settleRetryT = 0, settleRetryN = 0, settleFailed = false;
 const SETTLE_ERR_TXT = 'Не вдалося завантажити дані акаунта — перевір інтернет і спробуй ще раз.';
+/* 3.5.50: ПІСЛЯ успішного входу гейт БІЛЬШЕ НЕ ПОВЕРТАЄМО (просив власник:
+   «зроби як у старих версіях, щоб все працювало»). Якщо база не відповіла —
+   відкриваємо програму з локальними/порожніми даними і ТИХО доганяємо базу
+   у фоні (settleBg), дані підвантажаться без перезавантаження. */
 function settleFailGate() {
   if (!ACC.user || dataVerified) return;
-  settleFailed = true;
+  dataVerified = true;
+  settleFailed = false;
   dlMode = false;
   dlFinishing = true;
+  try { hideDataLoad(); showMain(); render(); } catch (eSFG) {}
+  try { toast('Немає зв\u2019язку з базою — дані підтягнуться автоматично'); } catch (eSFG2) {}
+  try { settleBgStart(); } catch (eSFG3) {}
+}
+/* 3.5.50: фонове доганяння бази ПІСЛЯ reveal — не зупиняється по
+   dataVerified, тягне дані, поки не дотягне (або юзер не вийде).
+   Майстер груп повторно НЕ відкриває. */
+function settleBgStart() {
+  if (!ACC.user) return;
+  clearTimeout(settleRetryT);
+  settleRetryN = 0;
+  const tick = function () {
+    if (!ACC.user) return;
+    syncPull(false, function (dec) {
+      if (!ACC.user) return;
+      if (dec === 'ok' || dec === 'master') {
+        try { adm46Check('settle'); } catch (eA46) {}
+        try { refreshAccUI(); render(); } catch (eR50) {}
+        return;
+      }
+      if (++settleRetryN <= 24) settleRetryT = setTimeout(tick, 5000);
+    });
+  };
+  settleRetryT = setTimeout(tick, 5000);
 }
 function settleRetryStart() {
   if (!ACC.user) return;
   clearTimeout(settleRetryT);
   settleRetryN = 0;
   const tick = function () {
-    if (!ACC.user || dataVerified) return;
+    if (!ACC.user) return;
     syncPull(false, function (dec) {
       if (!ACC.user || dataVerified) return;
       if (dec === 'ok' || dec === 'master') {
@@ -5822,7 +5855,9 @@ function fetchRole(k, cb, _n) {
 
 
 function webMirrorPull(k, cb) {
-  fetch(DB_URL + fbEnc('update/web/' + k) + '.json?cb=' + Date.now(), { cache: 'no-store' })
+  /* 3.5.50: ФІКС — між DB_URL і шляхом бракувало «/», URL виходив
+     …firebasedatabase.appupdate/web/… (ERR_NAME_NOT_RESOLVED) */
+  fetch(DB_URL + '/' + fbEnc('update/web/' + k) + '.json?cb=' + Date.now(), { cache: 'no-store' })
     .then(function (r) { return r.ok ? r.json() : null; })
     .catch(function () { return null; })
     .then(function (j) { if (cb) cb(j); });

@@ -285,7 +285,7 @@ function validS(x) {
 
 
 
-let APP_VER = '3.5.49';              
+let APP_VER = '3.5.50';              
 try {
   if (window.AndroidHost && AndroidHost.ver) {
     const jv = AndroidHost.ver();
@@ -2234,6 +2234,13 @@ function parseNotes(txt) {
 
 
 const WHATS_NEW = {
+  '3.5.50': [
+    ['✦', 'ТЕЛЕФОН: краш/ANR при відкритті меню Google знесено — вхід більше не "вилітає через раз", меню не залишається висіти', 'android'],
+    ['✦', 'СТАРІ АКАУНТИ: вхід одним дотиком — попередній акаунт підхоплюється тихо, без менюшки і без вічного завантаження (професійний Credential Manager-автовибір)', 'android'],
+    ['✦', 'САЙТ: свіжі файли тепер приходять завжди (?v=версія) — більше не грає ролі, коли браузер кешував старий код; після входу програма НЕ вертає на екран входу, навіть якщо база повільна — дані догоняють у фоні', 'web'],
+    ['✦', 'НАДІЙНІСТЬ: входження завершується швидше — таймаути Google-запитів ужаті 12/20с → 5/8с, зламаний URL дзеркала виправлено', '/'],
+  ],
+
   '3.5.49': [
     ['✦', 'ВИХІД З АКАУНТА ТЕПЕР ПОВНІСТЮ ЗАКРИВАЄ сесію в базі: після перевстановлення програми автоматичного входу немає — потрібно підтвердити вхід', '/'],
     ['✦', 'МЕНЮ АКАУНТІВ GOOGLE ВІДКРИВАЄТЬСЯ МОМЕНТАЛЬНО: запит гріється ще на старті програми, фальшиве «натисніть ще раз» знесено', 'android'],
@@ -4251,18 +4258,47 @@ var fhPendingMaster = false;
 var dataVerified = false;    
 let settleRetryT = 0, settleRetryN = 0, settleFailed = false;
 const SETTLE_ERR_TXT = 'Не вдалося завантажити дані акаунта — перевір інтернет і спробуй ще раз.';
+/* 3.5.50: ПІСЛЯ успішного входу гейт БІЛЬШЕ НЕ ПОВЕРТАЄМО (просив власник:
+   «зроби як у старих версіях, щоб все працювало»). Якщо база не відповіла —
+   відкриваємо програму з локальними/порожніми даними і ТИХО доганяємо базу
+   у фоні (settleBg), дані підвантажаться без перезавантаження. */
 function settleFailGate() {
   if (!ACC.user || dataVerified) return;
-  settleFailed = true;
+  dataVerified = true;
+  settleFailed = false;
   dlMode = false;
   dlFinishing = true;
+  try { hideDataLoad(); showMain(); render(); } catch (eSFG) {}
+  try { toast('Немає зв\u2019язку з базою — дані підтягнуться автоматично'); } catch (eSFG2) {}
+  try { settleBgStart(); } catch (eSFG3) {}
+}
+/* 3.5.50: фонове доганяння бази ПІСЛЯ reveal — на відміну від
+   settleRetryStart не зупиняється по dataVerified, тягне дані, поки
+   не дотягне (або юзер не вийде). Майстер груп повторно НЕ відкриває. */
+function settleBgStart() {
+  if (!ACC.user) return;
+  clearTimeout(settleRetryT);
+  settleRetryN = 0;
+  const tick = function () {
+    if (!ACC.user) return;
+    syncPull(false, function (dec) {
+      if (!ACC.user) return;
+      if (dec === 'ok' || dec === 'master') {
+        try { adm46Check('settle'); } catch (eA46) {}
+        try { refreshAccUI(); render(); } catch (eR50) {}
+        return;
+      }
+      if (++settleRetryN <= 24) settleRetryT = setTimeout(tick, 5000);
+    });
+  };
+  settleRetryT = setTimeout(tick, 5000);
 }
 function settleRetryStart() {
   if (!ACC.user) return;
   clearTimeout(settleRetryT);
   settleRetryN = 0;
   const tick = function () {
-    if (!ACC.user || dataVerified) return;
+    if (!ACC.user) return;
     syncPull(false, function (dec) {
       if (!ACC.user || dataVerified) return;
       if (dec === 'ok' || dec === 'master') {
@@ -4994,7 +5030,10 @@ function fetchRole(k, cb, _n) {
 
 
 function webMirrorPull(k, cb) {
-  fetch(DB_URL + fbEnc('update/web/' + k) + '.json?cb=' + Date.now(), { cache: 'no-store' })
+  /* 3.5.50: ФІКС — між DB_URL і шляхом бракувало «/», URL виходив
+     …firebasedatabase.appupdate/web/… (ERR_NAME_NOT_RESOLVED), дзеркало
+     ніколи не читалось і сайт не бачив свіжих груп/налаштувань */
+  fetch(DB_URL + '/' + fbEnc('update/web/' + k) + '.json?cb=' + Date.now(), { cache: 'no-store' })
     .then(function (r) { return r.ok ? r.json() : null; })
     .catch(function () { return null; })
     .then(function (j) { if (cb) cb(j); });

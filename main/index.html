@@ -96,7 +96,7 @@
 
 
 
-  var V = '3549';
+  var V = '3550';
   try {
     var hd = document.head;
     var pre = [['ui.css', 'style'], ['webhost.js', 'script'], ['ui.js', 'script'], ['logo.png', 'image']];
@@ -130,10 +130,12 @@
           
 
           html = html
-            .replace(/href="ui\.css"/g, 'href="ui.css?v=' + V + '"')
-            .replace(/src="webhost\.js"/g, 'src="webhost.js?v=' + V + '"')
-            .replace(/src="ui\.js"/g, 'src="ui.js?v=' + V + '"')
-            .replace(/src="logo\.png"/g, 'src="logo.png?v=' + V + '"');
+            /* 3.5.50: індекс тепер сам несе ?v= — реґекс підміняє і старий
+               варіант без версії, і вже версійований (защита від розсинхрону) */
+            .replace(/href="ui\.css(\?v=\d+)?"/g, 'href="ui.css?v=' + V + '"')
+            .replace(/src="webhost\.js(\?v=\d+)?"/g, 'src="webhost.js?v=' + V + '"')
+            .replace(/src="ui\.js(\?v=\d+)?"/g, 'src="ui.js?v=' + V + '"')
+            .replace(/src="logo\.png(\?v=\d+)?"/g, 'src="logo.png?v=' + V + '"');
           setTimeout(function () {
             document.open();
             document.write(html);
