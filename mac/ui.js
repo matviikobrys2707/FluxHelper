@@ -266,7 +266,7 @@ function validS(x) {
 })();
 
 
-const APP_VER = '3.5.48';                  
+const APP_VER = '3.5.49';                  
 
 
 
@@ -3191,6 +3191,12 @@ function updOpen() { return UPD.avail; }
 
 
 const WHATS_NEW = {
+  '3.5.49': [
+    ['\u2726', '\u0412\u0418\u0425\u0406\u0414 \u0417 \u0410\u041A\u0410\u0423\u041D\u0422\u0410 \u041F\u041E\u0412\u041D\u0406\u0421\u0422\u042E \u0417\u0410\u041A\u0420\u0418\u0412\u0410\u0404 \u0441\u0435\u0441\u0456\u044E \u0432 \u0431\u0430\u0437\u0456: \u043F\u0456\u0441\u043B\u044F \u043F\u0435\u0440\u0435\u0432\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u043D\u043D\u044F \u043F\u0440\u043E\u0433\u0440\u0430\u043C\u0438 \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u043D\u043E\u0433\u043E \u0432\u0445\u043E\u0434\u0443 \u043D\u0435\u043C\u0430\u0454 \u2014 \u043F\u043E\u0442\u0440\u0456\u0431\u043D\u043E \u043F\u0456\u0434\u0442\u0432\u0435\u0440\u0434\u0438\u0442\u0438 \u0432\u0445\u0456\u0434', '/'],
+    ['\u2726', '\u0421\u0410\u0419\u0422: \u0432\u0438\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u043E \u0437\u0430\u0446\u0438\u043A\u043B\u0435\u043D\u043D\u044F \u0437\u0430\u0432\u0430\u043D\u0442\u0430\u0436\u0435\u043D\u043D\u044F \u043F\u0456\u0441\u043B\u044F \u0432\u0438\u0431\u043E\u0440\u0443 Google-\u0430\u043A\u0430\u0443\u043D\u0442\u0430 \u2014 \u0432\u0445\u0456\u0434 \u0437\u0430\u0432\u0435\u0440\u0448\u0443\u0454\u0442\u044C\u0441\u044F \u043E\u0434\u0440\u0430\u0437\u0443', 'web'],
+    ['\u2726', '\u0413\u0415\u0419\u0422: \u043F\u0456\u0434\u0442\u0432\u0435\u0440\u0434\u0436\u0435\u043D\u043D\u044F \u0432\u0445\u043E\u0434\u0443 \u043F\u0456\u0441\u043B\u044F \u044F\u0432\u043D\u043E\u0433\u043E \u0432\u0438\u0445\u043E\u0434\u0443 \u043D\u0430 \u041F\u041A \u2014 \u0442\u0430\u043A\u0430 \u0441\u0430\u043C\u0430 \u043F\u043E\u0432\u0435\u0434\u0456\u043D\u043A\u0430, \u044F\u043A \u043D\u0430 \u0442\u0435\u043B\u0435\u0444\u043E\u043D\u0456', 'pc'],
+  ],
+
   '3.5.47': [
     ['\u2726', '\u0412\u0425\u0406\u0414 \u0412 \u041e\u0421\u0422\u0410\u041d\u041d\u042c\u0418\u0419 \u0410\u041a\u0410\u0423\u041d\u0422 \u0411\u0415\u0417 \u041f\u0406\u041a\u0415\u0420\u0410 \u0456 \u0411\u0415\u0417 \u0421\u0410\u0419\u0422\u0423: \u0434\u0430\u043d\u0456 \u0430\u043a\u0430\u0443\u043d\u0442\u0430 \u043f\u0440\u0438\u0445\u043e\u0434\u044f\u0442\u044c \u043e\u0434\u0440\u0430\u0437\u0443 \u0432 \u043f\u0440\u043e\u0433\u0440\u0430\u043c\u0443 \u2014 \u044f\u043a \u0443 \u0456\u043d\u0448\u0438\u0445 \u0434\u043e\u0434\u0430\u0442\u043a\u0430\u0445', 'android'],
     ['\u2726', '\u0410\u0412\u0422\u041e\u0412\u0418\u0411\u0406\u0420: \u043e\u0434\u0438\u043d Google-\u0430\u043a\u0430\u0443\u043d\u0442 \u043d\u0430 \u0442\u0435\u043b\u0435\u0444\u043e\u043d\u0456 = \u0432\u0456\u043a\u043d\u043e \u0432\u0438\u0431\u043e\u0440\u0443 \u043d\u0435 \u043f\u043e\u043a\u0430\u0437\u0443\u0454\u0442\u044c\u0441\u044f; \u0432\u0445\u0456\u0434 \u0447\u0435\u0440\u0435\u0437 \u0441\u0430\u0439\u0442 \u043d\u0430 \u0442\u0435\u043b\u0435\u0444\u043e\u043d\u0456 \u0437\u043d\u0435\u0441\u0435\u043d\u043e', 'android'],
@@ -5084,8 +5090,61 @@ function ensureFid(cb) {
     } else if (cb) cb();
   });
 }
-function authAccept(u, fromHost) {
+let RM_PENDING = null;
+function rmActive() { return !window.FH_WEB; }   /* EXE — так; сайт — ні */
+function rmKeyOf(sub) { return 'rm:' + String(sub); }
+function rememberWrite(sub, out) {
+  if (!rmActive() || !sub) return;
+  try {
+    cfExec('INSERT INTO keys (k, v) VALUES (?,?) ON CONFLICT(k) DO UPDATE SET v=excluded.v',
+      [rmKeyOf(sub), JSON.stringify({ out: out ? 1 : 0, ts: Date.now() })], null);
+  } catch (eRW) {}
+}
+function rememberIsOut(sub, cb) {
+  if (!rmActive() || !sub) { cb(false); return; }
+  try {
+    cfExec('SELECT v FROM keys WHERE k=?', [rmKeyOf(sub)], function (rows) {
+      let out = false;
+      try { const j = JSON.parse((rows && rows[0] && rows[0].v) || 'null'); out = !!(j && j.out); } catch (eJ) {}
+      cb(out);
+    });
+  } catch (eRC) { cb(false); }
+}
+function rmAskConfirm(u2, fromHost) {
+  RM_PENDING = { u: u2, fh: !!fromHost };
+  const w = byId('rmWrap');
+  if (!w) { gateShow(); setAgStat('Підтвердьте вхід у акаунт «' + String(u2.name || '').replace(/[<>&]/g, '') + '» — натисніть «Увійти через Google».', 'err'); return; }
+  const inf = byId('rmInfo');
+  if (inf) {
+    inf.innerHTML = '<div class="ci-tile" style="background:linear-gradient(135deg,#8b5cf6,#6366f1)">' +
+      (u2.pic ? '<img src="' + String(u2.pic).replace(/"/g, '') + '" alt="">' : '') + '</div>' +
+      '<div class="ci-t"><b>' + String(u2.name || 'Акаунт').replace(/[<>&]/g, '') + '</b><span>' +
+      String(u2.email || '').replace(/[<>&]/g, '') + '</span></div>';
+  }
+  w.classList.remove('hidden');
+}
+function rmConfirmYes() {
+  const w = byId('rmWrap'); if (w) w.classList.add('hidden');
+  const p2 = RM_PENDING; RM_PENDING = null;
+  if (p2 && p2.u) { rememberWrite(p2.u.sub, 0); authAccept(p2.u, p2.fh, true); }
+}
+function rmConfirmNo() {
+  const w = byId('rmWrap'); if (w) w.classList.add('hidden');
+  const p2 = RM_PENDING; RM_PENDING = null;
+  if (p2 && p2.u) { rememberWrite(p2.u.sub, 1); }
+  setAgStat('Вхід скасовано.');
+}
+
+function authAccept(u, fromHost, _skipRm) {
   if (!u || !u.sub) return;
+  if (!_skipRm && rmActive()) {
+    const sRm = String(u.sub);
+    rememberIsOut(sRm, function (outRm) {
+      if (ACC.user && ACC.user.sub === sRm) return;
+      if (outRm) { rmAskConfirm(u, fromHost); } else { authAccept(u, fromHost, true); }
+    });
+    return;
+  }
   ACC.user = u;
   
 
@@ -5166,6 +5225,7 @@ function authAccept(u, fromHost) {
 function authLogout() {
   
   paccSave();   
+  try { if (ACC.user && ACC.user.sub) { rememberWrite(String(ACC.user.sub), 1); } } catch (eRM49) {}   /* маркер «вийшов явним чином» — переживає перевстановлення */
   ACC.user = null; ACC.role = 'user'; ACC.sync = true;
   syncWatchStop();   
   
@@ -6253,6 +6313,9 @@ function init() {
   }
   
   const cY = byId('cYes'); if (cY) cY.onclick = confirmYes;
+  const _ry49 = byId('rmYes'); if (_ry49) _ry49.onclick = rmConfirmYes;
+  const _rn49 = byId('rmNo'); if (_rn49) _rn49.onclick = rmConfirmNo;
+  const _rb49 = byId('rmBack'); if (_rb49) _rb49.onclick = rmConfirmNo;
   const cN = byId('cNo'); if (cN) cN.onclick = closeConfirm;
   const cB = byId('cback'); if (cB) cB.onclick = closeConfirm;
   byId('tbar').addEventListener('mousedown', function (e) {

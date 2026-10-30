@@ -285,7 +285,7 @@ function validS(x) {
 
 
 
-let APP_VER = '3.5.48';              
+let APP_VER = '3.5.49';              
 try {
   if (window.AndroidHost && AndroidHost.ver) {
     const jv = AndroidHost.ver();
@@ -2234,6 +2234,13 @@ function parseNotes(txt) {
 
 
 const WHATS_NEW = {
+  '3.5.49': [
+    ['✦', 'ВИХІД З АКАУНТА ТЕПЕР ПОВНІСТЮ ЗАКРИВАЄ сесію в базі: після перевстановлення програми автоматичного входу немає — потрібно підтвердити вхід', '/'],
+    ['✦', 'МЕНЮ АКАУНТІВ GOOGLE ВІДКРИВАЄТЬСЯ МОМЕНТАЛЬНО: запит гріється ще на старті програми, фальшиве «натисніть ще раз» знесено', 'android'],
+    ['✦', 'САЙТ: виправлено зациклення завантаження після вибору Google-акаунта — вхід завершується одразу, без повторного лоадера', 'web'],
+    ['✦', 'ГЕЙТ: плитки недавніх акаунтів перероблені й анімовані при появі', '/'],
+  ],
+
   '3.5.46': [
     ['✦', 'ШВИДКІСТЬ: сайт відкривається швидко ЗАВЖДИ — дзеркало і сервер тепер у гонці (хто перший відповів), у кожного стартового запита таймаут 3.5-4 с, страховка інтерфейсу 4 с замість 8', '/'],
     ['✦', 'АДМІНКА: нова вкладка «Користувачі» — список акаунтів (пошта, ім\u2019я, іконка), блокування назавжди/на час (10 хв… 7 днів або свій час) і повне видалення акаунта з бази', '/'],
@@ -3439,7 +3446,7 @@ function setAgStat(t, cls) { const s2 = byId('agStat'); if (s2) { s2.className =
 function gateStart() {
   gateShow();
   agState = '';
-  
+  try { if (ANDROID && typeof AndroidHost.prewarm === 'function') AndroidHost.prewarm(); } catch (ePW) {}   /* меню Google гріється завчасу */
 
   if (gateAccountGone) {
     gateAccountGone = false;
@@ -3472,7 +3479,7 @@ let authPollT = 0;
 
 
 let RM_PENDING = null;
-function rmActive() { return ANDROID && !window.FH_WEB; }
+function rmActive() { return !window.FH_WEB; }   /* APK і ПК — так; сайт — ні */
 function rmKeyOf(sub) { return 'rm:' + String(sub); }
 function rememberWrite(sub, out) {
   if (!rmActive() || !sub) return;
@@ -3494,7 +3501,7 @@ function rememberIsOut(sub, cb) {
 function rmAskConfirm(u2) {
   RM_PENDING = u2;
   const w = byId('rmWrap');
-  if (!w) { authAccept(u2); return; }          
+  if (!w) { authAccept(u2, true); return; }          
   const inf = byId('rmInfo');
   if (inf) {
     inf.innerHTML = '<div class="ci-tile" style="background:linear-gradient(135deg,#8b5cf6,#6366f1)">' +
@@ -3507,7 +3514,7 @@ function rmAskConfirm(u2) {
 function rmConfirmYes() {
   const w = byId('rmWrap'); if (w) w.classList.add('hidden');
   const u2 = RM_PENDING; RM_PENDING = null;
-  if (u2) { rememberWrite(u2.sub, 0); authAccept(u2); }
+  if (u2) { rememberWrite(u2.sub, 0); authAccept(u2, true); }
 }
 function rmConfirmNo() {
   const w = byId('rmWrap'); if (w) w.classList.add('hidden');
@@ -3538,13 +3545,19 @@ function accsRender() {
   const w = byId('agAccs'); if (!w) return;
   const a = accsLoad();
   if (!a.length) { w.classList.add('hidden'); w.innerHTML = ''; return; }
-  let h = '<div class="ag-accs-t">нещодавно в цій програмі</div>';
+  let h = '<div class="ag-accs-t"><span class="ag-accs-dot"></span>нещодавно в цій програмі</div>';
   for (let i = 0; i < a.length && i < 3; i++) {
     const x = a[i];
-    h += '<button class="ag-acc" type="button" data-em="' + String(x.email || '').replace(/"/g, '&quot;') + '">' +
-      (x.pic ? '<img src="' + String(x.pic).replace(/"/g, '') + '" alt="">' : '<span class="ag-acc-ph">' + String(x.name || '?').replace(/[<>&]/g, '').charAt(0).toUpperCase() + '</span>') +
-      '<span class="ag-acc-n">' + String(x.name || 'Акаунт').replace(/[<>&]/g, '') + '</span>' +
-      '<span class="ag-acc-e">' + String(x.email || '').replace(/[<>&]/g, '') + '</span></button>';
+    const ini = String(x.name || '?').replace(/[<>&]/g, '').charAt(0).toUpperCase();
+    const dly = (0.38 + i * 0.09).toFixed(2);
+    h += '<button class="ag-acc" type="button" style="animation-delay:' + dly + 's" data-em="' + String(x.email || '').replace(/"/g, '&quot;') + '">' +
+      '<span class="ag-acc-av">' +
+      (x.pic ? '<img src="' + String(x.pic).replace(/"/g, '') + '" alt="" decoding="async">' : '<span class="ag-acc-ph">' + ini + '</span>') +
+      '</span>' +
+      '<span class="ag-acc-tx"><span class="ag-acc-n">' + String(x.name || 'Акаунт').replace(/[<>&]/g, '') + '</span>' +
+      '<span class="ag-acc-e">' + String(x.email || '').replace(/[<>&]/g, '') + '</span></span>' +
+      '<span class="ag-acc-go"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>' +
+      '</button>';
   }
   w.classList.remove('hidden');
   w.innerHTML = h;
@@ -4356,8 +4369,16 @@ function ensureFid(cb) {
     } else if (cb) cb();
   });
 }
-function authAccept(u) {
+function authAccept(u, _skipRm) {
   if (!u || !u.sub) return;
+  if (!_skipRm && rmActive()) {
+    const sRm = String(u.sub);
+    rememberIsOut(sRm, function (outRm) {
+      if (ACC.user && ACC.user.sub === sRm) return;
+      if (outRm) { rmAskConfirm(u); } else { authAccept(u, true); }
+    });
+    return;
+  }
   ACC.user = u;
   rememberWrite(u.sub, 0);   
   try { accsRemember(u); } catch (eAR42) {}   
@@ -4483,7 +4504,7 @@ function authLogout() {
 
 
 
-  try { if (ACC.user && ACC.user.sub) { cfExec('DELETE FROM keys WHERE k=?', [rmKeyOf(ACC.user.sub)], null); } } catch (eRM1) {}
+  try { if (ACC.user && ACC.user.sub) { rememberWrite(String(ACC.user.sub), 1); } } catch (eRM1) {}   /* маркер «вийшов явним чином» — переживає перевстановлення */
   ACC.user = null; ACC.role = 'user';
   syncWatchStop();   
   
@@ -6277,6 +6298,21 @@ function init() {
   } catch (e) {}
 
   if (ANDROID) { document.body.classList.add('android'); document.documentElement.classList.add('android'); }
+  /* страховка: сессия из localStorage не должна выжить после явного выхода (маркер rm:<sub> в базе) */
+  try {
+    if (ACC.user && ACC.user.sub && rmActive()) {
+      const _sB49 = String(ACC.user.sub);
+      rememberIsOut(_sB49, function (outB49) {
+        if (outB49 && ACC.user && ACC.user.sub === _sB49 && !dataVerified) {
+          try { localStorage.removeItem('fh_user'); } catch (eC1) {}
+          ACC.user = null; authReady = false;
+          try { refreshAccUI(); } catch (eC2) {}
+          try { gateStart(); } catch (eC3) {}
+        }
+      });
+    }
+  } catch (eB49) {}
+  
   
   const dwl = byId('dwLogo'); if (dwl) dwl.innerHTML = logoMark(36);
   

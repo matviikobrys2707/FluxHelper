@@ -33,7 +33,7 @@
 
 (function () {
 'use strict';
-var VER = '3.5.48';
+var VER = '3.5.49';
 var BACKEND = 'https://fluxhelper-backend.onrender.com';
 var ORIGIN = 'https://fluxhelper.pages.dev';
 var DB_URL = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app';
@@ -577,9 +577,12 @@ function webLogin(st) {
                       },
                       rtok: tokState.rtok, tokT: tokState.tokT, t: Date.now()
                     };
-                    fetch(DB_URL + '/update/auth_cb/' + encodeURIComponent(st) + '.json', {
-                      method: 'PUT', body: JSON.stringify(node)
-                    }).catch(function () {});
+                    try {
+                      if (window.__fh && typeof window.__fh.authOk === 'function') {
+                        window.__fh.authOk({ sub: String(p.sub), name: name, email: email, pic: String(p.picture || ''), fid: String(j.localId), tok: at });
+                      }
+                    } catch (eAO49) {}
+                    try { rtdbSync('delete', 'update/auth_cb/' + encodeURIComponent(st), null); } catch (eDEL49) {}
                     
                   });
               })
