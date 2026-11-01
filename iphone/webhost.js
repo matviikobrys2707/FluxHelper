@@ -85,6 +85,10 @@ function fhDiagFlush(why) {
     return id;
   } catch (e) { return ''; }
 }
+/* 3.5.52: експонуємо — ui.js/панель діагностики мають користуватися ЦІЄЮ
+   версією (з флашем у Firebase), а не локальним шімом без відправки */
+window.fhLog = fhLog;
+window.fhDiagFlush = fhDiagFlush;
 function tokRefreshRT(rt, cb) {
   try {
     
