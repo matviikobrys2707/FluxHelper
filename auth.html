@@ -445,6 +445,33 @@ h2 {
 
 
 
+    /* 3.5.53: D1 — ГОЛОВНИЙ канал (правило власника: база лише Cloudflare).
+       Пишемо auth_cb в D1 через /api/authcb (Pages Function → бекенд → D1).
+       Firebase-запис нижче лишено ЛИШЕ для старих версій застосунків
+       (3.5.52 у полях читає update/auth_cb з RTDB). */
+    chan(function () {
+      var tries53 = 0;
+      var post53 = function () {
+        fetch('/api/authcb', {
+          method: 'POST', cache: 'no-store',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ state: STATE, data: { d: prof, t: Date.now() } })
+        }).then(function (r) {
+          if (r && r.ok) { fin(true); return; }
+          throw new Error('d1');
+        }).catch(function () {
+          if (++tries53 < 2) {
+            /* /api/ нема (Pages Functions не активовано) — бекенд напряму */
+            fetch('https://fluxhelper-backend.onrender.com/api/authcb', {
+              method: 'POST', cache: 'no-store',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ state: STATE, data: { d: prof, t: Date.now() } })
+            }).then(function (r2) { fin(!!r2 && r2.ok); }).catch(function () { fin(false); });
+          } else fin(false);
+        });
+      };
+      post53();
+    });
     chan(function () {
       var putUrl = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app/update/auth_cb/' + encodeURIComponent(STATE) + '.json';
       var tries = 0;

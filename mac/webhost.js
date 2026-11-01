@@ -33,11 +33,36 @@
 
 (function () {
 'use strict';
-var VER = '3.5.52';
+var VER = '3.5.53';
 var BACKEND = 'https://fluxhelper-backend.onrender.com';
 var ORIGIN = 'https://fluxhelper.pages.dev';
 var DB_URL = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app';
 var GIS_CLIENT = '668834523935-k470ldmdv0r9am0720v6lgaatm6rtuf3.apps.googleusercontent.com';
+
+/* ── 3.5.53: ПРАВИЛО ВЛАСНИКА — база ЛИШЕ Cloudflare D1 ──────────────
+   Firebase для бази даних більше НЕ використовуємо (вичерпані ліміти).
+   Усі дані сайту йдуть у D1: спершу той самий origin (/api/ — Pages
+   Functions, шлюз до D1), якщо функцій нема — бекенд (Render → D1).
+   Легасі-записи у Firebase лишаються ТІЛЬКИ best-effort для старих
+   версій застосунків (3.5.1/3.5.52 у полях), новий код від них не залежить. */
+function fhApiFetch(path, opts, cb) {
+  var done = false, replied = false;
+  var fin = function (r) {
+    if (done) return;
+    if (r) { done = true; if (!replied) { replied = true; cb(r); } return; }
+    /* null = цей канал не відповів — чекаємо наступний канал */
+  };
+  try {
+    fetch('/api/' + path, opts).then(function (r) { fin(r.ok ? r : null); }).catch(function () { fin(null); });
+  } catch (e0) { fin(null); }
+  setTimeout(function () {
+    if (done) return;
+    try {
+      fetch(BACKEND + '/api/' + path, opts).then(function (r) { fin(r.ok ? r : null); }).catch(function () { fin(null); });
+    } catch (e1) { fin(null); }
+  }, 2200);
+  setTimeout(function () { if (!done && !replied) { replied = true; cb(null); } }, 9000);
+}
 
 
 
@@ -46,7 +71,7 @@ var FB_KEY = 'AIzaSyCDWpF3QTMEFBN9ravDxH_woKnBpcMRDvI';
 
 /* ── 3.5.52: ДІАГНОСТИКА ДЛЯ АДМІНА (без жодних секретів) ─────────────
    Хлібні крихти входу живуть у localStorage('fh_diag'); при зБОЯХ вишляються
-   у відкритий вузол update/diag Firebase — адмін читає їх без юзера.
+   у D1 client_log через /api/diag (3.5.53) — адмін читає їх без юзера.
    Токени/паролі НЕ пишуться: тільки коди подій, версія, платформа,
    перші 8 символів id акаунта і email (не є секретом, показується в UI). */
 var FHD = { buf: [], max: 40, t: 0 };
@@ -79,9 +104,11 @@ function fhDiagFlush(why) {
       em: String(u.email || '').slice(0, 60), ev: FHD.buf.slice(-40)
     };
     try { localStorage.setItem('fh_diag_last', id); } catch (eI52) {}
-    fetch(DB_URL + '/update/diag/' + encodeURIComponent(id) + '.json', {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pay)
-    }).catch(function () {});
+    /* 3.5.53: діаг → D1 client_log через /api/diag (заміна Firebase) */
+    fhApiFetch('diag', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rows: [{ ts: parseInt(pay.t, 10) || Date.now(), sub: pay.sub, ver: VER, plat: 'web', code: 'diag:' + String(why || '').slice(0, 24), data: pay }] })
+    }, function () {});
     return id;
   } catch (e) { return ''; }
 }
@@ -296,6 +323,28 @@ function apiGetRow(cb) {
 
   var done = false;
   var finish = function (row) { if (done) return; done = true; cb(row); };
+  /* 3.5.53: D1 — ПЕРШЕ ДЖЕРЕЛО (правило власника: база лише Cloudflare).
+     /api/data читає users з D1 (той самий рядок, що пишуть застосунки). */
+  var k53 = myFid();
+  if (k53) {
+    fhApiFetch('data?uid=' + encodeURIComponent(k53), { cache: 'no-store' }, function (r) {
+      if (done || !r) return;
+      r.json().then(function (j) {
+        if (done) return;
+        if (j && j.ok) {
+          finish(j.row ? {
+            role: String((j.row && j.row.role) || 'user'),
+            sync: (j.row && (j.row.sync === 0 || j.row.sync === '0')) ? 0 : 1,
+            settings: String((j.row && j.row.settings) || ''),
+            sts: parseInt(j.row && j.row.sts, 10) || 0
+          } : null);
+        }
+        /* 3.5.53: row:null АБО збої каналу — НЕ завершуємо, питаємо легасі
+           (дзеркало/Render): у частини акаунтів знімок досі лише там. */
+      }).catch(function () {});
+    });
+  }
+
   var viaMirror = function () {
     var k = myFid();
     if (!k) { finish(null); return; }
@@ -348,6 +397,18 @@ function apiGetRow(cb) {
 }
 function apiPutSnap(snap, profile, cb) {
   var done = function (ok) { cb(ok); };
+  /* 3.5.53: D1 — ПЕРШИЙ КАНАЛ ПИСЬМА (база лише Cloudflare). Mirror/Render
+     лишаються як легасі-страховка для старих читачів. */
+  (function () {
+    var k53 = myFid();
+    if (!k53) return;
+    try {
+      fhApiFetch('data', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid: k53, snap: snap, profile: profile || null })
+      }, function () {});
+    } catch (e53) {}
+  })();
   
 
   var k0 = myFid();
@@ -431,6 +492,27 @@ var mirCache = { mark: -1, sts: 0, snap: null, snapT: 0, missT: 0 };
 function mirStsCheck(cb) {
   var k = myFid();
   if (!k) { cb(null); return; }
+  /* 3.5.53: D1 першим (правило власника) — mirror лише як фолбек */
+  (function () {
+    fhApiFetch('data?uid=' + encodeURIComponent(k), { cache: 'no-store' }, function (r) {
+      if (!r) return;
+      r.json().then(function (j) {
+        if (j && j.ok) {
+          var row = j.row;
+          if (!row) { cb({ sts: 0, has: true }); return; }
+          var st = parseInt(row.sts, 10) || 0;
+          if (!st) {
+            var sc = null;
+            try { sc = JSON.parse(row.settings || 'null'); } catch (e53) {}
+            st = (sc && parseInt(sc.t, 10)) || 0;
+          }
+          if (row.settings) { try { mirCache.snap = JSON.parse(row.settings); mirCache.sts = st; mirCache.snapT = Date.now(); } catch (e54) {} }
+          cb({ sts: st, has: true });
+        }
+        /* null/!ok -> мовчки йдемо в легасі-гілку нижче */
+      }).catch(function () {});
+    });
+  })();
   if (mirCache.snapT && Date.now() - mirCache.snapT < 15000) { cb({ sts: mirCache.sts, has: true }); return; }
   fetch(DB_URL + '/update/websts/' + k + '.json?cb=' + Date.now(), { cache: 'no-store' })
     .then(function (r) { return r.ok ? r.json() : null; })
@@ -456,6 +538,23 @@ function mirStsCheck(cb) {
 function mirSnap(cb) {
   var k = myFid();
   if (!k) { cb(null); return; }
+  /* 3.5.53: D1 першим (правило власника) — mirror лише як фолбек */
+  (function () {
+    fhApiFetch('data?uid=' + encodeURIComponent(k), { cache: 'no-store' }, function (r) {
+      if (!r) return;
+      r.json().then(function (j) {
+        if (j && j.ok && j.row && j.row.settings) {
+          var sc = null;
+          try { sc = JSON.parse(j.row.settings); } catch (e53) {}
+          if (snapOk(sc)) {
+            mirCache.snap = sc; mirCache.sts = parseInt(sc.t, 10) || parseInt(j.row.sts, 10) || 0; mirCache.snapT = Date.now();
+            cb(JSON.stringify(sc));
+            return;
+          }
+        }
+      }).catch(function () {});
+    });
+  })();
   if (mirCache.snap && mirCache.snapT && Date.now() - mirCache.snapT < 10000) { cb(JSON.stringify(mirCache.snap)); return; }
   fetch(DB_URL + '/update/web/' + k + '.json?cb=' + Date.now(), { cache: 'no-store' })
     .then(function (r) { return r.ok ? r.json() : null; })

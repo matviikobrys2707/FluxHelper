@@ -285,7 +285,7 @@ function validS(x) {
 
 
 
-let APP_VER = '3.5.52';              
+let APP_VER = '3.5.53';              
 try {
   if (window.AndroidHost && AndroidHost.ver) {
     const jv = AndroidHost.ver();
@@ -1801,6 +1801,22 @@ function d1NetDown() {
 
 function d1Snap(cb) {
   if (window.FH_WEB) {
+    /* 3.5.53: D1 ПЕРШИМ (правило власника — база лише Cloudflare):
+       /api/snap читає v_snap_full з D1 — той самий знімок, що й у застосунків.
+       Firebase-дзеркало (schedule/subjects/...) нижче — легасі-фолбек. */
+    if (typeof fhApiFetch === 'function') {
+      try {
+        fhApiFetch('snap', { cache: 'no-store' }, function (r) {
+          if (!r) return;
+          r.json().then(function (j) {
+            if (j && j.ok && (j.schedule || j.subjects)) {
+              cb(JSON.stringify({ schedule: j.schedule || {}, subjects: j.subjects || {}, teachers: j.teachers || {}, weeks: j.weeks || {} }));
+            }
+            /* !ok -> мовчки йдемо в легасі-гілку нижче */
+          }).catch(function () {});
+        });
+      } catch (e53) {}
+    }
     
 
 
@@ -1959,6 +1975,28 @@ function d1RevHandle(snapRev, updRev, doChk, evN, evT, evU) {
 
 let webRev = -1;
 function webRevTick(cb) {
+  /* 3.5.53: D1 ПЕРШИМ (правило власника — база лише Cloudflare): маркери
+     webrev/webev/userdev читаються з _meta + keys через /api/rev.
+     Firebase-читання нижче — легасі-фолбек. */
+  if (window.FH_WEB && typeof fhApiFetch === 'function') {
+    try {
+      const myK53 = (ACC.user && userKey(ACC.user)) ? userKey(ACC.user) : '';
+      fhApiFetch('rev' + (myK53 ? ('?uid=' + encodeURIComponent(myK53)) : ''), { cache: 'no-store' }, function (r) {
+        if (!r) return;
+        r.json().then(function (j) {
+          if (j && j.ok) {
+            const n53 = parseInt(j.rev, 10) || 0;
+            let ch53;
+            if (n53 > 0) { ch53 = (webRev === -1) || (n53 !== webRev); webRev = n53; }
+            else if (webRev === -1) { webRev = 0; ch53 = true; } else ch53 = false;
+            cb(ch53, j.ev || null, j.uev || null);
+          }
+          /* !ok -> мовчки йдемо в легасі-гілку нижче */
+        }).catch(function () {});
+      });
+      return;
+    } catch (e53) {}
+  }
   if (typeof fetch !== 'function' || !DB_URL) { cb(true, null, null); return; }
   let done = false;
   const to = setTimeout(function () { if (!done) { done = true; cb(null, null, null); } }, 6000);
@@ -2234,6 +2272,13 @@ function parseNotes(txt) {
 
 
 const WHATS_NEW = {
+  '3.5.53': [
+    '✅ ТЕЛЕФОН — ВХІД ПРАЦЮЄ: якщо Google відмовляє прямий обмін токена, програма миттєво проходить його через сервер входу (повністю в застосунку, без браузера)',
+    '✅ ТЕЛЕФОН — плитка недавнього акаунта тепер входить САМЕ в той акаунт тихо й одразу, без меню вибору; немає акаунта на телефоні — плитка зникає',
+    '✅ Вихід із Firebase для бази даних: уся база тепер тільки Cloudflare (сервер більше не впирається в ліміти)',
+    '✅ Сайт: розклад, налаштування й діагностика — з Cloudflare-бази (швидше і стабільніше)',
+    '✅ Вхід ніколи не висить: 3 рівні підстраховки + діагностика для адміна',
+  ],
   '3.5.52': [
     '✅ САЙТ — вхід нарешті ПРАЦЮЄ: обмін токена в старому робочому форматі (providerId=google.com) + резервний сервер входу',
     '✅ ТЕЛЕФОН — якщо Google-вхід обривається, програма САМА завершує вхід через браузер і повертає тебе в акаунт',
@@ -3108,6 +3153,10 @@ function evUser(t, uid) {
   if (!uid) return;
   const n = Date.now();
   const u = String(uid);
+  /* 3.5.53: маркер «цільової події» юзера — у Cloudflare D1 (keys 'uev:<uid>'),
+     сайт читає його через /api/rev. Firebase userdev — легасі. */
+  try { cfExec("INSERT INTO keys (k,v) VALUES ('uev:' || ?,?) ON CONFLICT(k) DO UPDATE SET v=excluded.v",
+        [adm46Uid(u), JSON.stringify({ n: n, t: String(t || 'force') })], null, 6000); } catch (eEU53) {}
   try { dbPut('update/userdev/' + adm46Uid(u), { n: n, t: String(t || 'force'), ts: n }, null); } catch (eEU) {}
   try { dbPut('update/webev', { n: n, t: String(t || 'force'), u: u }, null); } catch (eEU2) {}
   evMeta(n, String(t || 'force'), u);
@@ -3132,6 +3181,9 @@ function evHandle(t, u) {
 }
 function dbPut(path, obj, cb) {
   try { if (/^(schedule|subjects|teachers|weeks)(\/|$)/.test(String(path))) evSched(); } catch (eWB47) {}
+  /* 3.5.53: маркер ревізії розкладу — у Cloudflare D1 (_meta 'webrev'),
+     сайт читає через /api/rev. Firebase webrev — легасі для старих. */
+  try { if (/^(schedule|subjects|teachers|weeks)(\/|$)/.test(String(path))) cfExec("INSERT INTO _meta (key,val) VALUES ('webrev',?) ON CONFLICT(key) DO UPDATE SET val=excluded.val", [String(Date.now())], null, 6000); } catch (eWB53) {}
   
 
   try { if (/^(schedule|subjects|teachers|weeks)(\/|$)/.test(String(path))) dbPut('update/webrev', Date.now(), null); } catch (eWB) {}
@@ -3635,49 +3687,73 @@ function chipFailTick(em) {
 }
 let authKick = null;
 function authPollDb(st) {
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
+  /* 3.5.53: канал відповіді браузерного входу — ТІЛЬКИ Cloudflare D1
+     (правило власника: Firebase для бази заборонено).
+       застосунок (ANDROID): cfExec -> SELECT pl FROM auth_cb (прямий D1);
+       сайт (FH_WEB):        /api/authcb?state= -> D1 через шлюз.
+     auth.html пише в D1 через /api/authcb (сторінка завжди свіжа —
+     must-revalidate), тож легасі-читання Firebase більше не потрібне. */
   clearTimeout(authPollT);
   authKick = null;
   if (!st) return;
   let lastTick = Date.now(), awake = lastTick;
+  const d1Take = function (raw) {
+    if (ACC.user || agState !== st) return true;
+    if (!raw) return false;
+    let j = raw, pj = false;
+    if (typeof raw === 'string') { try { j = JSON.parse(raw); pj = true; } catch (e) { return false; } }
+    if (pj && j && j.ok && j.data) j = { d: j.data.d || j.data };
+    if (j && j.d && j.d.sub) {
+      const p = j.d;
+      const u2 = { sub: String(p.sub), name: String(p.name || 'Користувач'), email: String(p.email || ''), pic: String(p.picture || p.pic || '') };
+      if (p.fid) u2.fid = String(p.fid);
+      try { cfExec('DELETE FROM auth_cb WHERE state=?', [st], null, 6000); } catch (eD53) {}
+      rememberIsOut(u2.sub, function (outRm) { if (outRm) rmAskConfirm(u2); else authAccept(u2); });
+      return true;
+    }
+    return false;
+  };
   const tick = function () {
     if (ACC.user || agState !== st) return;
     const now = Date.now();
-    if (now - lastTick > 10000) awake = now;   
+    if (now - lastTick > 10000) awake = now;
     lastTick = now;
-    fetch(DB_URL + '/update/auth_cb/' + st + '.json', { cache: 'no-store' })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (j) {
-        if (ACC.user || agState !== st) return;
-        if (j && j.d && j.d.sub) {
-          const p = j.d;
-          
-          const u2 = { sub: String(p.sub), name: String(p.name || 'Користувач'), email: String(p.email || ''), pic: String(p.picture || p.pic || '') };
-          if (p.fid) u2.fid = String(p.fid);
-          dbDel('/update/auth_cb/' + st);
-          
-          rememberIsOut(u2.sub, function (outRm) { if (outRm) rmAskConfirm(u2); else authAccept(u2); });
-        } else if (Date.now() - awake < 600000) {
-          authPollT = setTimeout(tick, 1500);
-        } else {
-          agState = '';
-          authKick = null;
-          setAgStat('Час входу вийшов. Натисни «Увійти через Google» ще раз.', 'err');
-          const g3 = byId('agGo'); if (g3) g3.disabled = false;
-        }
-      })
-      .catch(function () {
-        if (!ACC.user && agState === st && Date.now() - awake < 600000) authPollT = setTimeout(tick, 2500);
-      });
+    if (window.FH_WEB && typeof fhApiFetch === 'function') {
+      try {
+        fhApiFetch('authcb?state=' + encodeURIComponent(st), { cache: 'no-store' }, function (r) {
+          if (!r) return;
+          r.json().then(function (j) {
+            if (ACC.user || agState !== st) return;
+            if (j && j.ok && j.data) { d1Take({ d: (j.data && j.data.d) ? j.data.d : j.data }); return; }
+            if (Date.now() - awake < 600000) authPollT = setTimeout(tick, 2000);
+            else pollGiveUp53();
+          }).catch(function () {
+            if (!ACC.user && agState === st && Date.now() - awake < 600000) authPollT = setTimeout(tick, 2500);
+          });
+        });
+      } catch (e53) { authPollT = setTimeout(tick, 2500); }
+      return;
+    }
+    if (ANDROID && cfOk()) {
+      try {
+        cfExec('SELECT pl FROM auth_cb WHERE state=?', [st], function (rows) {
+          if (ACC.user || agState !== st) return;
+          const pl = rows && rows[0] ? rows[0].pl : null;
+          if (d1Take(pl)) return;
+          if (Date.now() - awake < 600000) authPollT = setTimeout(tick, 2000);
+          else pollGiveUp53();
+        }, 6000);
+      } catch (eC53) { authPollT = setTimeout(tick, 2500); }
+      return;
+    }
+    if (Date.now() - awake < 600000) authPollT = setTimeout(tick, 2000);
+    else pollGiveUp53();
+  };
+  const pollGiveUp53 = function () {
+    agState = '';
+    authKick = null;
+    setAgStat('Час входу вийшов. Натисни «Увійти через Google» ще раз.', 'err');
+    const g3 = byId('agGo'); if (g3) g3.disabled = false;
   };
   tick();
   authKick = tick;
@@ -5137,6 +5213,31 @@ function fetchRole(k, cb, _n) {
 
 
 function webMirrorPull(k, cb) {
+  /* 3.5.53: D1 ПЕРШИМ (правило власника — база лише Cloudflare): /api/data
+     повертає той самий рядок users, що пишуть застосунки. Firebase-дзеркало
+     update/web/<k> — лише легасі-фолбек для старих писачів. */
+  if (window.FH_WEB && typeof fhApiFetch === 'function') {
+    try {
+      fhApiFetch('data?uid=' + encodeURIComponent(k), { cache: 'no-store' }, function (r) {
+        if (r) {
+          r.json().then(function (j) {
+            if (j && j.ok && j.row && j.row.settings) {
+              var sc = null;
+              try { sc = JSON.parse(j.row.settings); } catch (e53) {}
+              if (sc && typeof sc === 'object') { if (cb) cb(sc); return; }
+            }
+            if (cb) cb(null);
+          }).catch(function () { if (cb) cb(null); });
+          return;
+        }
+        wmpLegacy53(k, cb);
+      });
+      return;
+    } catch (e53) {}
+  }
+  wmpLegacy53(k, cb);
+}
+function wmpLegacy53(k, cb) {
   /* 3.5.50: ФІКС — між DB_URL і шляхом бракувало «/», URL виходив
      …firebasedatabase.appupdate/web/… (ERR_NAME_NOT_RESOLVED), дзеркало
      ніколи не читалось і сайт не бачив свіжих груп/налаштувань */
@@ -6980,11 +7081,14 @@ window.__fh = {
   authErr: function (m) {
     const m52 = String(m || '');
     try { fhLog('aerr', m52.slice(0, 60)); } catch (eL52b) {}
+    /* 3.5.53: плитка недавніх акаунтів — явна помилка нативного входу = спроба
+       без результату. 2 таких = плитку прибрано (chipFailTick). */
+    try { if (ANDROID && !window.FH_WEB && AG_HINT52) chipFailTick(AG_HINT52); } catch (eCF53) {}
     /* 3.5.52: СПАСІННЯ ВХОДУ НА ТЕЛЕФОНІ. Нативний обмін токена може бути
        відхилений сервером (обмеження API-ключа Google — 403 без referer).
        Якщо це НЕ скасування юзером — миттєво відкриваємо браузерний вхід
        з ТИМ САМИМ state: auth.html завершує обмін (реферер сайту дозволено),
-       пише update/auth_cb/<st>, активний authPollDb забирає профіль. */
+       пише auth_cb (3.5.53 — у Cloudflare D1), активний authPollDb забирає профіль. */
     if (ANDROID && !window.FH_WEB && agState && m52.indexOf('скасовано') === -1) {
       try {
         if (typeof AndroidHost.open === 'function') {
