@@ -1981,7 +1981,7 @@ function webRevTick(cb) {
   if (window.FH_WEB && typeof fhApiFetch === 'function') {
     try {
       const myK53 = (ACC.user && userKey(ACC.user)) ? userKey(ACC.user) : '';
-      fhApiFetch('rev' + (myK53 ? ('?uid=' + encodeURIComponent(myK53)) : ''), { cache: 'no-store' }, function (r) {
+      fhApiFetch('rev53' + (myK53 ? ('?uid=' + encodeURIComponent(myK53)) : ''), { cache: 'no-store' }, function (r) {
         if (!r) return;
         r.json().then(function (j) {
           if (j && j.ok) {
