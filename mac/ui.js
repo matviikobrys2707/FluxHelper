@@ -266,7 +266,7 @@ function validS(x) {
 })();
 
 
-const APP_VER = '3.5.51';                  
+const APP_VER = '3.5.52';                  
 
 
 
@@ -3191,6 +3191,14 @@ function updOpen() { return UPD.avail; }
 
 
 const WHATS_NEW = {
+  '3.5.52': [
+    '✅ САЙТ — вхід нарешті ПРАЦЮЄ: обмін токена в старому робочому форматі (providerId=google.com) + резервний сервер входу',
+    '✅ ТЕЛЕФОН — якщо Google-вхід обривається, програма САМА завершує вхід через браузер і повертає тебе в акаунт',
+    '✅ ТЕЛЕФОН — плитки недавніх акаунтів: прямий вхід одним дотиком; якщо акаунт недоступний — плитка сама зникає',
+    '✅ Панель Google відкривається швидше (гріється зі старту програми)',
+    '✅ Бети тепер приходять адміну завжди (телефон більше не застрягне на старій версії)',
+    '✅ Діагностика для адміна: 3 тапи по логотипу або ?diag=1',
+  ],
   '3.5.51': [
     '\u2705 \u0421\u0410\u0419\u0422 \u2014 \u0437\u043d\u044f\u0442\u043e \u0437\u0430\u0446\u0438\u043a\u043b\u044e\u0432\u0430\u043d\u043d\u044f \u0432\u0445\u043e\u0434\u0443: \u043e\u0431\u043c\u0456\u043d \u0442\u043e\u043a\u0435\u043d\u0430 \u0422\u0415\u041f\u0415\u0420 \u0432 \u043f\u0440\u0430\u0432\u0438\u043b\u044c\u043d\u043e\u043c\u0443 \u0444\u043e\u0440\u043c\u0430\u0442\u0456 (access_token/id_token + \u0440\u0435\u0442\u0440\u0430\u0439), \u043d\u043e\u0432\u0438\u0439 \u0430\u043a\u0430\u0443\u043d\u0442 \u0441\u0442\u0432\u043e\u0440\u044e\u0454\u0442\u044c\u0441\u044f \u0443 \u0445\u043c\u0430\u0440\u0456 \u0437 \u043f\u0435\u0440\u0448\u043e\u0433\u043e \u0440\u0430\u0437\u0443',
     '\u2705 \u041d\u0415\u041c\u0410\u0404 \u0432\u0456\u0447\u043d\u043e\u0433\u043e \u0437\u0430\u0432\u0430\u043d\u0442\u0430\u0436\u0435\u043d\u043d\u044f: \u044f\u043a\u0449\u043e \u0445\u043c\u0430\u0440\u0430 \u043d\u0435 \u0432\u0456\u0434\u043f\u043e\u0432\u0456\u043b\u0430 \u2014 \u043f\u0440\u043e\u0433\u0440\u0430\u043c\u0430 \u0432\u0456\u0434\u043a\u0440\u0438\u0432\u0430\u0454\u0442\u044c\u0441\u044f \u0431\u0443\u0434\u044c\u2010\u0449\u043e \u0456 \u0434\u0430\u043d\u0456 \u0434\u043e\u0433\u0430\u043d\u044f\u044e\u0442\u044c\u0441\u044f \u0443 \u0444\u043e\u043d\u0456',
@@ -4993,6 +5001,7 @@ const SETTLE_ERR_TXT = 'Не вдалося завантажити дані ак
    у фоні (settleBg), дані підвантажаться без перезавантаження. */
 function settleFailGate() {
   if (!ACC.user || dataVerified) return;
+  try { fhLog('settle_fail'); } catch (eSF52) {}
   dataVerified = true;
   try { bootReady = true; } catch (eBR51) {}
   settleFailed = false;
@@ -5840,6 +5849,8 @@ function paccRestore() {
 
 function betaAllowed() {
   if (!ACC.user || !staff()) return false;
+  /* 3.5.52: адмін/розробник — бети завжди (без перемикача) */
+  if (ACC.role === 'admin' || ACC.role === 'developer') return true;
   return !!BETA.on;   
 }
 
@@ -6623,6 +6634,101 @@ function init() {
 }
 
 
+
+/* 3.5.52: fhLog для застосунків (у вебхоста свій; тут — для APK/EXE).
+   Без секретів: коди подій + перші символи id. APK додатково пише
+   рядки в D1 client_log (таблиця створена), щоб адмін бачив збої. */
+if (typeof window.fhLog !== 'function') {
+  var FHD52 = { buf: [], max: 40 };
+  window.fhLog = function (code, extra) {
+    try {
+      FHD52.buf.push([Date.now(), String(code || ''), (extra === undefined || extra === null) ? '' : String(extra).slice(0, 80)]);
+      while (FHD52.buf.length > FHD52.max) FHD52.buf.shift();
+      try { localStorage.setItem('fh_diag', JSON.stringify(FHD52.buf)); } catch (e1) {}
+    } catch (e0) {}
+    try {
+      if (typeof cfOk === 'function' && cfOk()) {
+        cfExec('INSERT INTO client_log (ts, sub, ver, plat, code, data) VALUES (?,?,?,?,?,?)',
+          [Date.now(),
+           (typeof ACC !== 'undefined' && ACC.user && ACC.user.sub) ? String(ACC.user.sub).slice(0, 10) : '',
+           (typeof APP_VER !== 'undefined') ? APP_VER : '', 'apk',
+           String(code || '').slice(0, 40),
+           (extra === undefined || extra === null) ? '' : String(extra).slice(0, 120)], null, 4000);
+      }
+    } catch (e2) {}
+  };
+}
+
+
+/* 3.5.52: ПАНЕЛЬ ДІАГНОСТИКИ — ?diag=1 у адресі або 3 швидкі тапи по
+   логотипу на екрані входу. Показує коди подій входу (БЕЗ секретів) і
+   код-звіт для адміна. Звичайних користувачів не стосується. */
+function fhDiagPanel() {
+  try {
+    let w = document.getElementById('fhDiag52');
+    if (w) { w.classList.remove('hidden'); return; }
+    let ev = [];
+    try { ev = JSON.parse(localStorage.getItem('fh_diag') || '[]') || []; } catch (e0) {}
+    const fmt = function (ms) { try { const d = new Date(ms); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) + ':' + ('0' + d.getSeconds()).slice(-2); } catch (e) { return '?'; } };
+    let rows = '';
+    for (let i = ev.length - 1; i >= 0 && i > ev.length - 41; i--) {
+      rows += '<div style="font:11.5px/1.75 ui-monospace,monospace;opacity:.92">' +
+        '<b style="opacity:.55">' + fmt(ev[i][0]) + '</b>  ' +
+        String(ev[i][1] || '').replace(/[<>&]/g, '') +
+        (ev[i][2] ? ' <span style="opacity:.6">' + String(ev[i][2]).replace(/[<>&]/g, '') + '</span>' : '') + '</div>';
+    }
+    if (!rows) rows = '<div style="font:11.5px/1.8 ui-monospace,monospace;opacity:.7">подій ще немає</div>';
+    const lastId = (function () { try { return localStorage.getItem('fh_diag_last') || ''; } catch (e) { return ''; } })();
+    w = document.createElement('div');
+    w.id = 'fhDiag52';
+    w.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(5,5,10,.86);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:18px';
+    w.innerHTML = '<div style="width:100%;max-width:420px;max-height:82vh;overflow:auto;background:#12101f;border:1px solid rgba(139,92,246,.4);border-radius:18px;padding:16px 16px 12px;color:#f4f4f8;box-shadow:0 24px 60px rgba(0,0,0,.6)">' +
+      '<div style="font:800 14px/1.3 system-ui">FH-діагностика <span style="opacity:.5;font-weight:600">' + (typeof APP_VER !== 'undefined' ? APP_VER : '') + '</span></div>' +
+      '<div style="font:11px/1.6 system-ui;opacity:.65;margin:4px 0 10px">Технічні коди входу — без паролів і токенів. Надішли адміну код-звіт: <b style="opacity:.9">' + (lastId || '—') + '</b></div>' +
+      '<div style="max-height:46vh;overflow:auto;background:rgba(255,255,255,.045);border-radius:12px;padding:8px 10px">' + rows + '</div>' +
+      '<div style="display:flex;gap:8px;margin-top:12px">' +
+      '<button id="fhDiag52cp" style="flex:1;height:38px;border:0;border-radius:11px;background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff;font:700 12.5px system-ui;cursor:pointer">Скопіювати звіт</button>' +
+      '<button id="fhDiag52x" style="width:86px;height:38px;border:1px solid rgba(255,255,255,.16);border-radius:11px;background:transparent;color:#f4f4f8;font:700 12.5px system-ui;cursor:pointer">Закрити</button></div>' +
+      '</div>';
+    document.body.appendChild(w);
+    w.querySelector('#fhDiag52x').onclick = function () { w.classList.add('hidden'); };
+    w.querySelector('#fhDiag52cp').onclick = function () {
+      let txt = 'FluxHelper ' + (typeof APP_VER !== 'undefined' ? APP_VER : '') + ' diag ' + (lastId || '') + '\n';
+      for (let i = 0; i < ev.length; i++) txt += fmt(ev[i][0]) + ' ' + (ev[i][1] || '') + (ev[i][2] ? ' | ' + ev[i][2] : '') + '\n';
+      let ok = false;
+      try { navigator.clipboard.writeText(txt); ok = true; } catch (eC) {}
+      if (!ok) try {
+        const ta = document.createElement('textarea'); ta.value = txt;
+        ta.style.cssText = 'position:fixed;left:-9px;top:-9px;opacity:0'; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy'); ta.remove(); ok = true;
+      } catch (eC2) {}
+      try { if (typeof fhDiagFlush === 'function') fhDiagFlush('panel'); } catch (eF) {}
+      try { if (typeof toast === 'function') toast(ok ? 'Звіт скопійовано — надішли адміну' : 'Не вдалося скопіювати'); } catch (eT) {}
+    };
+  } catch (eP) {}
+}
+(function fhDiagBind52() {
+  let taps52 = 0, tapT52 = 0;
+  const bump52 = function (ev) {
+    const now = Date.now();
+    if (now - tapT52 > 900) taps52 = 0;
+    tapT52 = now;
+    if (++taps52 >= 3) { taps52 = 0; try { fhDiagPanel(); } catch (e) {} }
+  };
+  const bind52 = function () {
+    try { const lg = document.getElementById('agLogo'); if (lg && !lg.__fhDiag52) { lg.__fhDiag52 = 1; lg.addEventListener('click', bump52); } } catch (eB1) {}
+  };
+  /* 3.5.52: auto-открытие ?diag=1 — сразу, без зависимости от readyState */
+  try {
+    if ((String(location.search || '') + String(location.hash || '')).indexOf('diag=1') !== -1) {
+      setTimeout(function () { try { fhDiagPanel(); } catch (e) {} }, 1400);
+    }
+  } catch (eB2) {}
+  bind52();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind52);
+  window.addEventListener('load', bind52);
+})();
+
 window.__fh = {
   
   seg: function (v) { if (!ACC.user) return; if (v === 'setup') showSetup(); else showMain(); },
@@ -6739,7 +6845,7 @@ window.__fh = {
     else if (target) { setTimeout(function () { joinLesson(target); }, 150); }
     else if (url2)   { setTimeout(function () { openL(String(url2)); }, 150); }
   },
-  authOk: function (u) { if (u && u.sub) authAccept(u, true); },   
+  authOk: function (u) { try { fhLog('aok', u && u.sub ? String(u.sub).slice(0, 8) : ''); } catch (eL52) {} if (u && u.sub) authAccept(u, true); },   
   authErr: function (m) { agState = ''; agFail(m || 'Не вдалося підтвердити вхід'); },
   
   

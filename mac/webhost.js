@@ -33,7 +33,7 @@
 
 (function () {
 'use strict';
-var VER = '3.5.51';
+var VER = '3.5.52';
 var BACKEND = 'https://fluxhelper-backend.onrender.com';
 var ORIGIN = 'https://fluxhelper.pages.dev';
 var DB_URL = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app';
@@ -43,6 +43,48 @@ var GIS_CLIENT = '668834523935-k470ldmdv0r9am0720v6lgaatm6rtuf3.apps.googleuserc
 
 
 var FB_KEY = 'AIzaSyCDWpF3QTMEFBN9ravDxH_woKnBpcMRDvI';
+
+/* ── 3.5.52: ДІАГНОСТИКА ДЛЯ АДМІНА (без жодних секретів) ─────────────
+   Хлібні крихти входу живуть у localStorage('fh_diag'); при зБОЯХ вишляються
+   у відкритий вузол update/diag Firebase — адмін читає їх без юзера.
+   Токени/паролі НЕ пишуться: тільки коди подій, версія, платформа,
+   перші 8 символів id акаунта і email (не є секретом, показується в UI). */
+var FHD = { buf: [], max: 40, t: 0 };
+function fhLog(code, extra) {
+  try {
+    FHD.buf.push([Date.now(), String(code || ''), (extra === undefined || extra === null) ? '' : String(extra).slice(0, 80)]);
+    while (FHD.buf.length > FHD.max) FHD.buf.shift();
+    try { localStorage.setItem('fh_diag', JSON.stringify(FHD.buf)); } catch (eL52) {}
+    if (/fail|err|rescue|guard/.test(String(code || ''))) {
+      clearTimeout(FHD.t);
+      FHD.t = setTimeout(function () { fhDiagFlush(String(code || '')); }, 2500);
+    }
+    if (String(code || '') === 'wl_ok') fhDiagFlush('ok');
+  } catch (e) {}
+}
+function fhDiagSub8() {
+  try { var u = jget('fh_user'); return (u && u.sub) ? String(u.sub).slice(0, 8) : ''; } catch (e52) { return ''; }
+}
+function fhDiagFlush(why) {
+  try {
+    if (!FHD.buf.length) return;
+    var d = new Date();
+    var id = d.getUTCFullYear() + ('0' + (d.getUTCMonth() + 1)).slice(-2) + ('0' + d.getUTCDate()).slice(-2) +
+      '-' + ('0' + d.getUTCHours()).slice(-2) + ('0' + d.getUTCMinutes()).slice(-2) + ('0' + d.getUTCSeconds()).slice(-2) +
+      '-' + Math.floor(Math.random() * 1296).toString(36);
+    var u = jget('fh_user') || {};
+    var pay = {
+      t: Date.now(), why: String(why || '').slice(0, 24), id: id, ver: VER, plat: 'web',
+      ua: String(navigator.userAgent || '').slice(0, 60), sub: fhDiagSub8(),
+      em: String(u.email || '').slice(0, 60), ev: FHD.buf.slice(-40)
+    };
+    try { localStorage.setItem('fh_diag_last', id); } catch (eI52) {}
+    fetch(DB_URL + '/update/diag/' + encodeURIComponent(id) + '.json', {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pay)
+    }).catch(function () {});
+    return id;
+  } catch (e) { return ''; }
+}
 function tokRefreshRT(rt, cb) {
   try {
     
@@ -553,6 +595,7 @@ function webLogin(st) {
     st = String(st || '');
     if (!st) { agErr('Не вдалося почати вхід. Спробуй ще раз.'); return; }
     agStat('<span class="spin"></span>Відкриваю вибір акаунта…');
+    fhLog('wl_open');
     ensureGis(function () {
       try {
         var tc = google.accounts.oauth2.initTokenClient({
@@ -565,6 +608,7 @@ function webLogin(st) {
 
             try { setAgStat(''); } catch (eClr) {}
             webDlStart();
+            fhLog('wl_gis');
             var at = String(resp.access_token);
             fetch('https://openidconnect.googleapis.com/v1/userinfo', { headers: { 'Authorization': 'Bearer ' + at } })
               .then(function (r) { return r.json(); })
@@ -580,21 +624,32 @@ function webLogin(st) {
                    всегда шёл в id_token= — вход часто зацикливался) */
                 var idTok0 = '';
                 try { if (resp.id_token && String(resp.id_token).split('.').length === 3) idTok0 = String(resp.id_token); } catch (eIT0) {}
-                var exch51 = function (pb, cb51) {
-                  fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=' + FB_KEY, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ postBody: pb, requestUri: 'http://localhost', returnSecureToken: true })
-                  }).then(function (r) { return r.json(); }).catch(function () { return null; }).then(cb51);
+                /* 3.5.52 ГОЛОВНИЙ ФІКС САЙТУ: identitytoolkit вимагає providerId
+                   у postBody — стара робоча auth-сторінка завжди шлала
+                   «…&providerId=google.com», а 3.5.49-3.5.51 шла БЕЗ нього, тому
+                   Firebase відповідала INVALID_CREDENTIAL_OR_PROVIDER_ID навіть із
+                   валідним токеном (цикл «до 100% і знову екран входу»).
+                   Крок 3 — фолбек FluxHelper Backend /api/auth/google (виклик
+                   старого сайту 3.5.12-3.5.39): обмін через Firebase Admin SDK
+                   без API-ключа — працює навіть якщо Google обмежив ключ. */
+                fhLog('wl_ui', String(p.sub || '').slice(0, 8));
+                var fin52 = null;
+                var after52 = function (j) {
+                  if (j && j.localId) { fhLog('wl_exch_ok'); fin52(j); return; }
+                  fhLog('wl_relay');
+                  try {
+                    fetch(BACKEND + '/api/auth/google', {
+                      method: 'POST', headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ token: at })
+                    }).then(function (r) { return r.json(); }).catch(function () { return null; }).then(function (j2) {
+                      if (j2 && j2.localId) { fhLog('wl_relay_ok'); fin52(j2); return; }
+                      fhLog('wl_exch_fail');
+                      agErr('Сервер входу не відповів. Спробуй ще раз за хвилину.');
+                    });
+                  } catch (eR52) { fhLog('wl_relay_err'); agErr('Сервер входу не відповів. Спробуй ще раз за хвилину.'); }
                 };
-                exch51(idTok0 ? ('id_token=' + encodeURIComponent(idTok0)) : ('access_token=' + encodeURIComponent(at)), function (j51) {
-                  if (!j51 || !j51.localId) {
-                    exch51(idTok0 ? ('access_token=' + encodeURIComponent(at)) : ('id_token=' + encodeURIComponent(at)), function (j) { fin51(j); });
-                    return;
-                  }
-                  fin51(j51);
-                });
-                var fin51 = function (j) {
-                    if (!j || !j.localId) { agErr('Сервер входу не відповів. Спробуй ще раз за хвилину.'); return; }
+                fin52 = function (j) {
+                    if (!j || !j.localId) { after52(j); return; }
                     var exp = parseInt(j.expiresIn, 10) || 3600;
                     tokState = {
                       tok: String(j.idToken || ''),
@@ -603,29 +658,26 @@ function webLogin(st) {
                       sub: String(p.sub), email: email
                     };
                     sessSave(tokState);
-                    
-
-                    var node = {
-                      d: {
-                        sub: String(p.sub), name: name, email: email,
-                        picture: String(p.picture || ''), fid: String(j.localId),
-                        tok: at   
-                      },
-                      rtok: tokState.rtok, tokT: tokState.tokT, t: Date.now()
-                    };
                     try {
                       if (window.__fh && typeof window.__fh.authOk === 'function') {
-                        window.__fh.authOk({ sub: String(p.sub), name: name, email: email, pic: String(p.picture || ''), fid: String(j.localId), tok: at });
+                        window.__fh.authOk({ sub: String(p.sub), name: name, email: email, pic: String(p.picture || ''), fid: String(j.localId), tok: String(j.idToken || at), rtok: String(j.refreshToken || ''), tokT: tokState.tokT });
                       }
                     } catch (eAO49) {}
                     try { rtdbSync('delete', 'update/auth_cb/' + encodeURIComponent(st), null); } catch (eDEL49) {}
-                    
                   };
+                var exch52 = function (pb, cb52) {
+                  fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=' + FB_KEY, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ postBody: pb, requestUri: 'http://localhost', returnSecureToken: true })
+                  }).then(function (r) { return r.json(); }).catch(function () { return null; }).then(cb52);
+                };
+                exch52(idTok0 ? ('id_token=' + encodeURIComponent(idTok0) + '&providerId=google.com') : ('access_token=' + encodeURIComponent(at) + '&providerId=google.com'), after52);
               })
               .catch(function () { agErr('Немає зв’язку з Google. Перевір інтернет і спробуй ще раз.'); });
           },
           error_callback: function (e) {
             var t = (e && e.type) || '';
+            fhLog('wl_gis_err', t);
             if (t === 'popup_closed' || t === 'popup_closed_by_user' || t === 'dismissed') agErr('Вхід скасовано. Натисни кнопку ще раз.');
             else if (t === 'popup_failed_to_open' || t === 'popup_blocked') agErr('Браузер заблокував вікно Google. Дозволь сплив-вікна й спробуй ще раз.');
             else if (t === 'access_denied') agErr('Доступ не надано. Натисни кнопку ще раз і дозволь доступ.');

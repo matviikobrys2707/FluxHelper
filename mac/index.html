@@ -7,14 +7,14 @@
 <link rel="preconnect" href="https://securetoken.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://accounts.google.com">
 <title>FluxHelper</title>
-<link rel="stylesheet" href="ui.css?v=3551">
+<link rel="stylesheet" href="ui.css?v=3552">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3518">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=3518">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3518">
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
-<script src="webhost.js?v=3551"></script>
+<script src="webhost.js?v=3552"></script>
 <script>
 
 
@@ -28,7 +28,7 @@
   try {
     if (!/^https?:$/.test(location.protocol)) return;              
     if (/^\/main(\/|$|\?|#)/.test(location.pathname + location.search)) return;  
-    location.replace('/main/' + (location.hash || ''));
+    location.replace('/main/' + (location.search || '') + (location.hash || ''));
   } catch (e) {}
 })();
 </script>
@@ -527,6 +527,6 @@ try{
   </div>
 </div>
 
-<script src="ui.js?v=3551"></script>
+<script src="ui.js?v=3552"></script>
 </body>
 </html>

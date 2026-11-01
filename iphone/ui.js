@@ -285,7 +285,7 @@ function validS(x) {
 
 
 
-let APP_VER = '3.5.51';              
+let APP_VER = '3.5.52';              
 try {
   if (window.AndroidHost && AndroidHost.ver) {
     const jv = AndroidHost.ver();
@@ -2234,6 +2234,14 @@ function parseNotes(txt) {
 
 
 const WHATS_NEW = {
+  '3.5.52': [
+    '✅ САЙТ — вхід нарешті ПРАЦЮЄ: обмін токена в старому робочому форматі (providerId=google.com) + резервний сервер входу',
+    '✅ ТЕЛЕФОН — якщо Google-вхід обривається, програма САМА завершує вхід через браузер і повертає тебе в акаунт',
+    '✅ ТЕЛЕФОН — плитки недавніх акаунтів: прямий вхід одним дотиком; якщо акаунт недоступний — плитка сама зникає',
+    '✅ Панель Google відкривається швидше (гріється зі старту програми)',
+    '✅ Бети тепер приходять адміну завжди (телефон більше не застрягне на старій версії)',
+    '✅ Діагностика для адміна: 3 тапи по логотипу або ?diag=1',
+  ],
   '3.5.51': [
     '\u2705 \u0421\u0410\u0419\u0422 \u2014 \u0437\u043d\u044f\u0442\u043e \u0437\u0430\u0446\u0438\u043a\u043b\u044e\u0432\u0430\u043d\u043d\u044f \u0432\u0445\u043e\u0434\u0443: \u043e\u0431\u043c\u0456\u043d \u0442\u043e\u043a\u0435\u043d\u0430 \u0422\u0415\u041f\u0415\u0420 \u0432 \u043f\u0440\u0430\u0432\u0438\u043b\u044c\u043d\u043e\u043c\u0443 \u0444\u043e\u0440\u043c\u0430\u0442\u0456 (access_token/id_token + \u0440\u0435\u0442\u0440\u0430\u0439), \u043d\u043e\u0432\u0438\u0439 \u0430\u043a\u0430\u0443\u043d\u0442 \u0441\u0442\u0432\u043e\u0440\u044e\u0454\u0442\u044c\u0441\u044f \u0443 \u0445\u043c\u0430\u0440\u0456 \u0437 \u043f\u0435\u0440\u0448\u043e\u0433\u043e \u0440\u0430\u0437\u0443',
     '\u2705 \u041d\u0415\u041c\u0410\u0404 \u0432\u0456\u0447\u043d\u043e\u0433\u043e \u0437\u0430\u0432\u0430\u043d\u0442\u0430\u0436\u0435\u043d\u043d\u044f: \u044f\u043a\u0449\u043e \u0445\u043c\u0430\u0440\u0430 \u043d\u0435 \u0432\u0456\u0434\u043f\u043e\u0432\u0456\u043b\u0430 \u2014 \u043f\u0440\u043e\u0433\u0440\u0430\u043c\u0430 \u0432\u0456\u0434\u043a\u0440\u0438\u0432\u0430\u0454\u0442\u044c\u0441\u044f \u0431\u0443\u0434\u044c\u2010\u0449\u043e \u0456 \u0434\u0430\u043d\u0456 \u0434\u043e\u0433\u0430\u043d\u044f\u044e\u0442\u044c\u0441\u044f \u0443 \u0444\u043e\u043d\u0456',
@@ -3493,6 +3501,7 @@ let authPollT = 0;
 
 
 let RM_PENDING = null;
+let AG_HINT52 = '';
 function rmActive() { return !window.FH_WEB; }   /* APK і ПК — так; сайт — ні */
 function rmKeyOf(sub) { return 'rm:' + String(sub); }
 function rememberWrite(sub, out) {
@@ -3587,6 +3596,43 @@ function accsRender() {
     });
   }
 }
+
+/* 3.5.52: плитки недавніх акаунтів — власник: прямий вхід або плитка зникає.
+   Успішний вхід акаунтом скидає лічильник; 2 спроби без результату =
+   прямий вхід недоступний -> плитку прибрано (повернеться після успішного
+   входу через Google). */
+function chipOkTick(u) {
+  if (!u || !u.sub) return;
+  try {
+    const a = accsLoad();
+    let ch = false;
+    for (let i = 0; i < a.length; i++) {
+      if (String(a[i].sub) === String(u.sub) && a[i].f) { a[i].f = 0; ch = true; }
+    }
+    if (ch) accsSave(a);
+  } catch (e) {}
+}
+function chipFailTick(em) {
+  try {
+    if (!em || em.indexOf('@') < 1) return;
+    const a = accsLoad();
+    for (let i = 0; i < a.length; i++) {
+      if (String(a[i].email) === String(em)) {
+        a[i].f = (parseInt(a[i].f, 10) || 0) + 1;
+        if (a[i].f >= 2) {
+          a.splice(i, 1);
+          accsSave(a);
+          try { accsRender(); } catch (eR52) {}
+          try { fhLog('chip_drop', String(em).slice(0, 10)); } catch (eL52) {}
+          try { toast('Плитку «' + String(em).split('@')[0] + '» прибрано — прямий вхід недоступний'); } catch (eT52) {}
+        } else {
+          accsSave(a);
+        }
+        return;
+      }
+    }
+  } catch (e) {}
+}
 let authKick = null;
 function authPollDb(st) {
   
@@ -3645,7 +3691,9 @@ function authStart(hintEmail) {
   const st = fhRandHex(12);
   agState = st;
   try { localStorage.setItem('fh_auth_state', st); } catch (e) {}
-  if (ANDROID) {
+  AG_HINT52 = String(hintEmail || '');
+  window.__fhRescued52 = null;
+  if (ANDROID && !window.FH_WEB) {
     
 
 
@@ -3669,16 +3717,47 @@ function authStart(hintEmail) {
       } else {
         AndroidHost.login(st);
       }
-      /* 3.5.51: сторож JS — якщо натива не відповіла за 22с (процес убито тощо),
-         знімаємо спінер і повертаємо кнопку, щоб вхід не «висів» назавжди */
-      (function (stW51) {
+      /* 3.5.52: ЧИТАННЯ auth_cb ПОВЕРНУЛИ. Натива при збої CM відкриває
+         браузер (auth.html#s=<st>), той пише профіль в update/auth_cb/<st>.
+         У 3.5.42-3.5.51 цей канал НІХТО не читав — браузерний вхід на
+         телефоні був глухим кутом. Тепер poll забирає профіль. */
+      try { authPollDb(st); } catch (eP52) {}
+      /* 3.5.52: пізнє спасіння — якщо натива мовчить 20с, відкриваємо
+         браузерний вхід САМІ (той самий state, той самий poll) */
+      (function (stR52) {
         setTimeout(function () {
-          if (agState !== stW51) return;
+          if (agState !== stR52 || ACC.user) return;
+          if (window.__fhRescued52 === stR52) return;
+          window.__fhRescued52 = stR52;
+          try {
+            fhLog('rescue20');
+            if (typeof AndroidHost.open === 'function') {
+              const h52 = String(AG_HINT52 || '');
+              AndroidHost.open('https://fluxhelper.pages.dev/auth.html#s=' + encodeURIComponent(stR52) +
+                '&oneclick=1' + (h52 ? '&login_hint=' + encodeURIComponent(h52) : ''));
+              setAgStat('<span class="spin"></span>Завершуємо вхід у браузері…');
+            }
+          } catch (eR52b) {}
+        }, 20000);
+      })(st);
+      /* 3.5.52: сторож JS — 30с (або 100с, якщо триває браузерний вхід).
+         Ніколи не висить назавжди; за фін. межею рахує невдалу спробу
+         плитки (2 невдачі = плитку знято) */
+      (function (stW51) {
+        let n52 = 0;
+        const iv52 = setInterval(function () {
+          n52 += 5;
+          if (agState !== stW51 || ACC.user) { clearInterval(iv52); return; }
+          const lim52 = (window.__fhRescued52 === stW51) ? 100 : 30;
+          if (n52 < lim52) return;
+          clearInterval(iv52);
           spinOff();
           agState = '';
           try { localStorage.removeItem('fh_auth_state'); } catch (eLR51) {}
+          try { fhLog('guard', String(lim52)); } catch (eLG52) {}
+          try { chipFailTick(hintEmail); } catch (eCF52) {}
           try { setAgStat('Google не відповів вчасно — натисни «Увійти через Google» ще раз.', 'err'); } catch (eS51) {}
-        }, 22000);
+        }, 5000);
       })(st);
     } catch (eNat47) {
       spinOff();
@@ -4282,6 +4361,7 @@ const SETTLE_ERR_TXT = 'Не вдалося завантажити дані ак
    у фоні (settleBg), дані підвантажаться без перезавантаження. */
 function settleFailGate() {
   if (!ACC.user || dataVerified) return;
+  try { fhLog('settle_fail'); } catch (eSF52) {}
   dataVerified = true;
   settleFailed = false;
   dlMode = false;
@@ -5028,6 +5108,10 @@ function paccRestore() {
 
 function betaAllowed() {
   if (!ACC.user || !staff()) return false;
+  /* 3.5.52: адмін/розробник отримують бети ЗАВЖДИ — вимкнений перемикач
+     більше не «глушить» оновлення (телефон власника застряг на 3.5.49
+     саме через це, і виправлення 3.5.50-3.5.51 до нього не доїхали) */
+  if (ACC.role === 'admin' || ACC.role === 'developer') return true;
   return !!BETA.on;   
 }
 
@@ -6694,6 +6778,7 @@ function init() {
   if (cfOk()) d1Init();
 
   buildTabs();
+  try { if (ANDROID && !window.FH_WEB && typeof AndroidHost.prewarm === 'function') AndroidHost.prewarm(); } catch (ePW52) {}   /* 3.5.52: панель Google гріється зі СТАРТУ */
   
 
 
@@ -6789,17 +6874,137 @@ function init() {
 }
 
 
+
+/* 3.5.52: fhLog для застосунків (у вебхоста свій; тут — для APK/EXE).
+   Без секретів: коди подій + перші символи id. APK додатково пише
+   рядки в D1 client_log (таблиця створена), щоб адмін бачив збої. */
+if (typeof window.fhLog !== 'function') {
+  var FHD52 = { buf: [], max: 40 };
+  window.fhLog = function (code, extra) {
+    try {
+      FHD52.buf.push([Date.now(), String(code || ''), (extra === undefined || extra === null) ? '' : String(extra).slice(0, 80)]);
+      while (FHD52.buf.length > FHD52.max) FHD52.buf.shift();
+      try { localStorage.setItem('fh_diag', JSON.stringify(FHD52.buf)); } catch (e1) {}
+    } catch (e0) {}
+    try {
+      if (typeof cfOk === 'function' && cfOk()) {
+        cfExec('INSERT INTO client_log (ts, sub, ver, plat, code, data) VALUES (?,?,?,?,?,?)',
+          [Date.now(),
+           (typeof ACC !== 'undefined' && ACC.user && ACC.user.sub) ? String(ACC.user.sub).slice(0, 10) : '',
+           (typeof APP_VER !== 'undefined') ? APP_VER : '', 'apk',
+           String(code || '').slice(0, 40),
+           (extra === undefined || extra === null) ? '' : String(extra).slice(0, 120)], null, 4000);
+      }
+    } catch (e2) {}
+  };
+}
+
+
+/* 3.5.52: ПАНЕЛЬ ДІАГНОСТИКИ — ?diag=1 у адресі або 3 швидкі тапи по
+   логотипу на екрані входу. Показує коди подій входу (БЕЗ секретів) і
+   код-звіт для адміна. Звичайних користувачів не стосується. */
+function fhDiagPanel() {
+  try {
+    let w = document.getElementById('fhDiag52');
+    if (w) { w.classList.remove('hidden'); return; }
+    let ev = [];
+    try { ev = JSON.parse(localStorage.getItem('fh_diag') || '[]') || []; } catch (e0) {}
+    const fmt = function (ms) { try { const d = new Date(ms); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) + ':' + ('0' + d.getSeconds()).slice(-2); } catch (e) { return '?'; } };
+    let rows = '';
+    for (let i = ev.length - 1; i >= 0 && i > ev.length - 41; i--) {
+      rows += '<div style="font:11.5px/1.75 ui-monospace,monospace;opacity:.92">' +
+        '<b style="opacity:.55">' + fmt(ev[i][0]) + '</b>  ' +
+        String(ev[i][1] || '').replace(/[<>&]/g, '') +
+        (ev[i][2] ? ' <span style="opacity:.6">' + String(ev[i][2]).replace(/[<>&]/g, '') + '</span>' : '') + '</div>';
+    }
+    if (!rows) rows = '<div style="font:11.5px/1.8 ui-monospace,monospace;opacity:.7">подій ще немає</div>';
+    const lastId = (function () { try { return localStorage.getItem('fh_diag_last') || ''; } catch (e) { return ''; } })();
+    w = document.createElement('div');
+    w.id = 'fhDiag52';
+    w.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(5,5,10,.86);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:18px';
+    w.innerHTML = '<div style="width:100%;max-width:420px;max-height:82vh;overflow:auto;background:#12101f;border:1px solid rgba(139,92,246,.4);border-radius:18px;padding:16px 16px 12px;color:#f4f4f8;box-shadow:0 24px 60px rgba(0,0,0,.6)">' +
+      '<div style="font:800 14px/1.3 system-ui">FH-діагностика <span style="opacity:.5;font-weight:600">' + (typeof APP_VER !== 'undefined' ? APP_VER : '') + '</span></div>' +
+      '<div style="font:11px/1.6 system-ui;opacity:.65;margin:4px 0 10px">Технічні коди входу — без паролів і токенів. Надішли адміну код-звіт: <b style="opacity:.9">' + (lastId || '—') + '</b></div>' +
+      '<div style="max-height:46vh;overflow:auto;background:rgba(255,255,255,.045);border-radius:12px;padding:8px 10px">' + rows + '</div>' +
+      '<div style="display:flex;gap:8px;margin-top:12px">' +
+      '<button id="fhDiag52cp" style="flex:1;height:38px;border:0;border-radius:11px;background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff;font:700 12.5px system-ui;cursor:pointer">Скопіювати звіт</button>' +
+      '<button id="fhDiag52x" style="width:86px;height:38px;border:1px solid rgba(255,255,255,.16);border-radius:11px;background:transparent;color:#f4f4f8;font:700 12.5px system-ui;cursor:pointer">Закрити</button></div>' +
+      '</div>';
+    document.body.appendChild(w);
+    w.querySelector('#fhDiag52x').onclick = function () { w.classList.add('hidden'); };
+    w.querySelector('#fhDiag52cp').onclick = function () {
+      let txt = 'FluxHelper ' + (typeof APP_VER !== 'undefined' ? APP_VER : '') + ' diag ' + (lastId || '') + '\n';
+      for (let i = 0; i < ev.length; i++) txt += fmt(ev[i][0]) + ' ' + (ev[i][1] || '') + (ev[i][2] ? ' | ' + ev[i][2] : '') + '\n';
+      let ok = false;
+      try { navigator.clipboard.writeText(txt); ok = true; } catch (eC) {}
+      if (!ok) try {
+        const ta = document.createElement('textarea'); ta.value = txt;
+        ta.style.cssText = 'position:fixed;left:-9px;top:-9px;opacity:0'; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy'); ta.remove(); ok = true;
+      } catch (eC2) {}
+      try { if (typeof fhDiagFlush === 'function') fhDiagFlush('panel'); } catch (eF) {}
+      try { if (typeof toast === 'function') toast(ok ? 'Звіт скопійовано — надішли адміну' : 'Не вдалося скопіювати'); } catch (eT) {}
+    };
+  } catch (eP) {}
+}
+(function fhDiagBind52() {
+  let taps52 = 0, tapT52 = 0;
+  const bump52 = function (ev) {
+    const now = Date.now();
+    if (now - tapT52 > 900) taps52 = 0;
+    tapT52 = now;
+    if (++taps52 >= 3) { taps52 = 0; try { fhDiagPanel(); } catch (e) {} }
+  };
+  const bind52 = function () {
+    try { const lg = document.getElementById('agLogo'); if (lg && !lg.__fhDiag52) { lg.__fhDiag52 = 1; lg.addEventListener('click', bump52); } } catch (eB1) {}
+  };
+  /* 3.5.52: auto-открытие ?diag=1 — сразу, без зависимости от readyState */
+  try {
+    if ((String(location.search || '') + String(location.hash || '')).indexOf('diag=1') !== -1) {
+      setTimeout(function () { try { fhDiagPanel(); } catch (e) {} }, 1400);
+    }
+  } catch (eB2) {}
+  bind52();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind52);
+  window.addEventListener('load', bind52);
+})();
+
 window.__fh = {
   cfqCb: function (id, status, json) { __fhCfqResult(id, status, json); },
   authOk: function (u) {
     agState = '';
+    try { fhLog('aok', u && u.sub ? String(u.sub).slice(0, 8) : ''); } catch (eL52) {}
+    try { chipOkTick(u); } catch (eC52) {}
     if (u && u.sub) authAccept(u);
   },
   authErr: function (m) {
+    const m52 = String(m || '');
+    try { fhLog('aerr', m52.slice(0, 60)); } catch (eL52b) {}
+    /* 3.5.52: СПАСІННЯ ВХОДУ НА ТЕЛЕФОНІ. Нативний обмін токена може бути
+       відхилений сервером (обмеження API-ключа Google — 403 без referer).
+       Якщо це НЕ скасування юзером — миттєво відкриваємо браузерний вхід
+       з ТИМ САМИМ state: auth.html завершує обмін (реферер сайту дозволено),
+       пише update/auth_cb/<st>, активний authPollDb забирає профіль. */
+    if (ANDROID && !window.FH_WEB && agState && m52.indexOf('скасовано') === -1) {
+      try {
+        if (typeof AndroidHost.open === 'function') {
+          const st52 = agState;
+          if (window.__fhRescued52 !== st52) {
+            window.__fhRescued52 = st52;
+            const h52 = String(AG_HINT52 || '');
+            fhLog('rescue_aerr');
+            AndroidHost.open('https://fluxhelper.pages.dev/auth.html#s=' + encodeURIComponent(st52) +
+              '&oneclick=1' + (h52 ? '&login_hint=' + encodeURIComponent(h52) : ''));
+            setAgStat('<span class="spin"></span>Завершуємо вхід у браузері…');
+            return;   /* agState НЕ чіпаємо — poll триває */
+          }
+        }
+      } catch (eR52) {}
+    }
     agState = '';
     try { if (typeof window.__fhAgSpin47 === 'function') window.__fhAgSpin47(); } catch (eSE47) {}
     const gb47 = byId('agGo'); if (gb47) gb47.disabled = false;
-    setAgStat(String(m || 'Не вдалося підтвердити вхід'), 'err');
+    setAgStat(m52 || 'Не вдалося підтвердити вхід', 'err');
   },
   notifFired: function (name, t, delta) {
     LAST_NOTIF = { name: name, t: t, delta: delta };

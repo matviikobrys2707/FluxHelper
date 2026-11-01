@@ -475,17 +475,32 @@ h2 {
   }
 
   function fbRegister(accessTok) {
+    /* 3.5.52: JWT -> id_token=, access-токен -> access_token=; ЗАВЖДИ
+       &providerId=google.com; якщо identitytoolkit відмовила (обмеження
+       API-ключа) — фолбек FluxHelper Backend (Firebase Admin SDK). */
     return new Promise(function (res) {
+      var t = String(accessTok || '');
+      var isJwt = t.split('.').length === 3 && t.length > 100;
+      var pb = (isJwt ? ('id_token=' + encodeURIComponent(t)) : ('access_token=' + encodeURIComponent(t))) + '&providerId=google.com';
+      var done52 = false;
+      var fin52 = function (v) { if (!done52) { done52 = true; res(v); } };
       try {
-        
-
         fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=' + encodeURIComponent(FB_KEY), {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ postBody: 'id_token=' + encodeURIComponent(accessTok) + '&providerId=google.com', requestUri: 'http://localhost', returnSecureToken: true })
-        }).then(function (r) { return r.json(); }).then(function (j) {
-          res((j && j.localId) ? { localId: String(j.localId), resp: j } : null);
-        }).catch(function () { res(null); });
-      } catch (e) { res(null); }
+          body: JSON.stringify({ postBody: pb, requestUri: 'http://localhost', returnSecureToken: true })
+        }).then(function (r) { return r.json(); }).catch(function () { return null; }).then(function (j) {
+          if (j && j.localId) { fin52({ localId: String(j.localId), resp: j }); return; }
+          try {
+            fetch('https://fluxhelper-backend.onrender.com/api/auth/google', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ token: t })
+            }).then(function (r) { return r.json(); }).catch(function () { return null; }).then(function (j2) {
+              fin52((j2 && j2.localId) ? { localId: String(j2.localId), resp: j2 } : null);
+            });
+          } catch (e2) { fin52(null); }
+        });
+      } catch (e) { fin52(null); }
+      setTimeout(function () { fin52(null); }, 25000);
     });
   }
   
