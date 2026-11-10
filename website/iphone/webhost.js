@@ -33,7 +33,7 @@
 
 (function () {
 'use strict';
-var VER = '3.5.53';
+var VER = '3.5.55';
 var BACKEND = 'https://fluxhelper-backend.onrender.com';
 var ORIGIN = 'https://fluxhelper.pages.dev';
 var DB_URL = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app';
@@ -708,12 +708,12 @@ function webLogin(st) {
     st = String(st || '');
     if (!st) { agErr('Не вдалося почати вхід. Спробуй ще раз.'); return; }
 
-    // CSRF: generate and store state parameter
+    // CSRF: generate and store state parameter (30 min TTL for Android compatibility)
     try {
       var stateBytes = new Uint8Array(32);
       crypto.getRandomValues(stateBytes);
       var stateStr = Array.from(stateBytes, function(b) { return b.toString(16).padStart(2, '0'); }).join('');
-      sessionStorage.setItem('fh_auth_state', JSON.stringify({ state: stateStr, exp: Date.now() + 10 * 60 * 1000 }));
+      sessionStorage.setItem('fh_auth_state', JSON.stringify({ state: stateStr, exp: Date.now() + 30 * 60 * 1000 }));
       st = stateStr;
     } catch (eState) { return; }
 
