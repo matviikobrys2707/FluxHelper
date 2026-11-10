@@ -499,6 +499,15 @@ h2 {
       document.getElementById('doneSub').innerHTML =
         'Вітаємо, <b>' + String(prof.name).replace(/[<>&]/g, '') + '</b>!<br>Поверніться у FluxHelper — акаунт уже підтверджено.<br>Цю вкладку браузера можна закрити.';
     }
+    /* 3.5.56: авто-повернення в застосунок (лінія іншого ІІ) — ТІЛЬКИ Android:
+       fluxhelper:// ловить intent-filter APK. Старі APK URL проковтують
+       (handleAuthUri: ?d= не збігається) — безпечно. На ПК редирект лишив би
+       сторінку помилки невідомого протоколу — тому гейт за User-Agent. */
+    setTimeout(function () {
+      if (/Android/i.test(navigator.userAgent)) {
+        try { location.href = 'fluxhelper://auth?done=1'; } catch (e) {}
+      }
+    }, 500);
   }
 
   function fbRegister(accessTok) {

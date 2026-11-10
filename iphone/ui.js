@@ -7073,7 +7073,10 @@ function fhDiagPanel() {
 window.__fh = {
   cfqCb: function (id, status, json) { __fhCfqResult(id, status, json); },
   authOk: function (u) {
-    agState = '';
+    /* 3.5.56: agState чистимо ЛИШЕ коли прийшов реальний профіль.
+       Пінг {done:true} (deep link fluxhelper://auth?done=1) НЕ повинен
+       гасити authPollDb — профіль може ще летіти з auth_cb. */
+    if (u && u.sub) { agState = ''; }
     try { fhLog('aok', u && u.sub ? String(u.sub).slice(0, 8) : ''); } catch (eL52) {}
     try { chipOkTick(u); } catch (eC52) {}
     if (u && u.sub) authAccept(u);
