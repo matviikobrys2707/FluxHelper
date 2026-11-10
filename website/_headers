@@ -1,0 +1,65 @@
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  X-XSS-Protection: 1; mode=block
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()
+  Content-Security-Policy: default-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://apis.google.com; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self' https://fluxhelper.pages.dev https://fluxhelper-backend.onrender.com https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://openidconnect.googleapis.com https://accounts.google.com; frame-src https://accounts.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+/auth.html
+  Cache-Control: public, max-age=0, must-revalidate
+/fbauth.html
+  Cache-Control: public, max-age=0, must-revalidate
+/FluxHelper.exe
+  Cache-Control: public, max-age=0, must-revalidate
+/FluxHelper.apk
+  Cache-Control: public, max-age=0, must-revalidate
+/manifest.json
+  Cache-Control: public, max-age=0, must-revalidate
+/icon-192.png
+  Cache-Control: public, max-age=604800
+/icon-512.png
+  Cache-Control: public, max-age=604800
+/favicon.ico
+  Cache-Control: public, max-age=604800
+/favicon.svg
+  Cache-Control: public, max-age=604800
+/favicon-32.png
+  Cache-Control: public, max-age=604800
+/apple-touch-icon.png
+  Cache-Control: public, max-age=604800
+/main
+  Cache-Control: public, max-age=0, must-revalidate
+/main/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+# 3.5.45: HTML версій — ЗАВЖДИ свіжий (no wildcard: Pages СКЛЕЮЄ заголовки
+# з правилів, тож /iphone/* no-cache нейтралізував би кеш ассетів нижче)
+/iphone/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+/iphone/manifest.webmanifest
+  Cache-Control: public, max-age=0, must-revalidate
+/mac/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# 3.5.45: ревізовані ассети (?v=3545) кешуються — повторні відкриття сайту
+# не качають ~660KB css/js заново (просив власник: «сайт загружается очень
+# долго»). При зміні ui.js/ui.css/webhost.js/logo.png ПІДВИЩУЙ ?v= у
+# main/index.html — нова версия приїде миттєво, без очікування кеша.
+/iphone/ui.css
+  Cache-Control: public, max-age=86400
+/iphone/ui.js
+  Cache-Control: public, max-age=86400
+/iphone/webhost.js
+  Cache-Control: public, max-age=86400
+/iphone/logo.png
+  Cache-Control: public, max-age=604800
+/mac/ui.css
+  Cache-Control: public, max-age=86400
+/mac/ui.js
+  Cache-Control: public, max-age=86400
+/mac/webhost.js
+  Cache-Control: public, max-age=86400
+/mac/logo.png
+  Cache-Control: public, max-age=604800

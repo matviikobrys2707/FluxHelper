@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FluxHelper — Авторизація</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#050508">
+<link rel="icon" type="image/svg+xml" href="favicon.svg?v=290">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=290">
+<link rel="shortcut icon" href="favicon.ico?v=290">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=290">
+<link rel="manifest" href="manifest.json">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+  font-family: 'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -webkit-user-select: none;
+  user-select: none;
+  background:
+    radial-gradient(540px 360px at 14% -10%, rgba(124,58,237,.17), transparent 68%),
+    radial-gradient(580px 400px at 88% 114%, rgba(79,70,229,.14), transparent 66%),
+    #050508;
+  color: #f4f4f8;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 30px 20px;
+}
+
+
+.gate-card {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 10px 0;
+  animation: agFade .45s ease both;
+}
+
+@keyframes agFade { from { opacity: 0; } to { opacity: 1; } }
+
+.ag-glow {
+  position: absolute;
+  top: calc(50% - 240px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 320px;
+  height: 180px;
+  background: radial-gradient(closest-side, rgba(139,92,246,.35), transparent);
+  pointer-events: none;
+  animation: agGlow 5.5s ease-in-out infinite alternate;
+}
+@keyframes agGlow {
+  from { opacity: .5; transform: translateX(-50%) scale(1); }
+  to { opacity: 1; transform: translateX(-50%) scale(1.2); }
+}
+
+@keyframes agIn {
+  from { opacity: 0; transform: translateY(16px) scale(.97); filter: blur(5px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+
+.us-logo {
+  position: relative;
+  z-index: 1;
+  animation: agIn .65s cubic-bezier(.16,1,.3,1) both;
+}
+.us-logo img {
+  width: 84px;
+  height: 84px;
+  border-radius: 20px;
+  display: block;
+  margin: 0 auto 10px;
+  box-shadow: 0 18px 44px rgba(0,0,0,.5), 0 0 0 1px rgba(148,163,184,.14) inset;
+  filter: drop-shadow(0 10px 26px rgba(99,102,241,.45));
+}
+
+.us-chip {
+  display: inline-block;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: #c4b5fd;
+  background: rgba(139,92,246,.16);
+  border: 1px solid rgba(139,92,246,.35);
+  border-radius: 99px;
+  padding: 3px 10px;
+  margin-bottom: 5px;
+  animation: agIn .65s cubic-bezier(.16,1,.3,1) .09s both;
+}
+
+h2 {
+  font-size: 20px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 12px 0 7px;
+  letter-spacing: .2px;
+  text-align: center;
+  animation: agIn .65s cubic-bezier(.16,1,.3,1) .17s both;
+}
+
+.ag-sub {
+  font-size: 12.5px;
+  color: #9aa0b4;
+  line-height: 1.55;
+  margin: 0 6px 16px;
+  max-width: 320px;
+  text-align: center;
+  animation: agIn .65s cubic-bezier(.16,1,.3,1) .25s both;
+}
+
+.ag-mini {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: 0 0 20px;
+  flex-wrap: wrap;
+  animation: agIn .65s cubic-bezier(.16,1,.3,1) .35s both;
+}
+.ag-mini span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #a7abc2;
+  background: rgba(148,163,184,.07);
+  border: 1px solid rgba(148,163,184,.13);
+  border-radius: 99px;
+  padding: 4.5px 10px;
+}
+.ag-mini span svg { opacity: .8; flex: none; }
+
+
+.who {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  margin: 0 auto 16px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  text-align: left;
+  max-width: 300px;
+  width: 100%;
+}
+.who.on { display: flex; }
+.who .av {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 13px;
+  color: #fff;
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+}
+.who .tt { min-width: 0; flex: 1; }
+.who .tt b { display: block; font-size: 12.5px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.who .tt span { display: block; font-size: 10.5px; color: #8b8fa3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+
+.ag-go {
+  width: 100%;
+  max-width: 300px;
+  justify-content: center;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 46px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .1px;
+  background: #ffffff;
+  box-shadow: 0 10px 26px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.25) inset;
+  border: 0;
+  color: #1f2937;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform .12s ease, box-shadow .2s ease;
+  animation: agIn .65s cubic-bezier(.16,1,.3,1) .42s both;
+}
+.ag-go:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 32px rgba(0,0,0,.5), 0 1px 0 rgba(255,255,255,.25) inset;
+}
+.ag-go:active { transform: scale(.97); }
+.ag-go:disabled { opacity: .62; cursor: default; transform: none; filter: none; }
+.ag-go svg { flex: none; }
+
+.ag-stat {
+  min-height: 18px;
+  font-size: 11.5px;
+  color: #9aa0b4;
+  margin-top: 14px;
+  line-height: 1.45;
+  text-align: center;
+  animation: agIn .65s cubic-bezier(.16,1,.3,1) .52s both;
+}
+.ag-stat.err { color: #fda4af; }
+
+.spin {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255,255,255,.25);
+  border-top-color: #8b5cf6;
+  border-radius: 50%;
+  vertical-align: -2px;
+  margin-right: 6px;
+  animation: fhsp .7s linear infinite;
+}
+@keyframes fhsp { to { transform: rotate(360deg); } }
+
+
+.done-box {
+  animation: agIn .55s cubic-bezier(.16,1,.3,1) both;
+}
+.done-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  margin: 0 auto 16px;
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  color: #4ade80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12px 30px rgba(34, 197, 94, 0.25);
+}
+.done-icon svg {
+  width: 36px;
+  height: 36px;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.code-box{display:none}
+</style>
+</head>
+<body>
+
+<div class="gate-card">
+  <div class="ag-glow"></div>
+
+  
+  <div id="stForm" style="width:100%;display:flex;flex-direction:column;align-items:center;">
+    <div class="us-logo">
+      <img src="icon-192.png" alt="FluxHelper" onerror="this.src='favicon-32.png'">
+    </div>
+    <div class="us-chip">Синхронізація розкладу</div>
+    <h2>Ввійдіть у FluxHelper</h2>
+    <p class="ag-sub">Увійдіть з акаунтом Google — єдиним, через що синхронізується розклад на всіх ваших пристроях.</p>
+
+    <div class="who" id="who">
+      <div class="av" id="whoAv">G</div>
+      <div class="tt">
+        <b id="whoName">акаунт Google</b>
+        <span id="whoMail"></span>
+      </div>
+    </div>
+
+    <div class="ag-mini">
+      <span>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9"/><polyline points="21 3 21 9 15 9"/></svg>
+        Автосинхронізація
+      </span>
+      <span>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Безпека
+      </span>
+      <span>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        Доступ до розкладу
+      </span>
+    </div>
+
+    <button class="ag-go" id="go" type="button">
+      <svg width="17" height="17" viewBox="0 0 48 48">
+        <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/>
+        <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
+        <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
+        <path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.1 5.7l6.2 5.2C40.9 35.6 44 30.3 44 24c0-1.3-.1-2.6-.4-3.9z"/>
+      </svg>
+      <span id="goT">Увійти через Google</span>
+    </button>
+
+    <div class="ag-stat" id="stat"></div>
+  </div>
+
+  
+  <div id="stDone" style="display:none;width:100%" class="done-box">
+    <div class="done-icon">
+      <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <h2>Все готово!</h2>
+    <p class="ag-sub" id="doneSub">Поверніться у FluxHelper — акаунт уже підтверджено.<br>Цю вкладку браузера можна закрити.</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var h = {}, seg = (location.hash || '').replace(/^#/, '').split('&');
+  for (var i = 0; i < seg.length; ++i) { var kv = seg[i].split('='); if (kv[0]) h[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1] || ''); }
+
+  var GH = h.access_token || h.error ? h : null;
+  var STATE = h.s || (GH ? (h.state || '') : ''), PORT = h.p || '', HINT = h.h || '';
+
+  var FB_KEY = 'AIzaSyCDWpF3QTMEFBN9ravDxH_woKnBpcMRDvI';
+  var GIS_CLIENT = '668834523935-k470ldmdv0r9am0720v6lgaatm6rtuf3.apps.googleusercontent.com';
+
+  // CSRF protection: validate state parameter against stored value
+  function validateState(state) {
+    try {
+      var stored = sessionStorage.getItem('fh_auth_state');
+      if (!stored) return false;
+      var data = JSON.parse(stored);
+      if (Date.now() > data.exp) return false;
+      if (state.length !== data.state.length) return false;
+      var match = true;
+      for (var i = 0; i < state.length; i++) {
+        if (state.charCodeAt(i) !== data.state.charCodeAt(i)) match = false;
+      }
+      return match;
+    } catch (e) { return false; }
+  }
+
+  function clearState() {
+    try { sessionStorage.removeItem('fh_auth_state'); } catch (e) {}
+  }
+
+  var go = document.getElementById('go'), goT = document.getElementById('goT'),
+      stat = document.getElementById('stat');
+
+  function setStat(t, cls) { stat.className = 'ag-stat' + (cls ? ' ' + cls : ''); stat.innerHTML = t || ''; }
+  function busy(on, txt) { go.disabled = !!on; goT.textContent = txt; }
+
+  if (GH) {
+    if (GH.error === 'access_denied') setStat('Вхід скасовано. Поверніться у FluxHelper і натисніть «Увійти через Google» ще раз.', 'err');
+    else if (!GH.access_token) setStat('Google не підтвердив вхід. Поверніться у FluxHelper і спробуйте ще раз.', 'err');
+    else gotToken({ access_token: String(GH.access_token) });
+    return;
+  }
+
+  
+  if (STATE && h.oneclick === '1') {
+    var ru = location.origin + '/auth.html';
+    var gu = 'https://accounts.google.com/o/oauth2/v2/auth?client_id=' + encodeURIComponent(GIS_CLIENT) +
+      '&redirect_uri=' + encodeURIComponent(ru) +
+      '&response_type=token&scope=' + encodeURIComponent('openid email profile') +
+      '&prompt=select_account&state=' + encodeURIComponent(STATE) +
+      (HINT && HINT.indexOf('@') > 0 ? '&login_hint=' + encodeURIComponent(HINT) : '');
+    setStat('<span class="spin"></span>Відкриваю Google…');
+    try { location.replace(gu); } catch (eR) { location.href = gu; }
+    return;
+  }
+
+  
+
+
+
+
+
+
+  if (STATE && PORT) {
+    var HB_URL = 'http://127.0.0.1:' + PORT + '/hb?state=' + encodeURIComponent(STATE);
+    var BYE_URL = 'http://127.0.0.1:' + PORT + '/bye?state=' + encodeURIComponent(STATE);
+    var hbTimer = 0, delivered = false;
+    function hbBeat() {
+      if (delivered) return;
+      try {
+        fetch(HB_URL, { mode: 'cors', cache: 'no-store', keepalive: true })
+          .then(function () { }, function () { });
+      } catch (e) { }
+    }
+    hbBeat();
+    hbTimer = setInterval(hbBeat, 2500);
+    window.addEventListener('pagehide', function () {
+      if (delivered) return;
+      try { navigator.sendBeacon && navigator.sendBeacon(BYE_URL); } catch (e) { }
+      try { fetch(BYE_URL, { mode: 'cors', keepalive: true }).catch(function () { }); } catch (e) { }
+    });
+    
+    window.__fhHbStop = function () {
+      delivered = true;
+      try { clearInterval(hbTimer); } catch (e) { }
+    };
+  }
+
+  if (!STATE) {
+    document.getElementById('stForm').innerHTML =
+      '<div class="us-logo"><img src="icon-192.png" alt="FluxHelper" onerror="this.src=\'favicon-32.png\'"></div>' +
+      '<h2>Посилання неактивне</h2>' +
+      '<p class="ag-sub">Це захищене посилання діє один раз.<br><br>' +
+      'Відкрийте FluxHelper на комп&rsquo;ютері або телефоні та натисніть «Увійти через Google».</p>';
+    return;
+  }
+
+  if (HINT && HINT.indexOf('@') > 0) {
+    var w = document.getElementById('who');
+    document.getElementById('whoMail').textContent = HINT;
+    document.getElementById('whoName').textContent = HINT.split('@')[0];
+    document.getElementById('whoAv').textContent = HINT.charAt(0).toUpperCase();
+    w.classList.add('on');
+    goT.textContent = 'Увійти як ' + HINT.split('@')[0];
+  } else {
+    goT.textContent = 'Увійти через Google';
+  }
+
+  function deliver(prof, ok, fail) {
+    
+
+
+
+    var sent = false, pending = 0, decided = false;
+    try { if (window.__fhHbStop) window.__fhHbStop(); } catch (eHB) { }   
+    function fin(good) { pending--; if (good) sent = true; if (!decided && pending <= 0) { decided = true; (sent ? ok : fail)(); } }
+    function chan(fn) { pending++; try { fn(); } catch (e) { fin(false); } }
+    setTimeout(function () { if (!decided && sent) { decided = true; ok(); } }, 2500);
+    setTimeout(function () { if (!decided) { decided = true; fail(); } }, 6000);
+    if (PORT) {
+      chan(function () {
+        fetch('http://127.0.0.1:' + PORT + '/cb?state=' + encodeURIComponent(STATE) + '&d=' + encodeURIComponent(JSON.stringify(prof)), { mode: 'cors', cache: 'no-store' })
+          .then(function (r) { fin(!!r && r.ok); })
+          .catch(function () { fin(false); });
+      });
+    }
+    
+
+
+
+    /* 3.5.53: D1 — ГОЛОВНИЙ канал (правило власника: база лише Cloudflare).
+       Пишемо auth_cb в D1 через /api/authcb (Pages Function → бекенд → D1).
+       Firebase-запис нижче лишено ЛИШЕ для старих версій застосунків
+       (3.5.52 у полях читає update/auth_cb з RTDB). */
+    chan(function () {
+      var tries53 = 0;
+      var post53 = function () {
+        fetch('/api/authcb', {
+          method: 'POST', cache: 'no-store',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ state: STATE, data: { d: prof, t: Date.now() } })
+        }).then(function (r) {
+          if (r && r.ok) { fin(true); return; }
+          throw new Error('d1');
+        }).catch(function () {
+          if (++tries53 < 2) {
+            /* /api/ нема (Pages Functions не активовано) — бекенд напряму */
+            fetch('https://fluxhelper-backend.onrender.com/api/authcb', {
+              method: 'POST', cache: 'no-store',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ state: STATE, data: { d: prof, t: Date.now() } })
+            }).then(function (r2) { fin(!!r2 && r2.ok); }).catch(function () { fin(false); });
+          } else fin(false);
+        });
+      };
+      post53();
+    });
+    chan(function () {
+      var putUrl = 'https://fluxhelper-1-default-rtdb.europe-west1.firebasedatabase.app/update/auth_cb/' + encodeURIComponent(STATE) + '.json';
+      var tries = 0;
+      var tryPut = function () {
+        fetch(putUrl, {
+          method: 'PUT', cache: 'no-store',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ d: prof, t: Date.now() })
+        }).then(function (r) {
+          if (r && r.ok) { fin(true); return; }
+          throw new Error('put');
+        }).catch(function () {
+          if (++tries < 3) setTimeout(tryPut, 700); else fin(false);
+        });
+      };
+      tryPut();
+    });
+  }
+
+  function finishOk(prof) {
+    busy(false, 'Готово');
+    document.getElementById('stForm').style.display = 'none';
+    var d = document.getElementById('stDone'); d.style.display = 'block';
+    if (prof && prof.name) {
+      document.getElementById('doneSub').innerHTML =
+        'Вітаємо, <b>' + String(prof.name).replace(/[<>&]/g, '') + '</b>!<br>Поверніться у FluxHelper — акаунт уже підтверджено.<br>Цю вкладку браузера можна закрити.';
+    }
+  }
+
+  function fbRegister(accessTok) {
+    /* 3.5.52: JWT -> id_token=, access-токен -> access_token=; ЗАВЖДИ
+       &providerId=google.com; якщо identitytoolkit відмовила (обмеження
+       API-ключа) — фолбек FluxHelper Backend (Firebase Admin SDK). */
+    return new Promise(function (res) {
+      var t = String(accessTok || '');
+      var isJwt = t.split('.').length === 3 && t.length > 100;
+      var pb = (isJwt ? ('id_token=' + encodeURIComponent(t)) : ('access_token=' + encodeURIComponent(t))) + '&providerId=google.com';
+      var done52 = false;
+      var fin52 = function (v) { if (!done52) { done52 = true; res(v); } };
+      try {
+        fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=' + encodeURIComponent(FB_KEY), {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ postBody: pb, requestUri: 'http://localhost', returnSecureToken: true })
+        }).then(function (r) { return r.json(); }).catch(function () { return null; }).then(function (j) {
+          if (j && j.localId) { fin52({ localId: String(j.localId), resp: j }); return; }
+          try {
+            fetch('https://fluxhelper-backend.onrender.com/api/auth/google', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ token: t })
+            }).then(function (r) { return r.json(); }).catch(function () { return null; }).then(function (j2) {
+              fin52((j2 && j2.localId) ? { localId: String(j2.localId), resp: j2 } : null);
+            });
+          } catch (e2) { fin52(null); }
+        });
+      } catch (e) { fin52(null); }
+      setTimeout(function () { fin52(null); }, 25000);
+    });
+  }
+  
+
+  function saveWebSession(fr, prof) {
+    try {
+      if (!fr || !fr.resp || !fr.resp.idToken) return;
+      var exp = parseInt(fr.resp.expiresIn, 10) || 3600;
+      localStorage.setItem('fh_web_session', JSON.stringify({
+        tok: String(fr.resp.idToken),
+        rtok: String(fr.resp.refreshToken || ''),
+        tokT: Date.now() + exp * 1000 - 120000,
+        sub: String((prof && prof.sub) || ''),
+        email: String((prof && prof.email) || '')
+      }));
+    } catch (e) { }
+  }
+
+  function gotToken(resp) {
+    // CSRF: validate state parameter
+    if (STATE && !validateState(STATE)) {
+      busy(false, 'Спробувати ще раз');
+      setStat('Недійсний стан авторизації. Спробуйте ще раз.', 'err');
+      clearState();
+      return;
+    }
+    if (!resp || !resp.access_token) {
+      busy(false, 'Спробувати ще раз');
+      setStat(resp && resp.error === 'access_denied' ? 'Вхід скасовано. Спробуйте ще раз.' : 'Google не підтвердив вхід. Спробуйте ще раз.', 'err');
+      return;
+    }
+    // Clear state after successful validation
+    clearState();
+    setStat('<span class="spin"></span>Передаємо профіль у програму…');
+    Promise.all([
+      fbRegister(resp.access_token),
+      fetch('https://openidconnect.googleapis.com/v1/userinfo', { headers: { Authorization: 'Bearer ' + resp.access_token } })
+        .then(function (r) { return r.ok ? r.json() : null; })
+    ]).then(function (rr) {
+      var fr = rr[0];
+      var fid = fr ? fr.localId : null;
+      var u = rr[1];
+      if (!u || !u.sub) throw new Error('profile');
+      var prof = { sub: String(u.sub), name: String(u.name || ''), email: String(u.email || ''), picture: String(u.picture || ''), fid: fid || '' };
+      saveWebSession(fr, prof);
+      
+
+
+      if (fr && fr.resp && fr.resp.idToken) {
+        var exp17 = parseInt(fr.resp.expiresIn, 10) || 3600;
+        prof.tok = String(fr.resp.idToken);
+        prof.rtok = String(fr.resp.refreshToken || '');
+        prof.tokT = Date.now() + exp17 * 1000 - 120000;
+      }
+      deliver(
+        prof,
+        finishOk,
+        function () {
+          busy(false, 'Спробувати ще раз');
+          setStat('Не вдалося передати профіль у програму. Перевірте, чи програма відкрита, і спробуйте ще раз.', 'err');
+        }
+      );
+    }).catch(function () {
+      busy(false, 'Спробувати ще раз');
+      setStat('Не вдалося прочитати профіль Google. Спробуйте ще раз.', 'err');
+    });
+  }
+
+  var tc = null;
+  go.onclick = function () {
+    if (!window.google || !google.accounts || !google.accounts.oauth2) {
+      setStat('<span class="spin"></span>Завантажуємо Google…');
+      setTimeout(function () { go.onclick(); }, 600);
+      return;
+    }
+    busy(true, 'Зачекайте…'); setStat('');
+    try {
+      if (!tc) {
+        tc = google.accounts.oauth2.initTokenClient({
+          client_id: GIS_CLIENT,
+          scope: 'openid email profile',
+          prompt: '',
+          callback: gotToken,
+          error_callback: function (err) {
+            busy(false, 'Спробувати ще раз');
+            setStat(err && err.type === 'popup_failed_to_open'
+              ? 'Браузер заблокував вікно Google — дозвольте спливні вікна для цього сайту і спробуйте ще раз.'
+              : 'Google не вдалося відкрити вхід. Спробуйте ще раз.', 'err');
+          }
+        });
+      }
+      tc.requestAccessToken({ hint: (HINT && HINT.indexOf('@') > 0) ? HINT : undefined });
+    } catch (e) {
+      busy(false, 'Спробувати ще раз');
+      setStat('Не вдалося відкрити вікно Google. Дозвольте спливні вікна і спробуйте ще раз.', 'err');
+    }
+  };
+
+  setStat('<span class="spin"></span>Підготовка Google-входу…');
+  var s = document.createElement('script');
+  s.src = 'https://accounts.google.com/gsi/client';
+  s.async = true; s.defer = true;
+  s.onload = function () { setStat(''); };
+  s.onerror = function () { setStat('Не вдалося завантажити Google Sign-In. Перевірте інтернет.', 'err'); };
+  document.head.appendChild(s);
+})();
+</script>
+</body>
+</html>
