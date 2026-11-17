@@ -3775,77 +3775,57 @@ function authStart(hintEmail) {
   window.__fhAgTs = Date.now();
   try { localStorage.setItem('fh_auth_state', st); } catch (e) {}
   AG_HINT52 = String(hintEmail || '');
-  window.__fhRescued52 = null;
   if (ANDROID && !window.FH_WEB) {
-    
-
-
-
-
-
-
-    const agBtn47 = byId('agGo');
-    const spinOn = function () {
-      try { if (agBtn47) agBtn47.disabled = true; } catch (eD47) {}
-      setAgStat('<span class="spin"></span>Заходимо в акаунт…');
+    /* 3.5.59: НОВИЙ ВХІД — системний браузер як єдиний шлях. Натива
+       (AndroidHost.login/loginLast) відкриває auth.html#s=<st>&mobile=1
+       у браузері; профіль повертається deep link'ом fluxhelper://auth
+       (миттєво) або через authPollDb (poll auth_cb у D1, резерв).
+       Нативного Credential Manager більше немає — сам він і був причиною
+       зависання «Заходимо в акаунт…» у 3.5.52–3.5.58. */
+    const agBtn59 = byId('agGo');
+    const spinOn59 = function () {
+      try { if (agBtn59) agBtn59.disabled = true; } catch (eD59) {}
+      setAgStat('<span class="spin"></span>Відкриваю Google…');
     };
-    const spinOff = function () {
-      try { if (agBtn47) agBtn47.disabled = false; } catch (eE47) {}
+    const spinOff59 = function () {
+      try { if (agBtn59) agBtn59.disabled = false; } catch (eE59) {}
     };
     try {
-      window.__fhAgSpin47 = spinOff;
-      spinOn();
+      window.__fhAgSpin47 = spinOff59;
+      spinOn59();
+      /* канал завершення №1 (резерв): poll auth_cb у D1 — живий, поки
+         застосунок відкритий, завершує вхід сам, коли браузер допише профіль */
+      try { authPollDb(st); } catch (eP59) {}
+      /* головний шлях: системний браузер (Custom Tab / дефолтний браузер) */
       if (hintEmail && typeof AndroidHost.loginLast === 'function') {
         AndroidHost.loginLast(st, String(hintEmail));
       } else {
         AndroidHost.login(st);
       }
-      /* 3.5.52: ЧИТАННЯ auth_cb ПОВЕРНУЛИ. Натива при збої CM відкриває
-         браузер (auth.html#s=<st>), той пише профіль в update/auth_cb/<st>.
-         У 3.5.42-3.5.51 цей канал НІХТО не читав — браузерний вхід на
-         телефоні був глухим кутом. Тепер poll забирає профіль. */
-      try { authPollDb(st); } catch (eP52) {}
-      /* 3.5.52: пізнє спасіння — якщо натива мовчить 20с, відкриваємо
-         браузерний вхід САМІ (той самий state, той самий poll) */
-      (function (stR52) {
-        setTimeout(function () {
-          if (agState !== stR52 || ACC.user) return;
-          if (window.__fhRescued52 === stR52) return;
-          window.__fhRescued52 = stR52;
-          try {
-            fhLog('rescue20');
-            if (typeof AndroidHost.open === 'function') {
-              const h52 = String(AG_HINT52 || '');
-              AndroidHost.open('https://fluxhelper.pages.dev/auth.html#s=' + encodeURIComponent(stR52) +
-                '&oneclick=1' + (h52 ? '&login_hint=' + encodeURIComponent(h52) : ''));
-              setAgStat('<span class="spin"></span>Завершуємо вхід у браузері…');
+      /* м'який сторож: 100с — прибрати спінер і дозволити повторний тап;
+         poll при цьому НЕ гаситься (агState живий до завершення/таймауту) */
+      (function (stW59) {
+        let n59 = 0;
+        const iv59 = setInterval(function () {
+          n59 += 5;
+          if (agState !== stW59 || ACC.user) { clearInterval(iv59); return; }
+          if (n59 === 100) {
+            spinOff59();
+            try { setAgStat('Завершуй вхід у Google у браузері — застосунок увійде сам, коли все буде готово. Якщо браузер закрився — натисни ще раз.'); } catch (eS59) {}
+          }
+          if (n59 >= 660) {
+            clearInterval(iv59);
+            if (agState === stW59 && !ACC.user) {
+              spinOff59();
+              try { setAgStat('Час входу вийшов. Натисни «Увійти через Google» ще раз.', 'err'); } catch (eT59) {}
             }
-          } catch (eR52b) {}
-        }, 20000);
-      })(st);
-      /* 3.5.52: сторож JS — 30с (або 100с, якщо триває браузерний вхід).
-         Ніколи не висить назавжди; за фін. межею рахує невдалу спробу
-         плитки (2 невдачі = плитку знято) */
-      (function (stW51) {
-        let n52 = 0;
-        const iv52 = setInterval(function () {
-          n52 += 5;
-          if (agState !== stW51 || ACC.user) { clearInterval(iv52); return; }
-          const lim52 = (window.__fhRescued52 === stW51) ? 100 : 30;
-          if (n52 < lim52) return;
-          clearInterval(iv52);
-          spinOff();
-          agState = '';
-          try { localStorage.removeItem('fh_auth_state'); } catch (eLR51) {}
-          try { fhLog('guard', String(lim52)); } catch (eLG52) {}
-          try { chipFailTick(hintEmail); } catch (eCF52) {}
-          try { setAgStat('Google не відповів вчасно — натисни «Увійти через Google» ще раз.', 'err'); } catch (eS51) {}
+          }
         }, 5000);
       })(st);
-    } catch (eNat47) {
-      spinOff();
+    } catch (eNat59) {
+      spinOff59();
       agState = '';
-      try { localStorage.removeItem('fh_auth_state'); } catch (eLR47) {}
+      try { localStorage.removeItem('fh_auth_state'); } catch (eLR59) {}
       setAgStat('Не вдалося відкрити вхід. Спробуй ще раз.', 'err');
     }
     return;
@@ -7089,36 +7069,31 @@ window.__fh = {
     if (u && u.sub) authAccept(u);
   },
   authErr: function (m) {
-    const m52 = String(m || '');
-    try { fhLog('aerr', m52.slice(0, 60)); } catch (eL52b) {}
-    /* 3.5.53: плитка недавніх акаунтів — явна помилка нативного входу = спроба
-       без результату. 2 таких = плитку прибрано (chipFailTick). */
-    try { if (ANDROID && !window.FH_WEB && AG_HINT52) chipFailTick(AG_HINT52); } catch (eCF53) {}
-    /* 3.5.52: СПАСІННЯ ВХОДУ НА ТЕЛЕФОНІ. Нативний обмін токена може бути
-       відхилений сервером (обмеження API-ключа Google — 403 без referer).
-       Якщо це НЕ скасування юзером — миттєво відкриваємо браузерний вхід
-       з ТИМ САМИМ state: auth.html завершує обмін (реферер сайту дозволено),
-       пише auth_cb (3.5.53 — у Cloudflare D1), активний authPollDb забирає профіль. */
-    if (ANDROID && !window.FH_WEB && agState && m52.indexOf('скасовано') === -1) {
-      try {
-        if (typeof AndroidHost.open === 'function') {
-          const st52 = agState;
-          if (window.__fhRescued52 !== st52) {
-            window.__fhRescued52 = st52;
-            const h52 = String(AG_HINT52 || '');
-            fhLog('rescue_aerr');
-            AndroidHost.open('https://fluxhelper.pages.dev/auth.html#s=' + encodeURIComponent(st52) +
-              '&oneclick=1' + (h52 ? '&login_hint=' + encodeURIComponent(h52) : ''));
-            setAgStat('<span class="spin"></span>Завершуємо вхід у браузері…');
-            return;   /* agState НЕ чіпаємо — poll триває */
-          }
-        }
-      } catch (eR52) {}
-    }
+    /* 3.5.59: натива більше не обмінює токени, rescue-гілки не потрібні.
+       Явна помилка (наприклад, браузер не відкрився) = чистий стан + повідомлення. */
+    const m59 = String(m || '');
+    try { fhLog('aerr', m59.slice(0, 60)); } catch (eL59) {}
+    try { if (ANDROID && !window.FH_WEB && AG_HINT52) chipFailTick(AG_HINT52); } catch (eC59) {}
     agState = '';
-    try { if (typeof window.__fhAgSpin47 === 'function') window.__fhAgSpin47(); } catch (eSE47) {}
-    const gb47 = byId('agGo'); if (gb47) gb47.disabled = false;
-    setAgStat(m52 || 'Не вдалося підтвердити вхід', 'err');
+    try { if (typeof window.__fhAgSpin47 === 'function') window.__fhAgSpin47(); } catch (eSE59) {}
+    const gb59 = byId('agGo'); if (gb59) gb59.disabled = false;
+    setAgStat(m59 || 'Не вдалося підтвердити вхід', 'err');
+  },
+  authOkStr: function (s) {
+    /* 3.5.59: профіль із deep link fluxhelper://auth?d=<json> (натива → jsCall).
+       Нормалізуємо до того самого вигляду, що й poll-канал (d1Take). */
+    try {
+      const u59 = JSON.parse(String(s || ''));
+      if (u59 && u59.sub) {
+        window.__fh.authOk({
+          sub: String(u59.sub),
+          name: String(u59.name || 'Користувач'),
+          email: String(u59.email || ''),
+          pic: String(u59.picture || u59.pic || ''),
+          fid: u59.fid ? String(u59.fid) : undefined
+        });
+      }
+    } catch (e59) {}
   },
   notifFired: function (name, t, delta) {
     LAST_NOTIF = { name: name, t: t, delta: delta };

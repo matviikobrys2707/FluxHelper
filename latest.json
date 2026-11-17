@@ -1,17 +1,17 @@
 {
-  "latest": "3.5.58",
+  "latest": "3.5.59",
   "notes": [
     "✦ Цей файл — дзеркало бета-каналу (versions/beta/latest.json); кореневі FluxHelper.apk / FluxHelper.exe — ЗАВЖДИ остання бета",
-    "✦ 3.5.58: виправлено «вічний вхід» на телефоні після вибору акаунта (таймаут токена, захищений обмін, CM-колбеки на main thread, самозцінення завислого стану в JS)",
-    "✅ Серверна частина жива: Backend /api/auth/google <1с, tokeninfo ОК"
+    "✦ 3.5.59: вхід через Google переписано з нуля — системний браузер як єдиний шлях, нативний CM-ланцюг видалено; APK став у 6 разів меншим",
+    "✅ Ланцюг входу перевірено лайв-тестами 17.11.2026"
   ],
-  "apk_md5": "050f2effe1443120551483d3291d9cfe",
-  "apk_size": 2479969,
-  "exe_md5": "3c00da5841b0bb9c940333e90e2d5472",
-  "exe_sha256": "a9e32822ebd75feb5cc4727accdb4ef5643dc1f1f429120d199aeb430a34256f",
+  "apk_md5": "c8a3a535756fa71cee228eb9e77f2364",
+  "apk_size": 399201,
+  "exe_md5": "40e8a7b9d9f1c900baa04e73d2889211",
+  "exe_sha256": "f1e992ed7aa584c091a8677f30dcf29d1e6d5f72da02fd022c9667f2ff867e9d",
   "exe_size": 1953280,
   "updated_at": "2026-11-17",
   "channel": "beta",
-  "apk_url": "/versions/beta/3.5.58/FluxHelper.apk",
-  "exe_url": "/versions/beta/3.5.58/FluxHelper.exe"
+  "apk_url": "/versions/beta/3.5.59/FluxHelper.apk",
+  "exe_url": "/versions/beta/3.5.59/FluxHelper.exe"
 }

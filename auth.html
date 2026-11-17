@@ -316,7 +316,9 @@ h2 {
       <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
     </div>
     <h2>Все готово!</h2>
-    <p class="ag-sub" id="doneSub">Поверніться у FluxHelper — акаунт уже підтверджено.<br>Цю вкладку браузера можна закрити.</p>
+    <p class="ag-sub" id="doneSub">
+    <button class="ag-go" id="backBtn" type="button" style="display:none;margin-top:14px">Повернутися у FluxHelper</button>
+Поверніться у FluxHelper — акаунт уже підтверджено.<br>Цю вкладку браузера можна закрити.</p>
   </div>
 </div>
 
@@ -337,6 +339,12 @@ h2 {
 
   var GH = h.access_token || h.error ? h : null;
   var STATE = h.s || (GH ? (h.state || '') : ''), PORT = h.p || '', HINT = h.h || '';
+
+  /* 3.5.59: режим МОБІЛЬНОГО входу (deep link назад у застосунок).
+     Прапор переживає OAuth-редирект через sessionStorage (та сама вкладка). */
+  var MOBILE = false;
+  try { MOBILE = sessionStorage.getItem('fh_m') === '1'; } catch (eM59) {}
+  if (h.mobile === '1') { MOBILE = true; try { sessionStorage.setItem('fh_m', '1'); } catch (eM59b) {} }
   
 
   var FB_KEY = 'AIzaSyCDWpF3QTMEFBN9ravDxH_woKnBpcMRDvI';   
@@ -499,15 +507,36 @@ h2 {
       document.getElementById('doneSub').innerHTML =
         'Вітаємо, <b>' + String(prof.name).replace(/[<>&]/g, '') + '</b>!<br>Поверніться у FluxHelper — акаунт уже підтверджено.<br>Цю вкладку браузера можна закрити.';
     }
-    /* 3.5.56: авто-повернення в застосунок (лінія іншого ІІ) — ТІЛЬКИ Android:
-       fluxhelper:// ловить intent-filter APK. Старі APK URL проковтують
-       (handleAuthUri: ?d= не збігається) — безпечно. На ПК редирект лишив би
-       сторінку помилки невідомого протоколу — тому гейт за User-Agent. */
-    setTimeout(function () {
-      if (/Android/i.test(navigator.userAgent)) {
-        try { location.href = 'fluxhelper://auth?done=1'; } catch (e) {}
+    /* 3.5.59: повернення в застосунок.
+       MOBILE (deep link із профілем, головний канал): застосунок отримує
+       профіль одразу (fluxhelper://auth?s=<state>&d=<json>), D1-запис лишається
+       резервом для poll. tok/rtok НЕ передаємо: довжина URL, і застосунку вони
+       не потрібні (fid уже в профілі, синхронізація йде без токена).
+       Без MOBILE — стара поведінка: пінг done=1. */
+    if (MOBILE && prof && prof.sub) {
+      var d59 = {
+        sub: String(prof.sub),
+        name: String(prof.name || ''),
+        email: String(prof.email || ''),
+        picture: String(prof.picture || ''),
+        fid: String(prof.fid || '')
+      };
+      var dl59 = 'fluxhelper://auth?s=' + encodeURIComponent(STATE) +
+        '&d=' + encodeURIComponent(JSON.stringify(d59));
+      var bb = document.getElementById('backBtn');
+      if (bb) {
+        bb.style.display = 'flex';
+        bb.onclick = function () { try { location.href = dl59; } catch (eB59) { } };
       }
-    }, 500);
+      if (/Android/i.test(navigator.userAgent)) {
+        setTimeout(function () { try { location.href = dl59; } catch (eD59) { } }, 400);
+        /* резервний пінг (стара поведінка): прокидає застосунок, якщо перший
+           deep link браузер проковтнув — poll у застосунку донесе профіль із D1 */
+        setTimeout(function () { try { location.href = 'fluxhelper://auth?done=1'; } catch (eP59) { } }, 2400);
+      }
+    } else if (/Android/i.test(navigator.userAgent)) {
+      setTimeout(function () { try { location.href = 'fluxhelper://auth?done=1'; } catch (e59c) { } }, 500);
+    }
   }
 
   function fbRegister(accessTok) {
