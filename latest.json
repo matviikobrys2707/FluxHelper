@@ -1,17 +1,17 @@
 {
-  "latest": "3.5.59",
+  "latest": "3.5.60",
   "notes": [
     "✦ Цей файл — дзеркало бета-каналу (versions/beta/latest.json); кореневі FluxHelper.apk / FluxHelper.exe — ЗАВЖДИ остання бета",
-    "✦ 3.5.59: вхід через Google переписано з нуля — системний браузер як єдиний шлях, нативний CM-ланцюг видалено; APK став у 6 разів меншим",
-    "✅ Ланцюг входу перевірено лайв-тестами 17.11.2026"
+    "✦ 3.5.60: фікс крашу запуску 3.5.59 (NoSuchFieldError credLock); вхід через Google (браузер → deep link) без змін",
+    "⚠️ З 3.5.59 оновлення тільки вручну (краш на старті) — скачайте APK 3.5.60 і встановіть поверх"
   ],
-  "apk_md5": "c8a3a535756fa71cee228eb9e77f2364",
+  "apk_md5": "f57374d0e184bdc6dd38a20448951c48",
   "apk_size": 399201,
-  "exe_md5": "40e8a7b9d9f1c900baa04e73d2889211",
-  "exe_sha256": "f1e992ed7aa584c091a8677f30dcf29d1e6d5f72da02fd022c9667f2ff867e9d",
+  "exe_md5": "02ece6f2e1bf7b69acef78b3a942d126",
+  "exe_sha256": "fca65c5f385b63014b0bc00981ed89087e703a76cd64dc3ccf7127fa2022754f",
   "exe_size": 1953280,
   "updated_at": "2026-11-17",
   "channel": "beta",
-  "apk_url": "/versions/beta/3.5.59/FluxHelper.apk",
-  "exe_url": "/versions/beta/3.5.59/FluxHelper.exe"
+  "apk_url": "/versions/beta/3.5.60/FluxHelper.apk",
+  "exe_url": "/versions/beta/3.5.60/FluxHelper.exe"
 }
