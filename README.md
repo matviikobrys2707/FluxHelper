@@ -3,49 +3,64 @@
 Застосунок розкладу уроків з посиланнями на Zoom, групами, сповіщеннями та синхронізацією.
 Вхід захищає Google.
 
-- **Сайт**: [fluxhelper.pages.dev](https://fluxhelper.pages.dev)
-  - Веб-версія для ВСІХ пристроїв (головна): [fluxhelper.pages.dev/main](https://fluxhelper.pages.dev/main)
-    — сам визначає пристрій: телефон -> мобільна версія, комп'ютер -> десктопна;
-    вкладки в URL англійською (`#schedule`, `#settings`, `#account`, `#admin`)
-  - Версія для iPhone (лише iPhone): [fluxhelper.pages.dev/iphone/](https://fluxhelper.pages.dev/iphone/)
-  - Версія для Mac (лише Mac): [fluxhelper.pages.dev/mac/](https://fluxhelper.pages.dev/mac/)
-- **Windows**: [FluxHelper.exe](https://fluxhelper.pages.dev/FluxHelper.exe)
-- **Android**: [FluxHelper.apk](https://fluxhelper.pages.dev/FluxHelper.apk)
-- **Повний пакет (все в одному)**: [FluxHelper_3.5.56_FULL.zip](FluxHelper_3.5.56_FULL.zip)
-  — готові APK + EXE 3.5.56, джерела сайту 3.5.56 (як задеплоєно на Pages),
-  smali-джерела APK (dex_src) + інструменти збирання, патч-скрипти EXE,
-  changelog і контрольні суми (HASHES.txt) — одним файлом для скачування на ПК.
+**Поточна бета: 3.5.57** (versionCode 30557, 17.11.2026) · офіційний підпис APK/EXE: `6871f0d5`
 
-## Версії сайту (реліз і бета)
+## ⬇️ Де скачати (одинакова скрізь схема)
 
-Сайт існує у ДВОХ версіях, і обидві зберігаються тут, на GitHub:
+**Головне правило: кореневі `FluxHelper.apk` / `FluxHelper.exe` — ЗАВЖДИ остання бета.**
+Кнопки «Завантажити» на сайті ведуть саме на ці файли, тому сайт, GitHub і
+Releases роздають одну й ту саму версію.
 
-| Версія | Де живе | Хто бачить |
+| Що | Посилання |
+|---|---|
+| Android APK (остання бета) | [fluxhelper.pages.dev/FluxHelper.apk](https://fluxhelper.pages.dev/FluxHelper.apk) |
+| Windows EXE (остання бета) | [fluxhelper.pages.dev/FluxHelper.exe](https://fluxhelper.pages.dev/FluxHelper.exe) |
+| Те саме на GitHub (main) | [FluxHelper.apk](FluxHelper.apk) · [FluxHelper.exe](FluxHelper.exe) |
+| Реліз на GitHub (tags+assets) | [github.com/matviikobrys2707/FluxHelper/releases](https://github.com/matviikobrys2707/FluxHelper/releases) |
+| Папка версії в репо | `versions/beta/3.5.57/` — [APK](versions/beta/3.5.57/FluxHelper.apk) · [EXE](versions/beta/3.5.57/FluxHelper.exe) · [changelog](versions/beta/3.5.57/changelog.txt) |
+| Повний пакет (все в одному) | [FluxHelper_3.5.57_FULL.zip](FluxHelper_3.5.57_FULL.zip) — бінарники + джерела сайту + smali-джерела APK + патч-скрипти EXE + HASHES.txt |
+
+Перевірка справжності (3.5.57): APK md5 `774b2d95616b7dd819a147eb6deaab17`,
+EXE md5 `451a5f9440f0fc1d8906ee14641030ff`. Підпис APK: сертифікат SHA-1
+`6871f0d5fadac10933492095bd322d4bf81a8373` (CN=Flux Helper, O=Blazix).
+
+Сайт: [fluxhelper.pages.dev](https://fluxhelper.pages.dev)
+- Веб-версія для ВСІХ пристроїв: [fluxhelper.pages.dev/main](https://fluxhelper.pages.dev/main)
+- iPhone: [fluxhelper.pages.dev/iphone/](https://fluxhelper.pages.dev/iphone/) · Mac: [fluxhelper.pages.dev/mac/](https://fluxhelper.pages.dev/mac/)
+
+## Канали: реліз і бета
+
+| Канал | Маніфест | Кому |
 |---|---|---|
-| **Реліз** (стабільна) | гілка **`site-release`** | усі звичайні користувачі сайту |
-| **Бета** (нові функції) | гілка **`main`** (деплоється на Pages) | адміни з увімкненим перемикачем «Бета-версії» |
+| **Бета** | `versions/beta/latest.json` | адміни з перемикачем «Бета-версії» в профілі |
+| **Реліз** (стабільний) | `versions/release/latest.json` | усі звичайні користувачі |
 
-Як це працює:
-
-- На сайт ЗАВЖДИ деплоїться гілка `main` — але нові функції в ній
-  **перемкнуті прапорцем бета-режиму** і звичайним користувачам не показуються.
-- Адмін бачить у профілі рядок «Бета-версії» (пераметр `bt` у знімку налаштувань,
-  синхронізується з базою). Вмикає перемикач → перезавантажує сторінку →
-  отримує бета-версію сайту з новими функціями і підписом «X.Y.Z beta»
-  у рамці версії. URL при цьому НЕ змінюється.
-- Коли бета стає релізом: гілку `main` (з вже ввімкненими для всіх функціями)
-  зливають у `site-release`, і нові можливості отримують усі.
+- На сайт деплоїться гілка `main`; бета-функції перемкнуті прапорцем бета-режиму
+  і звичайним користувачам не показуються. Админ вмикає перемикач у профілі →
+  отримує бета-версію сайту.
+- Застосунки перевіряють свій маніфест (`latest.json` свого каналу), порівнюють
+  `apk_md5`/`exe_md5` і качають файл із папки своєї версії
+  (`versions/<канал>/<версія>/…`) — з сайту (Cloudflare), GitHub RAW або Releases.
+- Коли бета стає релізом: `main` зливають у `site-release`, маніфест
+  `versions/release/latest.json` піднімають, і нові можливості отримують усі.
 
 ## Структура репозиторію
 
-- `iphone/` — код веб-версії для iPhone (дзеркало `assets/www` Android-застосунку)
-- `mac/` — код веб-версії для Mac (дзеркало інтерфейсу Windows-програми)
-- `versions/release/` — стабільні збірки (APK/EXE) попередніх поколінь
-- `versions/beta/` — бета-канал: `latest.json` + папки версій (`APK`, `EXE`, `changelog.txt`)
-  — поточна бета: **3.5.57** (Google-вхід на Android: діагностика Credential Manager)
-- `FluxHelper.apk` / `FluxHelper.exe` в корені — завжди ОСТАННІЙ реліз
-- `FluxHelper_3.5.56_FULL.zip` — повний пакет бети 3.5.56: бінарники + джерела одним архівом
-- `auth.html`, `fbauth.html` — сторінки входу Google для застосунків
+```
+FluxHelper.apk / FluxHelper.exe   — ЗАВЖДИ остання бета (зараз 3.5.57) — те, що качає сайт
+FluxHelper_3.5.57_FULL.zip        — повний пакет поточної бети (бінарники + джерела + HASHES)
+latest.json                       — дзеркало бета-каналу для кореневих бінарників
+index.html, auth.html, fbauth.html, _headers, manifest.json — сайт + сторінки входу Google
+main/  iphone/  mac/  b/          — код веб-версій (b/ — бета-сторінка без індексації)
+versions/
+  beta/   — бета-канал: latest.json + АРХІВ папок усіх бета-версій (2.4.3 … 3.5.57)
+  release/ — стабільний канал: latest.json + папки стабільних версій (останній реліз 3.5.1)
+```
+
+- `versions/beta/<версія>/` містить `FluxHelper.apk`, `FluxHelper.exe`,
+  `changelog.txt` — нічого зайвого; поточна версія завжди в `versions/beta/latest.json`.
+- `FluxHelper_3.5.57_FULL.zip` — розгорнутий склад пакета див. `README.txt`
+  всередині архіву.
 
 ## Оновлення застосунків
 
