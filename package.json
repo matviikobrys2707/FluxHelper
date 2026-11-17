@@ -1,0 +1,9 @@
+{
+  "name": "fluxhelper-site",
+  "private": true,
+  "version": "3.5.56",
+  "description": "FluxHelper website - static site, no build step (Pages serves repo root as-is)",
+  "scripts": {
+    "build": "echo fluxhelper: static site, no build step"
+  }
+}
