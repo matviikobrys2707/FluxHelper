@@ -813,8 +813,43 @@ window.AndroidHost = {
       if (u.indexOf('zoommtg://') === 0 || u.indexOf('zoomus://') === 0) {
         var m = u.match(/\/j\/(\d{5,})/) || u.match(/[?&]confno=(\d{5,})/);
         var pwd = (u.match(/[?&]pwd=([^&]+)/) || [])[1];
-        u = m ? ('https://app.zoom.us/wc/' + m[1] + '/join?ref_from=launch&fromPWA=1' + (pwd ? '&pwd=' + pwd : ''))
+        var web = m ? ('https://app.zoom.us/wc/' + m[1] + '/join?ref_from=launch&fromPWA=1' + (pwd ? '&pwd=' + pwd : ''))
               : 'https://zoom.us/join';
+        var ua = navigator.userAgent || '';
+        if (/Android/i.test(ua)) {
+          var iu = (m && /^zoom(?:mtg|us):\/\/zoom\.us\/join\?/.test(u)) ? u.replace(/^zoom(?:mtg|us):\/\/zoom\.us\/join\?/, 'intent://zoom.us/join?') : '';
+          if (iu) window.location.href = iu + '#Intent;scheme=zoommtg;package=us.zoom.videomeetings;S.browser_fallback_url=' + encodeURIComponent(web) + ';end';
+          else window.location.href = u;
+          return;
+        }
+        var ghLeft = false;
+        try {
+          window.addEventListener('pagehide', function () { ghLeft = true; });
+          document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'hidden') ghLeft = true;
+          });
+        } catch (eGH) {}
+        setTimeout(function () {
+          try {
+            if (ghLeft || (document.visibilityState || 'visible') !== 'visible') return;
+            var w = window.open(web, '_blank');
+            if (!w) window.location.href = web;
+          } catch (eWF) {}
+        }, 2000);
+        if (/iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && (navigator.maxTouchPoints || 0) > 1)) {
+          window.location.href = u;
+          return;
+        }
+        try {
+          var zf = document.createElement('iframe');
+          zf.setAttribute('style', 'position:fixed;left:-9px;top:-9px;width:1px;height:1px;opacity:0;border:0');
+          zf.setAttribute('src', u);
+          document.body.appendChild(zf);
+          setTimeout(function () { try { zf.remove(); } catch (eZR) {} }, 5000);
+        } catch (eZI) {
+          window.location.href = u;
+        }
+        return;
       }
       if (u.indexOf('http') !== 0) return;
       window.open(u, '_blank', 'noopener');

@@ -540,6 +540,15 @@ function toWebZoom(u) {
            (pm ? ('&pwd=' + pm[1]) : '') + '&fromPWA=1';
   } catch (e) { return u; }
 }
+function toZoomApp(u) {
+  try {
+    const s = String(u || '');
+    const m = s.match(/\/j\/(\d{5,})/) || s.match(/\/wc\/(\d{5,})\/join/);
+    if (!m) return '';
+    const pm = s.match(/[?&]pwd=([^&]+)/);
+    return 'zoommtg://zoom.us/join?action=join&confno=' + m[1] + (pm ? ('&pwd=' + pm[1]) : '');
+  } catch (e) { return ''; }
+}
 function refreshZoomUI() {
   const a = byId('zApp'), w = byId('zWeb');
   if (a) a.classList.toggle('on', ZOOM.mode === 'app');
@@ -659,9 +668,13 @@ function refreshThemeUI() {
 
 function openL(u) {
   if (!u) return;
-  if (ZOOM.mode === 'web') u = toWebZoom(u);   
+  if (ZOOM.mode === 'web') u = toWebZoom(u);
+  if (ZOOM.mode === 'app' && /^https:\/\/(us\d\d)?zoom\.us\/|\/j\/\d+/.test(u)) {
+    const z = toZoomApp(u);
+    if (z) { try { AndroidHost.open(z); return; } catch (e) {} }
+  }
   if (ANDROID) { try { AndroidHost.open(u); return; } catch (e) {} }
-  if (host('fh:join2|' + ZOOM.mode + '|' + u)) return;   
+  if (host('fh:join2|' + ZOOM.mode + '|' + u)) return;
   if (host('fh:join|' + u)) return;
   window.open(u, '_blank');
 }
