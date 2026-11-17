@@ -822,7 +822,7 @@ window.AndroidHost = {
     try {
       u = String(u || '');
       if (u.indexOf('zoommtg://') === 0 || u.indexOf('zoomus://') === 0) {
-        var m = u.match(/\/j\/(\d{5,})/);
+        var m = u.match(/\/j\/(\d{5,})/) || u.match(/[?&]confno=(\d{5,})/);
         var pwd = (u.match(/[?&]pwd=([^&]+)/) || [])[1];
         u = m ? ('https://app.zoom.us/wc/' + m[1] + '/join?ref_from=launch&fromPWA=1' + (pwd ? '&pwd=' + pwd : ''))
               : 'https://zoom.us/join';
