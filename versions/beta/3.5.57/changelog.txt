@@ -1,0 +1,45 @@
+FluxHelper 3.5.57 (beta, versionCode 30557) — 17.11.2026
+
+✅ GOOGLE-ВХІД НА ANDROID — аудит за інструкцією (Credential Manager → ID Token →
+   перевірка на сервері → сесія). Перевірено увесь чекліст — усе вже реалізовано
+   й працює в застосунку (classes.dex 3.5.52…3.5.56):
+   • Credential Manager + Google Identity Services (googleid 1.1.1) — системний
+     вибір акаунта (GetGoogleIdOption, serverClientId = Web client сайту,
+     filterByAuthorizedAccounts=false → видно всі акаунти + «інший акаунт»);
+   • обробка скасування вібору (Cancellation → тихе «скасовано», без фейкового
+     фейлу входу);
+   • ID Token перевіряється НА СЕРВЕРІ: Google tokeninfo (підпис, строк дії,
+     аудієнція — Web client АБО авто-Android client проєкту) → обмін через
+     FluxHelper Backend (Render /api/auth/google) → Firebase signInWithIdp →
+     сесія (fbExchange — прямий резервний обмін);
+   • збереження сесії (authPrefs + loginLast — швидкий вхід останнім акаунтом);
+   • вихід (googleLogout: prefs + cookies);
+   • пристрої без Google Play Services: ланцюжок фолбэків Credential Manager →
+     системний пікер акаунтів → вхід через браузер (auth.html) → deep link
+     fluxhelper://auth?done=1 назад у застосунок.
+   • мінімальна вимога застосунку: Android 7.0 (minSdk 24); Credential Manager
+     працює на всіх версіях, з якими працює FluxHelper.
+
+🛠 ДОДАНО В 3.5.57 — діагностика нативного входу: якщо Credential Manager
+   повертає помилку, її ТИП тепер пишеться в журнал (localStorage.fh_gcm_err +
+   console.log '[gcm]'). Це видно у відладці (chrome://inspect → WebView) і
+   одразу показує причину: «GetCredentialCustomException/Developer error» =
+   в Google Cloud проєкті НЕМАЄ Android OAuth client для package+SHA-1.
+
+📋 ЩО ТРЕБА ВЛАСНИКУ ДЛЯ ПОВНОЦІННОГО НАТИВНОГО ВХОДУ (одноразово, Google
+   Cloud Console → Google Auth Platform → Clients → Create client):
+   • тип: Android;
+   • package name: com.fluxhelper.app;
+   • SHA-1: 68:71:F0:D5:FA:DA:C1:09:33:49:20:95:BD:32:2D:4B:F8:1A:83:73
+     (офіційний ключ 6871F0 — той самим, яким підписаний APK);
+   • Web client 668834523935-… НЕ ВИДАЛЯТИ (через нього працює вхід на сайті
+     і serverClientId у застосунку).
+
+✅ ПК (EXE): тільки номер версії 3.5.56 → 3.5.57 (3 ascii + 2 utf-16 входження;
+   розмір 1:1 1 953 280; логіка та інтерфейс НЕ торкані).
+
+✅ САЙТ: без змін у 3.5.57 (фікс «через застосунок» на сайті вже живий з
+   17.11 — zoommtg:// + фолбэк на веб-JOIN).
+
+Офіційний підпис APK: 6871f0d5 ✓
+md5 apk: 774b2d95616b7dd819a147eb6deaab17 | md5 exe: 451a5f9440f0fc1d8906ee14641030ff

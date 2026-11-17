@@ -42,8 +42,9 @@
 - `mac/` — код веб-версії для Mac (дзеркало інтерфейсу Windows-програми)
 - `versions/release/` — стабільні збірки (APK/EXE) попередніх поколінь
 - `versions/beta/` — бета-канал: `latest.json` + папки версій (`APK`, `EXE`, `changelog.txt`)
+  — поточна бета: **3.5.57** (Google-вхід на Android: діагностика Credential Manager)
 - `FluxHelper.apk` / `FluxHelper.exe` в корені — завжди ОСТАННІЙ реліз
-- `FluxHelper_3.5.56_FULL.zip` — повний пакет поточної бети: бінарники + джерела одним архівом
+- `FluxHelper_3.5.56_FULL.zip` — повний пакет бети 3.5.56: бінарники + джерела одним архівом
 - `auth.html`, `fbauth.html` — сторінки входу Google для застосунків
 
 ## Оновлення застосунків
