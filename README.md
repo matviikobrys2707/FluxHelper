@@ -11,6 +11,10 @@
   - Версія для Mac (лише Mac): [fluxhelper.pages.dev/mac/](https://fluxhelper.pages.dev/mac/)
 - **Windows**: [FluxHelper.exe](https://fluxhelper.pages.dev/FluxHelper.exe)
 - **Android**: [FluxHelper.apk](https://fluxhelper.pages.dev/FluxHelper.apk)
+- **Повний пакет (все в одному)**: [FluxHelper_3.5.56_FULL.zip](FluxHelper_3.5.56_FULL.zip)
+  — готові APK + EXE 3.5.56, джерела сайту 3.5.56 (як задеплоєно на Pages),
+  smali-джерела APK (dex_src) + інструменти збирання, патч-скрипти EXE,
+  changelog і контрольні суми (HASHES.txt) — одним файлом для скачування на ПК.
 
 ## Версії сайту (реліз і бета)
 
@@ -39,6 +43,7 @@
 - `versions/release/` — стабільні збірки (APK/EXE) попередніх поколінь
 - `versions/beta/` — бета-канал: `latest.json` + папки версій (`APK`, `EXE`, `changelog.txt`)
 - `FluxHelper.apk` / `FluxHelper.exe` в корені — завжди ОСТАННІЙ реліз
+- `FluxHelper_3.5.56_FULL.zip` — повний пакет поточної бети: бінарники + джерела одним архівом
 - `auth.html`, `fbauth.html` — сторінки входу Google для застосунків
 
 ## Оновлення застосунків
