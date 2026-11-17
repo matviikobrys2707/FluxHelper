@@ -1,17 +1,17 @@
 {
-  "latest": "3.5.62",
+  "latest": "3.5.63",
   "notes": [
-    "✦ Цей файл — дзеркало бета-каналу (versions/beta/latest.json); кореневі FluxHelper.apk / FluxHelper.exe — ЗАВЖДИ остання бета",
-    "✦ 3.5.62: ФІКС причини «вічного входу» (403 referer-blocked → Origin-заголовок; обмін прямо у Firebase ~0.3с); вибір акаунта Google через ~6с; бібліотеки на місці (APK ~2.48 МБ)",
-    "✦ Власнику: відновіть Android OAuth client у Google Cloud (com.fluxhelper.app + SHA-1 6871F0D5FADAC10933492095BD322D4BF81A8373) — нативний пікер всередині застосунку запрацює автоматично"
+    "✦ Цей файл — дзеркало бета-каналу; кореневі FluxHelper.apk / FluxHelper.exe — ЗАВЖДИ остання бета",
+    "✦ 3.5.63: вибір акаунта одразу всередині застосунку (системне меню Google миттєво, без браузера); перший вхід може показати екран згоди Google — «Дозволити»",
+    "✦ Резерв: браузерна сторінка вибору акаунта Google (~12с); обмін токена без 403 (фікс 3.5.62); бібліотеки на місці"
   ],
-  "apk_md5": "9982f9908a2b95056c2c721fba4c4a0a",
+  "apk_md5": "885e96d8670860333837d18dc3cf250f",
   "apk_size": 2479969,
-  "exe_md5": "dc2b499541139b8f734b31dd3d547e62",
-  "exe_sha256": "d770020d65245ddcb2664aad2c64572ea9634bfa35c59329b34dfdffc8183b9e",
+  "exe_md5": "0f456ccf0b9980b66f7abf3d617c6281",
+  "exe_sha256": "cb4704266f07f4a7ea24c778663275843eb9a78451a746a918203a3f3db90bf2",
   "exe_size": 1953280,
   "updated_at": "2026-11-17",
   "channel": "beta",
-  "apk_url": "/versions/beta/3.5.62/FluxHelper.apk",
-  "exe_url": "/versions/beta/3.5.62/FluxHelper.exe"
+  "apk_url": "/versions/beta/3.5.63/FluxHelper.apk",
+  "exe_url": "/versions/beta/3.5.63/FluxHelper.exe"
 }
