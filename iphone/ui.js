@@ -3759,13 +3759,20 @@ function authPollDb(st) {
   authKick = tick;
 }
 function authStart(hintEmail) {
-  if (agState) return;
+  if (agState) {
+    /* 3.5.58: завислий нативний вхід НЕ блокує кнопку назавжди —
+       спроба старша за 45с вважається мертвою, state чистимо і йдемо далі */
+    if (Date.now() - (window.__fhAgTs || 0) < 45000) return;
+    agState = '';
+    try { localStorage.removeItem('fh_auth_state'); } catch (eSt58) {}
+  }
   agState = '';
   toast('Відкриваю Google…');
   const gb = byId('agGo'); if (gb) gb.disabled = true;
   setAgStat('<span class="spin"></span>Відкриваю вибір акаунта…');
   const st = fhRandHex(12);
   agState = st;
+  window.__fhAgTs = Date.now();
   try { localStorage.setItem('fh_auth_state', st); } catch (e) {}
   AG_HINT52 = String(hintEmail || '');
   window.__fhRescued52 = null;

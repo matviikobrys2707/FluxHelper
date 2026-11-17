@@ -1,18 +1,17 @@
 {
-  "latest": "3.5.57",
-  "channel": "beta",
+  "latest": "3.5.58",
   "notes": [
     "✦ Цей файл — дзеркало бета-каналу (versions/beta/latest.json); кореневі FluxHelper.apk / FluxHelper.exe — ЗАВЖДИ остання бета",
-    "✦ GOOGLE-ВХІД (Android): аудит за інструкцією Credential Manager — усе реалізовано; додано діагностику типу помилки нативного входу (fh_gcm_err)",
-    "✦ ВЛАСНИКУ: для нативного входу додай в Google Cloud Android-клієнт (package com.fluxhelper.app, SHA-1 68:71:F0:D5:FA:DA:C1:09:33:49:20:95:BD:32:2D:4B:F8:1A:83:73)",
-    "✦ ПК 3.5.57 = тільки номер версії; офіційний підпис 6871f0d5"
+    "✦ 3.5.58: виправлено «вічний вхід» на телефоні після вибору акаунта (таймаут токена, захищений обмін, CM-колбеки на main thread, самозцінення завислого стану в JS)",
+    "✅ Серверна частина жива: Backend /api/auth/google <1с, tokeninfo ОК"
   ],
-  "apk_md5": "774b2d95616b7dd819a147eb6deaab17",
+  "apk_md5": "050f2effe1443120551483d3291d9cfe",
   "apk_size": 2479969,
-  "exe_md5": "451a5f9440f0fc1d8906ee14641030ff",
-  "exe_sha256": "e6e9506a2a8b02e7e84a8526710d48a592e5293b017985654887bef58c3937c0",
+  "exe_md5": "3c00da5841b0bb9c940333e90e2d5472",
+  "exe_sha256": "a9e32822ebd75feb5cc4727accdb4ef5643dc1f1f429120d199aeb430a34256f",
   "exe_size": 1953280,
-  "apk_url": "/versions/beta/3.5.57/FluxHelper.apk",
-  "exe_url": "/versions/beta/3.5.57/FluxHelper.exe",
-  "updated_at": "2026-11-17"
+  "updated_at": "2026-11-17",
+  "channel": "beta",
+  "apk_url": "/versions/beta/3.5.58/FluxHelper.apk",
+  "exe_url": "/versions/beta/3.5.58/FluxHelper.exe"
 }
