@@ -1,15 +1,15 @@
 {
-  "latest": "3.5.69",
+  "latest": "3.5.70",
   "notes": [
-    "✦ 3.5.69: системний вибір акаунта ЯВНИМ інтентом (без рефлексії — тепер відкриється при встановленому GMS); своє меню акаунтів; браузер видалено; нативна логіка = 3.5.1"
+    "✦ 3.5.70: виправлено VerifyError 3.5.69 (не запускався); логіка та сама — системний вибір акаунта ЯВНИМ інтентом, своє меню, браузер видалено"
   ],
-  "apk_md5": "e6c83a14a710bd1130b665814d27aaab",
+  "apk_md5": "8a9cb416a0a66a150168c8425652d02b",
   "apk_size": 2479969,
-  "exe_md5": "4df479af64fabb4ef00c1fc39a48b902",
-  "exe_sha256": "4a61c2adcc0157ce7a62cbc8e787dd28f065dde31fd98dc42c43678bcf8b3c76",
+  "exe_md5": "fb97b02c4d3e83e444509f3dd8d21a7c",
+  "exe_sha256": "a8041d8f73cecc16df823e3def36d17fccd6ba0a0e5b483928b50ae284413767",
   "exe_size": 1953280,
   "updated_at": "2026-11-18",
   "channel": "beta",
-  "apk_url": "/versions/beta/3.5.69/FluxHelper.apk",
-  "exe_url": "/versions/beta/3.5.69/FluxHelper.exe"
+  "apk_url": "/versions/beta/3.5.70/FluxHelper.apk",
+  "exe_url": "/versions/beta/3.5.70/FluxHelper.exe"
 }
