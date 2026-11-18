@@ -1,17 +1,17 @@
 {
-  "latest": "3.5.64",
+  "latest": "3.5.65",
   "notes": [
     "✦ Цей файл — дзеркало бета-каналу; кореневі FluxHelper.apk / FluxHelper.exe — ЗАВЖДИ остання бета",
-    "✦ 3.5.64: порядок входу як у 3.5.1 (CM → системний пикер → браузер ~12с); клієнт 3.5.1 видалено з Google Cloud (deleted_client) — вхід працює без нього",
-    "✦ Поліпшення для старих Android: автоматична згода Google, вотчдог-пікер 4с, обмін без 403; підпис 6871f0d5 ✓"
+    "✦ 3.5.65: сірий діалог вибору акаунта видалено; тільки шторка Credential Manager (аватарки + ім'я); скасування/помилки без сірого вікна",
+    "✦ Без лагів: один async-запит, гвард подвійних натискань; немає акаунтів → браузерний вхід одразу; підпис 6871f0d5 ✓"
   ],
-  "apk_md5": "21015c4c49b14f0347b96d99b31ab62e",
+  "apk_md5": "a26d945810d4db7398b819d0a97d2e0a",
   "apk_size": 2479969,
-  "exe_md5": "c07a273dba336f466c84f1a6fd169cef",
-  "exe_sha256": "d0274767f84a0330916d00ab0612a8ea29a746b6b5766136e121554bba65cb8b",
+  "exe_md5": "95589fc30186bcd3d5d0707bfee02000",
+  "exe_sha256": "158814dca9152c57983cf187096ac877c1abfaf14e548c253f615b5ac95c9c9a",
   "exe_size": 1953280,
   "updated_at": "2026-11-18",
   "channel": "beta",
-  "apk_url": "/versions/beta/3.5.64/FluxHelper.apk",
-  "exe_url": "/versions/beta/3.5.64/FluxHelper.exe"
+  "apk_url": "/versions/beta/3.5.65/FluxHelper.apk",
+  "exe_url": "/versions/beta/3.5.65/FluxHelper.exe"
 }

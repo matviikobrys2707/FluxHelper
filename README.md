@@ -3,7 +3,7 @@
 Застосунок розкладу уроків з посиланнями на Zoom, групами, сповіщеннями та синхронізацією.
 Вхід захищає Google.
 
-**Поточна бета: 3.5.64** (versionCode 30564, 18.11.2026) — порядок входу ЯК У 3.5.1 (Credential Manager → системний діалог вибору акаунта → браузер ~12с); клієнт 3.5.1 видалено з Google Cloud (deleted_client, LIVE-перевірка) — вхід працює без нього · згода Google автоматична · бібліотеки на місці (APK ~2.48 МБ) · офіційний підпис APK/EXE: `6871f0d5`
+**Поточна бета: 3.5.65** (versionCode 30565, 18.11.2026) — СІРИЙ системний діалог вибору акаунта ПОВНІСТЮ ВИДАЛЕНО: тільки сучасна шторка Credential Manager (аватарки + ім'я + email) за офіційними прикладами Google; один async-запит без лагів; гвард подвійних натискань; скасування → тихо, без акаунтів/старий CM → браузерний вхід одразу · бібліотеки на місці (APK ~2.48 МБ) · офіційний підпис APK/EXE: `6871f0d5`
 
 ## ⬇️ Де скачати (одинакова скрізь схема)
 
@@ -17,11 +17,11 @@ Releases роздають одну й ту саму версію.
 | Windows EXE (остання бета) | [fluxhelper.pages.dev/FluxHelper.exe](https://fluxhelper.pages.dev/FluxHelper.exe) |
 | Те саме на GitHub (main) | [FluxHelper.apk](FluxHelper.apk) · [FluxHelper.exe](FluxHelper.exe) |
 | Реліз на GitHub (tags+assets) | [github.com/matviikobrys2707/FluxHelper/releases](https://github.com/matviikobrys2707/FluxHelper/releases) |
-| Папка версії в репо | `versions/beta/3.5.64/` — [APK](versions/beta/3.5.64/FluxHelper.apk) · [EXE](versions/beta/3.5.64/FluxHelper.exe) · [changelog](versions/beta/3.5.64/changelog.txt) |
-| Повний пакет (все в одному) | [FluxHelper_3.5.64_FULL.zip](FluxHelper_3.5.64_FULL.zip) — бінарники + джерела сайту + smali-джерела APK + патч-скрипти EXE + HASHES.txt |
+| Папка версії в репо | `versions/beta/3.5.65/` — [APK](versions/beta/3.5.65/FluxHelper.apk) · [EXE](versions/beta/3.5.65/FluxHelper.exe) · [changelog](versions/beta/3.5.65/changelog.txt) |
+| Повний пакет (все в одному) | [FluxHelper_3.5.65_FULL.zip](FluxHelper_3.5.65_FULL.zip) — бінарники + джерела сайту + smali-джерела APK + патч-скрипти EXE + HASHES.txt |
 
-Перевірка справжності (3.5.64): APK md5 `21015c4c49b14f0347b96d99b31ab62e`,
-EXE md5 `c07a273dba336f466c84f1a6fd169cef`. Підпис APK: сертифікат SHA-1
+Перевірка справжності (3.5.65): APK md5 `a26d945810d4db7398b819d0a97d2e0a`,
+EXE md5 `95589fc30186bcd3d5d0707bfee02000`. Підпис APK: сертифікат SHA-1
 `6871f0d5fadac10933492095bd322d4bf81a8373` (CN=Flux Helper, O=Blazix).
 
 Сайт: [fluxhelper.pages.dev](https://fluxhelper.pages.dev)
@@ -47,19 +47,19 @@ EXE md5 `c07a273dba336f466c84f1a6fd169cef`. Підпис APK: сертифіка
 ## Структура репозиторію
 
 ```
-FluxHelper.apk / FluxHelper.exe   — ЗАВЖДИ остання бета (зараз 3.5.64) — те, що качає сайт
-FluxHelper_3.5.64_FULL.zip        — повний пакет поточної бети (бінарники + джерела + HASHES)
+FluxHelper.apk / FluxHelper.exe   — ЗАВЖДИ остання бета (зараз 3.5.65) — те, що качає сайт
+FluxHelper_3.5.65_FULL.zip        — повний пакет поточної бети (бінарники + джерела + HASHES)
 latest.json                       — дзеркало бета-каналу для кореневих бінарників
 index.html, auth.html, fbauth.html, _headers, manifest.json — сайт + сторінки входу Google
 main/  iphone/  mac/  b/          — код веб-версій (b/ — бета-сторінка без індексації)
 versions/
-  beta/   — бета-канал: latest.json + АРХІВ папок усіх бета-версій (2.4.3 … 3.5.64)
+  beta/   — бета-канал: latest.json + АРХІВ папок усіх бета-версій (2.4.3 … 3.5.65)
   release/ — стабільний канал: latest.json + папки стабільних версій (останній реліз 3.5.1)
 ```
 
 - `versions/beta/<версія>/` містить `FluxHelper.apk`, `FluxHelper.exe`,
   `changelog.txt` — нічого зайвого; поточна версія завжди в `versions/beta/latest.json`.
-- `FluxHelper_3.5.64_FULL.zip` — розгорнутий склад пакета див. `README.txt`
+- `FluxHelper_3.5.65_FULL.zip` — розгорнутий склад пакета див. `README.txt`
   всередині архіву.
 
 ## Оновлення застосунків
