@@ -1,14 +1,14 @@
 {
-  "latest": "3.5.70",
+  "latest": "3.5.71",
   "notes": [
-    "🚨 3.5.69 НЕ ЗАПУСКАВВСЯ (VerifyError — мої помилки smali) → 3.5.70: return-object ×3 у fhGetAccs; початок startGoogleLogin-блоку переписано одним replace з asserts; типовий потік всіх нових методів розібрано вручну",
-    "🪟 Логіка збережена: своє меню акаунтів → СИСТЕМНИЙ вибір акаунта ЯВНИМ інтентом (ComponentName GMS AccountPicker, без рефлексії — покаже ВСІ 10 акаунтів) → CM → діалог із причиною",
-    "✅ Браузерний вхід видалено (3.5.68); FH-тости збережено; підпис 6871f0d5"
+    "🎯 3.5.71: пикер через ПЛАТФОРМЕННЫЙ AccountManager.newChooseAccountIntent (как в классических примерах GitHub/SO) — неявный интент резолвится системой, без GET_ACCOUNTS, без GMS-классов; 2 сигнатуры (API 22-29 / API 30+) + явный интент как попытка 3",
+    "🪟 Диагноз 3.5.70: явный ComponentName GMS AccountPicker не резолвится на Android 16 → тихий уход в CM → пусто → вотчдог. В 3.5.71 окно выбора откроется со ВСЕМИ акаунтами",
+    "✅ Результат по-прежнему: onActivityResult 0x1b59, extra authAccount; своё меню (FH 3b) сохранено; браузер удалён; підпис 6871f0d5"
   ],
-  "apk_md5": "8a9cb416a0a66a150168c8425652d02b",
+  "apk_md5": "d7788c572a050e0c9a2912c830b44895",
   "apk_size": 2479969,
-  "exe_md5": "fb97b02c4d3e83e444509f3dd8d21a7c",
-  "exe_sha256": "a8041d8f73cecc16df823e3def36d17fccd6ba0a0e5b483928b50ae284413767",
+  "exe_md5": "f396ded0f9a8e116bdcf7e4b34f2a4ec",
+  "exe_sha256": "aab4bc6a03d39b38e24f0355494175117f5d1b17cd45cbbacdfa0aeafd11cf56",
   "exe_size": 1953280,
   "updated_at": "2026-11-18"
 }

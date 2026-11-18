@@ -3,7 +3,7 @@
 Застосунок розкладу уроків з посиланнями на Zoom, групами, сповіщеннями та синхронізацією.
 Вхід захищає Google.
 
-**Поточна бета: 3.5.70** (versionCode 30570, 18.11.2026) — FIX VerifyError 3.5.69 (не запускався: return v0 замість return-object у fhGetAccs; у startGoogleLogin потрапив сирий варіант блоку — v5="st" затир String[], втрачений move-result-object після getString). Логіка збережена: своє меню акаунтів → системний вибір ЯВНИМ інтентом (ComponentName GMS AccountPicker + CHOOSE_ACCOUNT, без рефлексії) → CM → діалог із причиною; браузер видалено; тости FH збережено · офіційний підпис APK/EXE: `6871f0d5`
+**Поточна бета: 3.5.71** (versionCode 30571, 18.11.2026) — пикер через платформений AccountManager.newChooseAccountIntent (неявний інтент, без GET_ACCOUNTS, без GMS-класів): 2 сигнатури (API 22-29 з boolean / API 30+ без boolean, NoSuchMethodError-catch) → явний інтент GMS AccountPicker → CM. Фікс: на Android 16 явний ComponentName не резолвиться → пікер не відкривався (тости FH 1 → cm cold ok → діалог). Результат: onActivityResult 0x1b59, extra authAccount; своє меню (FH 3b) збережено · підпис `6871f0d5`
 
 ## ⬇️ Де скачати (одинакова скрізь схема)
 
@@ -20,8 +20,8 @@ Releases роздають одну й ту саму версію.
 | Папка версії в репо | `versions/beta/3.5.65/` — [APK](versions/beta/3.5.65/FluxHelper.apk) · [EXE](versions/beta/3.5.65/FluxHelper.exe) · [changelog](versions/beta/3.5.65/changelog.txt) |
 | Повний пакет (все в одному) | [FluxHelper_3.5.65_FULL.zip](FluxHelper_3.5.65_FULL.zip) — бінарники + джерела сайту + smali-джерела APK + патч-скрипти EXE + HASHES.txt |
 
-Перевірка справжності (3.5.65): APK md5 `8a9cb416a0a66a150168c8425652d02b`,
-EXE md5 `fb97b02c4d3e83e444509f3dd8d21a7c`. Підпис APK: сертифікат SHA-1
+Перевірка справжності (3.5.65): APK md5 `d7788c572a050e0c9a2912c830b44895`,
+EXE md5 `f396ded0f9a8e116bdcf7e4b34f2a4ec`. Підпис APK: сертифікат SHA-1
 `6871f0d5fadac10933492095bd322d4bf81a8373` (CN=Flux Helper, O=Blazix).
 
 Сайт: [fluxhelper.pages.dev](https://fluxhelper.pages.dev)

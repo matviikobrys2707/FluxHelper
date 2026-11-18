@@ -1,0 +1,33 @@
+FluxHelper 3.5.71 (beta, versionCode 30571) — 18.11.2026
+
+ЧТО СЛУЧИЛОСЬ В 3.5.70 (диагноз по тостам FH 1 → cm cold ok → диалог):
+системное окно выбора НЕ открывалось, потому что ПОПЫТКА открыть его
+явным интентом (ComponentName "com.google.android.gms.common.AccountPicker")
+на Android 16 / новых GMS падает (активити перенесена/не экспортирована) —
+код молча уходил в Credential Manager, тот был пуст → вотчдог → диалог
+с причиной.
+
+РЕШЕНИЕ 3.5.71 — СТАНДАРТ, который используют другие разработчики
+(примеры: gist.github.com/4018924, stackoverflow.com/questions/22174259,
+официальные доки developer.android.com AccountManager и
+developers.google.com GMS AccountPicker):
+
+  AccountManager.newChooseAccountIntent(...)
+
+платформенный НЕЯВНЫЙ интент: НЕ требует GET_ACCOUNTS, НЕ грузит
+GMS-классы, НЕ знает внутренних имён GMS — систему сам резолвит
+аутентификатор Google. Окно выбора показывает ВСЕ аккаунты устройства
+(у тебя — все 10), выбранное имя приходит в onActivityResult под extra
+"authAccount" (AccountManager.KEY_ACCOUNT_NAME) — наш обработчик уже
+это умеет, результата путь не изменился.
+
+Порядок попыток в showAccountPicker():
+  1. newChooseAccountIntent — сигнатура API 22-29 (с boolean);
+     NoSuchMethodError →
+  2. newChooseAccountIntent — сигнатура API 30+ (без boolean, с
+     String[] requiredFeatures); иная ошибка →
+  3. явный интент на GMS AccountPicker (код 3.5.70) как запасной;
+  4. иначе false → вотчдог + Credential Manager (как было).
+Своё меню аккаунтов (FH 3b) сохранено; браузер удалён; тости FH на месте.
+
+md5 apk: d7788c572a050e0c9a2912c830b44895 | md5 exe: f396ded0f9a8e116bdcf7e4b34f2a4ec
