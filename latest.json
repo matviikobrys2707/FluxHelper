@@ -1,15 +1,14 @@
 {
-  "latest": "3.5.72",
+  "latest": "3.5.73",
   "notes": [
-    "✦ 3.5.72: фікс входу після вибору акаунта — вікно згоди Google відкривається, повторний запит токена, вотчдог і діагностика FH 5t/5a/5b/5x/6"
+    "🚑 3.5.73: hotfix запуска (VerifyError з 3.5.72 виправлено — .registers 10); фікс згоди Google 3.5.72 на місці"
   ],
-  "apk_md5": "80c132d1eeaf8e94a6186487af04cf87",
+  "apk_md5": "804b84e91ece79f9edf27ad3be60ace6",
   "apk_size": 2479969,
-  "exe_md5": "bef33775898e7ebff0b0f48d4354289b",
-  "exe_sha256": "e73b6691ae8cac54beefc74261b7ed847103b36f67ba1b71cebcb9d89c6d4422",
+  "exe_md5": "b8d6ca87feda2304b4af32f5372a3b6e",
   "exe_size": 1953280,
   "updated_at": "2026-11-18",
   "channel": "beta",
-  "apk_url": "/versions/beta/3.5.72/FluxHelper.apk",
-  "exe_url": "/versions/beta/3.5.72/FluxHelper.exe"
+  "apk_url": "/versions/beta/3.5.73/FluxHelper.apk",
+  "exe_url": "/versions/beta/3.5.73/FluxHelper.exe"
 }

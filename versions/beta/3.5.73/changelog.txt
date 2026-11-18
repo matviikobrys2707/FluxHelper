@@ -1,0 +1,20 @@
+FluxHelper 3.5.73 (beta, versionCode 30573) — 18.11.2026
+
+HOTFIX 3.5.72: приложение падало ПРИ ЗАПУСКЕ (java.lang.VerifyError:
+[0x1C] 'this' argument 'String' not instance of MainActivity).
+
+ПРИЧИНА (наша ошибка): в nativeTokenFlow было .registers 9 — при двух
+параметрах p0 (this: MainActivity) занимал регистр v7, p1 — v8. Вотчдог-
+вставка 3.5.72 использовала v7 как временный регистр и ПЕРЕЗАПИСЫВАЛА
+this — верификатор ART отвергал весь класс MainActivity ещё при старте.
+
+ФИКС: .registers 9 -> 10 (p0=v8, p1=v9, locals v0..v7 — v7 свободен).
+Плюс аудит локальных регистров по ВСЕМ вставленным методам
+(nativeTokenFlow / onActivityResult / fetchUserInfoAndFinish / $12 / $13
+/ $21 / мосты) — нигде параметры не задеваются.
+
+Всё остальное — как в 3.5.72: consent-ветка KEY_INTENT (0x1b5A), retry
+из hint, getResult таймаут 8с, вотчдог $21 12с, тосты FH 5t/5a/5b/5x/6,
+description в пикере.
+
+md5 apk: 804b84e91ece79f9edf27ad3be60ace6 | md5 exe: b8d6ca87feda2304b4af32f5372a3b6e
