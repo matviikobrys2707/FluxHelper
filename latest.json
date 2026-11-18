@@ -1,16 +1,15 @@
 {
-  "latest": "3.5.68",
+  "latest": "3.5.69",
   "notes": [
-    "✦ 3.5.68: браузерний вхід видалено з коду; спливне вікно з причиною (GMS/акаунти) з'являється одразу; нативна логіка = 3.5.1",
-    "✦ На пристроях БЕЗ Google Play services меню акаунта неможливе — вікно пояснює що встановити"
+    "✦ 3.5.69: системний вибір акаунта ЯВНИМ інтентом (без рефлексії — тепер відкриється при встановленому GMS); своє меню акаунтів; браузер видалено; нативна логіка = 3.5.1"
   ],
-  "apk_md5": "08d5eb2f9be3183f8b611449a508a068",
+  "apk_md5": "e6c83a14a710bd1130b665814d27aaab",
   "apk_size": 2479969,
-  "exe_md5": "946fe1d3c700ea19a14ab4c8a6a4364f",
-  "exe_sha256": "0352136a4b385e1f1ec17b93710a6533e180d65697288eb8cc4b2e69b0769dab",
+  "exe_md5": "4df479af64fabb4ef00c1fc39a48b902",
+  "exe_sha256": "4a61c2adcc0157ce7a62cbc8e787dd28f065dde31fd98dc42c43678bcf8b3c76",
   "exe_size": 1953280,
   "updated_at": "2026-11-18",
   "channel": "beta",
-  "apk_url": "/versions/beta/3.5.68/FluxHelper.apk",
-  "exe_url": "/versions/beta/3.5.68/FluxHelper.exe"
+  "apk_url": "/versions/beta/3.5.69/FluxHelper.apk",
+  "exe_url": "/versions/beta/3.5.69/FluxHelper.exe"
 }
