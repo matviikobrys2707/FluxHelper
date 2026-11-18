@@ -1,16 +1,16 @@
 {
-  "latest": "3.5.67",
+  "latest": "3.5.68",
   "notes": [
-    "✦ 3.5.67: діагностичні тости FH 1..6 на шляху входу + Host.login без catchall; логіка входу = 3.5.1",
-    "✦ Повідомте розробнику порядок тостів FH після натискання «Увійти через Google»"
+    "✦ 3.5.68: браузерний вхід видалено з коду; спливне вікно з причиною (GMS/акаунти) з'являється одразу; нативна логіка = 3.5.1",
+    "✦ На пристроях БЕЗ Google Play services меню акаунта неможливе — вікно пояснює що встановити"
   ],
-  "apk_md5": "42784ac66fb9a074ebc7fba7a95c89f3",
+  "apk_md5": "08d5eb2f9be3183f8b611449a508a068",
   "apk_size": 2479969,
-  "exe_md5": "c1807353902bd18a2fbc97781c5304f8",
-  "exe_sha256": "6a37cb99e8ea1322dea3c33229ab1001230c51e4975f056f4c7806c39241249f",
+  "exe_md5": "946fe1d3c700ea19a14ab4c8a6a4364f",
+  "exe_sha256": "0352136a4b385e1f1ec17b93710a6533e180d65697288eb8cc4b2e69b0769dab",
   "exe_size": 1953280,
   "updated_at": "2026-11-18",
   "channel": "beta",
-  "apk_url": "/versions/beta/3.5.67/FluxHelper.apk",
-  "exe_url": "/versions/beta/3.5.67/FluxHelper.exe"
+  "apk_url": "/versions/beta/3.5.68/FluxHelper.apk",
+  "exe_url": "/versions/beta/3.5.68/FluxHelper.exe"
 }

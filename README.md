@@ -3,7 +3,7 @@
 Застосунок розкладу уроків з посиланнями на Zoom, групами, сповіщеннями та синхронізацією.
 Вхід захищає Google.
 
-**Поточна бета: 3.5.67** (versionCode 30567, 18.11.2026) — ДИАГНОСТИКА «Заходимо в акаунт… і нічого»: тости-кроки FH 1..6 на всьому шляху входу (login start → CM handle/cold/exception → picker → browser → token → помилка CM з ім'ям винятку); Host.login/loginLast без catchall (як 3.5.1) — помилки Java видно в UI; Java-сторож 12с→10с; логіка входу лишається дослівною 3.5.1 (трансплантат 3.5.66) · офіційний підпис APK/EXE: `6871f0d5`
+**Поточна бета: 3.5.68** (versionCode 30568, 18.11.2026) — БРАУЗЕРНИЙ ВХІД ПОВНІСТЮ ВИДАЛЕНО З КОДУ (за вимогою власника): openBrowserLogin → спливне вікно з діагнозом (GMS ✓/✗ з поясненням про «for AR», к-сть Google-акаунтів, що робити, Android); rescue20/rescue_aerr у ui.js прибрані; передперевірка GMS — вікно з причиною одразу при натисканні; сброс 45с-гварда; тости FH збережено; нативна логіка входу = дослівна 3.5.1 · Діагноз за FH-тостами власника: пристрій БЕЗ Google Play services · офіційний підпис APK/EXE: `6871f0d5`
 
 ## ⬇️ Де скачати (одинакова скрізь схема)
 
@@ -20,8 +20,8 @@ Releases роздають одну й ту саму версію.
 | Папка версії в репо | `versions/beta/3.5.65/` — [APK](versions/beta/3.5.65/FluxHelper.apk) · [EXE](versions/beta/3.5.65/FluxHelper.exe) · [changelog](versions/beta/3.5.65/changelog.txt) |
 | Повний пакет (все в одному) | [FluxHelper_3.5.65_FULL.zip](FluxHelper_3.5.65_FULL.zip) — бінарники + джерела сайту + smali-джерела APK + патч-скрипти EXE + HASHES.txt |
 
-Перевірка справжності (3.5.65): APK md5 `42784ac66fb9a074ebc7fba7a95c89f3`,
-EXE md5 `c1807353902bd18a2fbc97781c5304f8`. Підпис APK: сертифікат SHA-1
+Перевірка справжності (3.5.65): APK md5 `08d5eb2f9be3183f8b611449a508a068`,
+EXE md5 `946fe1d3c700ea19a14ab4c8a6a4364f`. Підпис APK: сертифікат SHA-1
 `6871f0d5fadac10933492095bd322d4bf81a8373` (CN=Flux Helper, O=Blazix).
 
 Сайт: [fluxhelper.pages.dev](https://fluxhelper.pages.dev)
