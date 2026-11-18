@@ -1,17 +1,16 @@
 {
-  "latest": "3.5.66",
+  "latest": "3.5.67",
   "notes": [
-    "✦ Цей файл — дзеркало бета-каналу; кореневі FluxHelper.apk / FluxHelper.exe — ЗАВЖДИ остання бета",
-    "✦ 3.5.66: логіка входу = ТОЧНО ЯК У 3.5.1 (дословний перенос): prewarm → вибір з усіма акаунтами → системний вибір → вхід; прибрано холодний запит і гвард 3.5.65",
-    "✦ Транспорт збережено (Origin, auth.html); підпис 6871f0d5 ✓"
+    "✦ 3.5.67: діагностичні тости FH 1..6 на шляху входу + Host.login без catchall; логіка входу = 3.5.1",
+    "✦ Повідомте розробнику порядок тостів FH після натискання «Увійти через Google»"
   ],
-  "apk_md5": "6159d62ba41fc1aab7ec421484e88beb",
+  "apk_md5": "42784ac66fb9a074ebc7fba7a95c89f3",
   "apk_size": 2479969,
-  "exe_md5": "d356f5164ee1ec52dd4957f19cb5ff6d",
-  "exe_sha256": "74e621d78241cd8036782ce90596260cc0e8973575aab7aa96c6555f5a6df55b",
+  "exe_md5": "c1807353902bd18a2fbc97781c5304f8",
+  "exe_sha256": "6a37cb99e8ea1322dea3c33229ab1001230c51e4975f056f4c7806c39241249f",
   "exe_size": 1953280,
   "updated_at": "2026-11-18",
   "channel": "beta",
-  "apk_url": "/versions/beta/3.5.66/FluxHelper.apk",
-  "exe_url": "/versions/beta/3.5.66/FluxHelper.exe"
+  "apk_url": "/versions/beta/3.5.67/FluxHelper.apk",
+  "exe_url": "/versions/beta/3.5.67/FluxHelper.exe"
 }
